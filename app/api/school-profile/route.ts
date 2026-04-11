@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id || !session.user.email) {
-    return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   const body = (await request.json()) as {
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   };
 
   if (!body.schoolProfile || typeof body.schoolProfile !== "object") {
-    return NextResponse.json({ error: "Payload invalido." }, { status: 400 });
+    return NextResponse.json({ error: "Payload inválido." }, { status: 400 });
   }
 
   const client = await clientPromise;

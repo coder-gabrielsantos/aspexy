@@ -8,7 +8,7 @@ const googleEnabled = Boolean(googleClientId && googleClientSecret);
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   // Sem MongoDB adapter no login: OAuth + JWT apenas. O adapter costuma gerar erro "Callback"
-  // se o Atlas bloquear IP, credencial ou gravacao de usuario na hora do retorno do Google.
+  // se o Atlas bloquear IP, credencial ou gravação de usuário na hora do retorno do Google.
   // Os perfis da escola continuam salvos via API em `school_profiles`.
   session: {
     strategy: "jwt",

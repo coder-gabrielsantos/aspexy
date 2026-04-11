@@ -3,6 +3,7 @@
 import { ArrowRight, AlertTriangle } from "lucide-react";
 import { signIn } from "next-auth/react";
 
+import { PlatformLogo } from "@/components/platform-logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -32,13 +33,13 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   OAuthSignin: "Erro ao iniciar login com Google. Verifique Client ID/Secret e URLs no Google Cloud.",
   OAuthCallback:
-    "Erro no retorno do Google. Confira redirect URI (http://localhost:3000/api/auth/callback/google), NEXTAUTH_URL e se o Client Secret esta correto.",
+    "Erro no retorno do Google. Confira redirect URI (http://localhost:3000/api/auth/callback/google), NEXTAUTH_URL e se o Client Secret está correto.",
   Callback:
-    "Falha no callback OAuth (troca do codigo por sessao). Verifique NEXTAUTH_SECRET, redirect URI no Google Cloud e tente em aba anonima.",
-  OAuthAccountNotLinked: "Esta conta ja esta vinculada a outro metodo de login.",
-  AccessDenied: "Acesso negado. Se o app esta em modo teste, adicione seu email em Test users.",
-  Configuration: "Configuracao do servidor de autenticacao invalida (NEXTAUTH_SECRET, URLs, etc.).",
-  Default: "Nao foi possivel concluir o login. Tente novamente."
+    "Falha no callback OAuth (troca do código por sessão). Verifique NEXTAUTH_SECRET, redirect URI no Google Cloud e tente em aba anônima.",
+  OAuthAccountNotLinked: "Esta conta já está vinculada a outro método de login.",
+  AccessDenied: "Acesso negado. Se o app está em modo teste, adicione seu e-mail em Test users.",
+  Configuration: "Configuração do servidor de autenticação inválida (NEXTAUTH_SECRET, URLs, etc.).",
+  Default: "Não foi possível concluir o login. Tente novamente."
 };
 
 type LoginScreenProps = {
@@ -48,54 +49,83 @@ type LoginScreenProps = {
 
 export default function LoginScreen({ googleConfigured, oauthError }: LoginScreenProps) {
   const errorMessage = oauthError
-    ? OAUTH_ERROR_MESSAGES[oauthError] ?? `${OAUTH_ERROR_MESSAGES.Default} (codigo: ${oauthError})`
+    ? OAUTH_ERROR_MESSAGES[oauthError] ?? `${OAUTH_ERROR_MESSAGES.Default} (código: ${oauthError})`
     : null;
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_70%_15%,rgba(59,130,246,0.08),transparent_35%),#f8fafc]">
-      <div className="grid min-h-screen lg:grid-cols-[420px_1fr]">
-        <aside className="relative hidden overflow-hidden bg-[radial-gradient(circle_at_18%_20%,rgba(56,189,248,0.22),transparent_38%),radial-gradient(circle_at_75%_65%,rgba(37,99,235,0.18),transparent_42%),linear-gradient(160deg,#0b1220,#122b6b_55%,#0b1220)] p-10 text-slate-100 lg:block">
-          <div className="absolute inset-0 opacity-35 [background-image:radial-gradient(rgba(255,255,255,0.12)_1px,transparent_1px)] [background-size:18px_18px]" />
-          <div className="relative z-10 flex h-full flex-col justify-between">
-            <div className="inline-flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-white/10 ring-1 ring-white/15" />
+    <main className="relative min-h-screen overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,hsl(245,82%,63%,0.12),transparent_60%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_40%_40%_at_80%_80%,hsl(270,80%,60%,0.06),transparent_50%)]" />
+
+      <div className="relative grid min-h-screen lg:grid-cols-[440px_1fr]">
+        <aside className="relative hidden overflow-hidden lg:block">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b3e] via-[#1e1566] to-[#0d1033]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_30%,hsl(270,80%,50%,0.25),transparent_50%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_70%,hsl(245,82%,63%,0.2),transparent_45%)]" />
+          <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:20px_20px]" />
+
+          <div className="relative z-10 flex h-full flex-col justify-between p-10">
+            <div className="inline-flex items-center gap-3.5">
+              <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-white/10 p-1 ring-1 ring-white/20 backdrop-blur-sm">
+                <PlatformLogo size={40} className="h-8 w-8" priority />
+              </div>
               <div>
-                <p className="text-base font-semibold tracking-wide">Aspexy</p>
-                <p className="text-xs text-slate-200/80">School Scheduling Platform</p>
+                <p className="text-base font-semibold tracking-wide text-white">Aspexy</p>
+                <p className="text-[13px] text-white/60">School Scheduling Platform</p>
               </div>
             </div>
-            <div className="max-w-sm">
-              <p className="text-sm text-slate-200/85">
-                Acesse com sua conta para configurar a estrutura de horarios da escola.
-              </p>
+
+            <div className="space-y-6">
+              <div className="h-px w-12 bg-gradient-to-r from-white/30 to-transparent" />
+              <div className="max-w-sm space-y-3">
+                <p className="text-xl font-semibold leading-snug text-white/95">
+                  Automatize a criação de horários escolares com inteligência.
+                </p>
+                <p className="text-sm leading-relaxed text-white/50">
+                  Acesse com sua conta para configurar a estrutura de horários da escola.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
+              <p className="text-xs text-white/40">Todos os dados protegidos com criptografia</p>
             </div>
           </div>
         </aside>
 
         <section className="flex items-center justify-center p-6 md:p-10">
-          <Card className="w-full max-w-lg border-slate-200/80 bg-white/95 shadow-[0_18px_55px_rgba(15,23,42,0.10)] backdrop-blur">
+          <Card className="w-full max-w-lg animate-fade-in-up border-0 shadow-premium-lg">
             <CardHeader className="space-y-3 pb-3">
+              <div className="mb-2 lg:hidden">
+                <div className="inline-flex items-center gap-2.5">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-xl bg-white p-0.5 shadow-sm ring-1 ring-slate-200/80">
+                    <PlatformLogo size={36} className="h-8 w-8" priority />
+                  </div>
+                  <span className="text-lg font-semibold tracking-tight text-slate-900">Aspexy</span>
+                </div>
+              </div>
               <CardTitle className="font-display text-2xl font-semibold tracking-tight text-slate-900">
                 Entrar no Aspexy
               </CardTitle>
               <p className="text-sm text-slate-500">
-                Use sua conta Google institucional para acessar o painel de horarios.
+                Use sua conta Google institucional para acessar o painel de horários.
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
               {errorMessage ? (
-                <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
-                  <div className="flex items-start gap-2">
+                <div className="animate-fade-in rounded-xl border border-rose-200/80 bg-rose-50/80 p-3.5 text-sm text-rose-800">
+                  <div className="flex items-start gap-2.5">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <div>{errorMessage}</div>
+                    <div className="leading-relaxed">{errorMessage}</div>
                   </div>
                 </div>
               ) : null}
               {!googleConfigured ? (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                  <div className="flex items-start gap-2">
+                <div className="animate-fade-in rounded-xl border border-amber-200/80 bg-amber-50/80 p-3.5 text-sm text-amber-800">
+                  <div className="flex items-start gap-2.5">
                     <AlertTriangle className="mt-0.5 h-4 w-4" />
-                    <div>
-                      Google OAuth ainda nao configurado. Preencha `GOOGLE_CLIENT_ID` e
+                    <div className="leading-relaxed">
+                      Google OAuth ainda não configurado. Preencha `GOOGLE_CLIENT_ID` e
                       `GOOGLE_CLIENT_SECRET` no `.env.local`.
                     </div>
                   </div>
@@ -105,19 +135,25 @@ export default function LoginScreen({ googleConfigured, oauthError }: LoginScree
               <Button
                 onClick={() => signIn("google", { callbackUrl: "/" })}
                 disabled={!googleConfigured}
-                className="h-10 w-full justify-between rounded-lg border border-slate-200 bg-white px-3 text-slate-800 shadow-sm transition-all duration-200 hover:border-slate-300 hover:bg-slate-50"
+                className="group h-12 w-full justify-between rounded-xl border border-slate-200/80 bg-white px-4 text-slate-800 shadow-sm transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md"
               >
                 <span className="flex items-center gap-3">
-                  <span className="grid h-6 w-6 place-items-center rounded bg-white">
+                  <span className="grid h-7 w-7 place-items-center rounded-lg bg-white shadow-sm ring-1 ring-slate-100">
                     <GoogleIcon className="h-4 w-4" />
                   </span>
                   <span className="text-sm font-medium">Continuar com Google</span>
                 </span>
-                <ArrowRight className="h-4 w-4 opacity-60" />
+                <ArrowRight className="h-4 w-4 text-slate-400 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-slate-600" />
               </Button>
 
-              <p className="text-xs text-slate-500">
-                Ao continuar, voce concorda com os termos internos de uso da plataforma Aspexy.
+              <div className="relative py-1">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-100" />
+                </div>
+              </div>
+
+              <p className="text-center text-xs leading-relaxed text-slate-400">
+                Ao continuar, você concorda com os termos internos de uso da plataforma Aspexy.
               </p>
             </CardContent>
           </Card>
