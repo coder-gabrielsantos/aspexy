@@ -4,7 +4,8 @@ import { useEffect, useId, useMemo, useState } from "react";
 import Select, {
   type ClassNamesConfig,
   type GroupBase,
-  type SingleValue
+  type SingleValue,
+  type StylesConfig
 } from "react-select";
 
 import { cn } from "@/lib/utils";
@@ -43,7 +44,6 @@ const selectClassNames: ClassNamesConfig<
   menu: () =>
     "mt-1.5 overflow-hidden rounded-xl border border-slate-200/60 bg-white py-1 shadow-premium-lg",
   menuList: () => "max-h-60 overflow-y-auto p-1",
-  menuPortal: () => "z-[100]",
   option: (props) =>
     cn(
       "cursor-pointer rounded-lg px-2.5 py-2 text-sm transition-colors duration-150",
@@ -56,6 +56,16 @@ const selectClassNames: ClassNamesConfig<
   input: () => "m-0 p-0 text-slate-800 [&_input]:outline-none",
   noOptionsMessage: () => "cursor-default rounded-lg px-2.5 py-2 text-sm text-slate-500",
   loadingMessage: () => "cursor-default rounded-lg px-2.5 py-2 text-sm text-slate-500"
+};
+
+/** react-select sets menuPortal zIndex: 1 inline; sticky table headers use z-10, so we must override via styles. */
+const selectStyles: StylesConfig<
+  ScheduleSelectOption,
+  false,
+  GroupBase<ScheduleSelectOption>
+> = {
+  menuPortal: (base) => ({ ...base, zIndex: 100 }),
+  menu: (base) => ({ ...base, zIndex: 100 })
 };
 
 export default function ScheduleSelect({
@@ -93,6 +103,7 @@ export default function ScheduleSelect({
       placeholder={placeholder}
       isClearable={isClearable}
       isSearchable
+      styles={selectStyles}
       classNames={selectClassNames}
       classNamePrefix="aspexy-select"
       menuPosition="fixed"

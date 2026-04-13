@@ -21,7 +21,8 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["SF Mono", "Fira Code", "ui-monospace", "monospace"],
-        display: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"]
+        display: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
+        logo: ["var(--font-logo-script)", "cursive", "serif"]
       },
       colors: {
         border: "hsl(var(--border))",

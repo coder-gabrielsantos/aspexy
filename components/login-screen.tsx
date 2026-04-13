@@ -1,13 +1,14 @@
 "use client";
 
-import { ArrowRight, AlertTriangle } from "lucide-react";
+import { useRef } from "react";
+import { AlertTriangle } from "lucide-react";
 import { signIn } from "next-auth/react";
 
 import { PlatformLogo } from "@/components/platform-logo";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
+/** Logo Google oficial (multicolor). */
+function GoogleGIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" {...props}>
       <path
@@ -48,82 +49,122 @@ type LoginScreenProps = {
 };
 
 export default function LoginScreen({ googleConfigured, oauthError }: LoginScreenProps) {
+  const glowRef = useRef<HTMLDivElement>(null);
+  const asideRef = useRef<HTMLElement>(null);
+
   const errorMessage = oauthError
     ? OAUTH_ERROR_MESSAGES[oauthError] ?? `${OAUTH_ERROR_MESSAGES.Default} (código: ${oauthError})`
     : null;
+
+  /** Posição em % do painel escuro; pode ficar fora de 0–100% (luz “some” para o lado). */
+  const syncGlowFromClient = (clientX: number, clientY: number) => {
+    const aside = asideRef.current;
+    if (!aside) return;
+    const rect = aside.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    const x = ((clientX - rect.left) / rect.width) * 100;
+    const y = ((clientY - rect.top) / rect.height) * 100;
+    glowRef.current?.style.setProperty("--mx", `${x}%`);
+    glowRef.current?.style.setProperty("--my", `${y}%`);
+  };
+
+  const handleShellMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    syncGlowFromClient(e.clientX, e.clientY);
+  };
+
+  const handleShellMouseLeave = () => {
+    glowRef.current?.style.setProperty("--mx", "50%");
+    glowRef.current?.style.setProperty("--my", "50%");
+  };
+
   return (
-    <main className="relative min-h-screen overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,hsl(245,82%,63%,0.12),transparent_60%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_40%_40%_at_80%_80%,hsl(270,80%,60%,0.06),transparent_50%)]" />
+    <main className="min-h-screen bg-white">
+      <div
+        className="grid min-h-screen lg:grid-cols-[1.4fr_1fr]"
+        onMouseMove={handleShellMouseMove}
+        onMouseLeave={handleShellMouseLeave}
+      >
+        <aside
+          ref={asideRef}
+          className="relative hidden select-none overflow-hidden bg-[#03050a] lg:block"
+        >
+          {/* Base e profundidade */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#080b14] via-[#03050a] to-[#0a0e18]" />
+          {/* Luz ambiente que segue o cursor (--mx / --my) */}
+          <div
+            ref={glowRef}
+            className="pointer-events-none absolute inset-0"
+            style={
+              {
+                "--mx": "50%",
+                "--my": "50%",
+                background: `
+                  radial-gradient(circle 120vmin at var(--mx) var(--my), rgba(99, 102, 241, 0.26), transparent 72%),
+                  radial-gradient(circle 95vmin at var(--mx) var(--my), rgba(14, 165, 233, 0.15), transparent 68%),
+                  radial-gradient(circle 145vmin at var(--mx) var(--my), rgba(255, 255, 255, 0.05), transparent 78%)
+                `
+              } as React.CSSProperties
+            }
+          />
+          {/* Textura: linhas diagonais finas */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.45] mix-blend-soft-light"
+            style={{
+              backgroundImage: `repeating-linear-gradient(
+                -28deg,
+                rgba(255,255,255,0.04) 0px,
+                rgba(255,255,255,0.04) 1px,
+                transparent 1px,
+                transparent 14px
+              )`
+            }}
+          />
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.25]"
+            style={{
+              backgroundImage: `repeating-linear-gradient(
+                58deg,
+                rgba(255,255,255,0.02) 0px,
+                rgba(255,255,255,0.02) 1px,
+                transparent 1px,
+                transparent 22px
+              )`
+            }}
+          />
+          {/* Grade técnica discreta */}
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] [background-size:52px_52px] opacity-[0.35]" />
+          {/* Vignette suave nas bordas */}
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_85%_75%_at_50%_50%,transparent_0%,rgba(0,0,0,0.45)_100%)]" />
 
-      <div className="relative grid min-h-screen lg:grid-cols-[440px_1fr]">
-        <aside className="relative hidden overflow-hidden lg:block">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b3e] via-[#1e1566] to-[#0d1033]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_30%,hsl(270,80%,50%,0.25),transparent_50%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_70%,hsl(245,82%,63%,0.2),transparent_45%)]" />
-          <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:20px_20px]" />
-
-          <div className="relative z-10 flex h-full flex-col justify-between p-10">
-            <div className="inline-flex items-center gap-3.5">
-              <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-white/10 p-1 ring-1 ring-white/20 backdrop-blur-sm">
-                <PlatformLogo size={40} className="h-8 w-8" priority />
-              </div>
-              <div>
-                <p className="text-base font-semibold tracking-wide text-white">Aspexy</p>
-                <p className="text-[13px] text-white/60">School Scheduling Platform</p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="h-px w-12 bg-gradient-to-r from-white/30 to-transparent" />
-              <div className="max-w-sm space-y-3">
-                <p className="text-xl font-semibold leading-snug text-white/95">
-                  Automatize a criação de horários escolares com inteligência.
-                </p>
-                <p className="text-sm leading-relaxed text-white/50">
-                  Acesse com sua conta para configurar a estrutura de horários da escola.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
-              <p className="text-xs text-white/40">Todos os dados protegidos com criptografia</p>
-            </div>
+          <div className="relative z-10 flex h-full flex-col items-center justify-center gap-6 p-10">
+            <PlatformLogo size={64} className="h-14 w-14 opacity-90" priority />
+            <p className="font-logo text-5xl font-normal leading-tight tracking-normal text-white md:text-6xl">
+              Aspexy
+            </p>
           </div>
         </aside>
 
-        <section className="flex items-center justify-center p-6 md:p-10">
-          <Card className="w-full max-w-lg animate-fade-in-up border-0 shadow-premium-lg">
-            <CardHeader className="space-y-3 pb-3">
-              <div className="mb-2 lg:hidden">
-                <div className="inline-flex items-center gap-2.5">
-                  <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-xl bg-white p-0.5 shadow-sm ring-1 ring-slate-200/80">
-                    <PlatformLogo size={36} className="h-8 w-8" priority />
-                  </div>
-                  <span className="text-lg font-semibold tracking-tight text-slate-900">Aspexy</span>
-                </div>
-              </div>
-              <CardTitle className="font-display text-2xl font-semibold tracking-tight text-slate-900">
-                Entrar no Aspexy
-              </CardTitle>
-              <p className="text-sm text-slate-500">
-                Use sua conta Google institucional para acessar o painel de horários.
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        <section className="flex items-center justify-center bg-slate-50/80 px-6 py-10 sm:px-10">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200/80 bg-white p-8 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.12)]">
+            <div className="space-y-1.5 text-center">
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Bem-vindo</h1>
+              <p className="text-sm text-slate-500">Faça login para continuar</p>
+            </div>
+
+            <div className="mt-8 space-y-3">
               {errorMessage ? (
-                <div className="animate-fade-in rounded-xl border border-rose-200/80 bg-rose-50/80 p-3.5 text-sm text-rose-800">
+                <div className="rounded-xl border border-rose-200/80 bg-rose-50/80 p-3 text-left text-sm text-rose-800">
                   <div className="flex items-start gap-2.5">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                     <div className="leading-relaxed">{errorMessage}</div>
                   </div>
                 </div>
               ) : null}
+
               {!googleConfigured ? (
-                <div className="animate-fade-in rounded-xl border border-amber-200/80 bg-amber-50/80 p-3.5 text-sm text-amber-800">
+                <div className="rounded-xl border border-amber-200/80 bg-amber-50/80 p-3 text-left text-sm text-amber-800">
                   <div className="flex items-start gap-2.5">
-                    <AlertTriangle className="mt-0.5 h-4 w-4" />
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                     <div className="leading-relaxed">
                       Google OAuth ainda não configurado. Preencha `GOOGLE_CLIENT_ID` e
                       `GOOGLE_CLIENT_SECRET` no `.env.local`.
@@ -131,32 +172,27 @@ export default function LoginScreen({ googleConfigured, oauthError }: LoginScree
                   </div>
                 </div>
               ) : null}
+            </div>
 
+            <div className="mt-6">
               <Button
+                type="button"
+                variant="outline"
                 onClick={() => signIn("google", { callbackUrl: "/" })}
                 disabled={!googleConfigured}
-                className="group h-12 w-full justify-between rounded-xl border border-slate-200/80 bg-white px-4 text-slate-800 shadow-sm transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md"
+                className="h-12 w-full rounded-full border-slate-700/90 bg-white text-sm font-semibold text-slate-800 shadow-none hover:bg-slate-50 hover:text-slate-800 disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
               >
-                <span className="flex items-center gap-3">
-                  <span className="grid h-7 w-7 place-items-center rounded-lg bg-white shadow-sm ring-1 ring-slate-100">
-                    <GoogleIcon className="h-4 w-4" />
-                  </span>
-                  <span className="text-sm font-medium">Continuar com Google</span>
+                <span className="inline-flex min-w-0 items-center justify-center gap-3">
+                  <GoogleGIcon className="h-5 w-5 shrink-0" />
+                  Entrar com Google
                 </span>
-                <ArrowRight className="h-4 w-4 text-slate-400 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-slate-600" />
               </Button>
+            </div>
 
-              <div className="relative py-1">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-100" />
-                </div>
-              </div>
-
-              <p className="text-center text-xs leading-relaxed text-slate-400">
-                Ao continuar, você concorda com os termos internos de uso da plataforma Aspexy.
-              </p>
-            </CardContent>
-          </Card>
+            <p className="mt-8 text-center text-xs leading-relaxed text-slate-400">
+              Ao se conectar, você aceita nossos termos de uso e nossa política de privacidade.
+            </p>
+          </div>
         </section>
       </div>
     </main>

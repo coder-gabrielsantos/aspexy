@@ -787,6 +787,8 @@ export default function AspexyCanvas() {
     subjects: { title: "Disciplinas", desc: "Cadastre disciplinas, atribua professores e turmas." },
     generate: { title: "Gerar horário", desc: "Gere horários oficiais a partir de uma estrutura salva." }
   };
+  const panelTitleClass = "text-sm font-semibold text-slate-800";
+  const panelDescClass = "text-xs text-slate-500";
   const { title: pageTitle, desc: pageDesc } = pageMeta[activeTab];
 
   return (
@@ -815,13 +817,10 @@ export default function AspexyCanvas() {
             <div className="animate-fade-in space-y-5">
               <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-premium">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100/80 px-5 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="gradient-primary grid h-9 w-9 place-items-center rounded-xl text-white shadow-sm">
-                      <LayoutGrid className="h-4 w-4" />
-                    </div>
+                  <div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-800">Configuração da estrutura</p>
-                      <p className="text-xs text-slate-500">Defina os horários e dias letivos da escola</p>
+                      <p className={panelTitleClass}>Configuração da estrutura</p>
+                      <p className={panelDescClass}>Defina os horários e dias letivos da escola</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -882,9 +881,9 @@ export default function AspexyCanvas() {
 
               <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-premium">
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[940px] table-fixed border-collapse">
+                  <table className="w-full min-w-[984px] table-fixed border-collapse">
                     <colgroup>
-                      <col className="w-[156px]" />
+                      <col className="w-[200px]" />
                       {DAYS.map((day) => (
                         <col key={day} />
                       ))}
@@ -909,16 +908,16 @@ export default function AspexyCanvas() {
                           key={slot.id}
                           className="transition-colors duration-150 hover:bg-slate-50/50"
                         >
-                          <td className="border-b border-slate-100/80 px-2 py-2">
-                            <div className="flex items-center justify-center gap-1">
-                              <Input inputMode="numeric" placeholder="HH:MM" value={slot.start} maxLength={5} className="h-8 w-[58px] text-center text-xs tabular-nums"
+                          <td className="border-b border-slate-100/80 px-2.5 py-2">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <Input inputMode="numeric" placeholder="HH:MM" value={slot.start} maxLength={5} className="h-8 w-[4.75rem] shrink-0 px-2 text-center text-xs tabular-nums"
                                 onChange={(e) => updateSlotTime(si, "start", formatTimeTyping(e.target.value))}
                                 onFocus={(e) => e.currentTarget.select()}
                                 onKeyDown={(e) => { if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return; e.preventDefault(); updateSlotTime(si, "start", addMinutesToTime24(slot.start, e.key === "ArrowUp" ? 5 : -5)); }}
                                 onBlur={() => updateSlotTime(si, "start", normalizeTime24OrFallback(slot.start, DEFAULT_START))}
                               />
-                              <span className="text-[10px] text-slate-300">–</span>
-                              <Input inputMode="numeric" placeholder="HH:MM" value={slot.end} maxLength={5} className="h-8 w-[58px] text-center text-xs tabular-nums"
+                              <span className="shrink-0 text-[10px] text-slate-300">–</span>
+                              <Input inputMode="numeric" placeholder="HH:MM" value={slot.end} maxLength={5} className="h-8 w-[4.75rem] shrink-0 px-2 text-center text-xs tabular-nums"
                                 onChange={(e) => updateSlotTime(si, "end", formatTimeTyping(e.target.value))}
                                 onFocus={(e) => e.currentTarget.select()}
                                 onKeyDown={(e) => { if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return; e.preventDefault(); updateSlotTime(si, "end", addMinutesToTime24(slot.end, e.key === "ArrowUp" ? 5 : -5)); }}
@@ -973,11 +972,9 @@ export default function AspexyCanvas() {
             <div className="animate-fade-in grid grid-cols-1 gap-5 lg:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)] lg:items-start">
               <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-premium">
                 <div className="flex items-center justify-between gap-3 border-b border-slate-100/80 px-5 py-4">
-                  <div className="flex items-center gap-2.5">
-                    <div className="gradient-primary grid h-8 w-8 place-items-center rounded-xl text-white shadow-sm">
-                      <GraduationCap className="h-3.5 w-3.5" />
-                    </div>
-                    <p className="text-sm font-semibold text-slate-800">Nova turma</p>
+                  <div>
+                    <p className={panelTitleClass}>Nova turma</p>
+                    <p className={panelDescClass}>Cadastre uma turma para usar na distribuição das disciplinas.</p>
                   </div>
                   <span className="rounded-lg bg-slate-100/80 px-2 py-0.5 text-xs font-medium tabular-nums text-slate-500">
                     {classes.length}
@@ -1059,6 +1056,10 @@ export default function AspexyCanvas() {
           {activeTab === "teachers" && (
             <div className="animate-fade-in space-y-5">
               <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-premium">
+                <div className="border-b border-slate-100/80 px-5 py-4">
+                  <p className={panelTitleClass}>Configuração de professores</p>
+                  <p className={panelDescClass}>Cadastre os professores e selecione uma estrutura para definir disponibilidade.</p>
+                </div>
                 <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
                   <div className="min-w-0 flex-1">
                     <p className="mb-1.5 text-xs font-medium text-slate-500">Novo professor</p>
@@ -1260,6 +1261,10 @@ export default function AspexyCanvas() {
           {activeTab === "subjects" && (
             <div className="animate-fade-in space-y-5">
               <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-premium">
+                <div className="border-b border-slate-100/80 px-5 py-4">
+                  <p className={panelTitleClass}>Configuração de disciplinas</p>
+                  <p className={panelDescClass}>Associe cada disciplina ao professor e à turma correspondente.</p>
+                </div>
                 <div className="grid grid-cols-1 gap-3 px-5 py-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,12rem)_4rem_minmax(10rem,1fr)_minmax(7rem,9rem)_auto] lg:items-end">
                   <div className="min-w-0 sm:col-span-2 lg:col-span-1">
                     <p className="mb-1.5 text-xs font-medium text-slate-500">Disciplina</p>
@@ -1400,6 +1405,10 @@ export default function AspexyCanvas() {
           {activeTab === "generate" && (
             <div className="min-w-0 animate-fade-in space-y-5">
               <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-premium">
+                <div className="border-b border-slate-100/80 px-5 py-4">
+                  <p className={panelTitleClass}>Configuração da geração</p>
+                  <p className={panelDescClass}>Selecione a estrutura base e visualize horários já gerados.</p>
+                </div>
                 <div className="flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
                   <div className="grid min-w-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:max-w-[min(100%,580px)]">
                     <div className="min-w-0">
@@ -1452,20 +1461,20 @@ export default function AspexyCanvas() {
                           {DAY_FULL_LABEL[dayName]}
                         </h3>
                       </div>
-                      <div className="overflow-x-auto">
+                      <div className="max-h-[min(70vh,560px)] overflow-auto">
                         <table
                           className="table-fixed border-collapse text-xs"
                           style={{ width: `${140 + classIds.length * 140}px` }}
                         >
                           <thead>
                             <tr>
-                              <th className="sticky left-0 z-[1] w-[140px] min-w-[140px] max-w-[140px] whitespace-nowrap border-b border-slate-200/80 bg-slate-50/90 px-3 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.04)]">
+                              <th className="sticky left-0 top-0 z-[30] w-[140px] min-w-[140px] max-w-[140px] whitespace-nowrap border-b border-slate-200/90 bg-slate-100 px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wider text-slate-800 shadow-[2px_2px_0_0_rgba(15,23,42,0.06)]">
                                 Horário
                               </th>
                               {classIds.map((cid) => (
                                 <th
                                   key={`${dayName}-${cid}`}
-                                  className="w-[140px] min-w-[140px] max-w-[140px] overflow-hidden border-b border-slate-200/80 bg-slate-50/90 px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500"
+                                  className="sticky top-0 z-[20] w-[140px] min-w-[140px] max-w-[140px] overflow-hidden border-b border-l border-slate-200/90 bg-slate-100 px-3 py-2 text-center text-[11px] font-bold uppercase tracking-wider text-slate-800 shadow-[0_2px_0_0_rgba(15,23,42,0.06)]"
                                 >
                                   <span className="block truncate" title={`Turma ${cid}`}>
                                     Turma {cid}
@@ -1492,16 +1501,20 @@ export default function AspexyCanvas() {
                                 >
                                   <td
                                     className={cn(
-                                      "sticky left-0 z-[1] w-[140px] min-w-[140px] max-w-[140px] whitespace-nowrap border-b border-slate-100/80 px-3 text-xs font-medium tabular-nums text-slate-600 shadow-[2px_0_6px_-2px_rgba(0,0,0,0.03)]",
-                                      isBreak ? "bg-slate-50/80 py-2 text-center text-slate-400" : "bg-white py-2.5 align-top"
+                                      "sticky left-0 z-[10] w-[140px] min-w-[140px] max-w-[140px] whitespace-nowrap border-b border-slate-100/80 px-3 align-middle text-xs font-semibold tabular-nums shadow-[2px_0_0_0_rgba(15,23,42,0.04)]",
+                                      isBreak
+                                        ? "bg-slate-100/90 py-2 text-center text-slate-500"
+                                        : "bg-slate-50/95 py-2 text-center text-slate-800"
                                     )}
                                   >
                                     {isBreak ? (
-                                      `${slot.start} – ${slot.end}`
+                                      <span className="inline-flex min-h-[2.25rem] w-full items-center justify-center">
+                                        {`${slot.start} – ${slot.end}`}
+                                      </span>
                                     ) : (
-                                      <div className="flex min-h-[2.5rem] items-center justify-center text-center">
+                                      <span className="inline-flex min-h-[2.25rem] w-full items-center justify-center text-center leading-snug">
                                         {`${slotOrdinal}º — ${slot.start} – ${slot.end}`}
-                                      </div>
+                                      </span>
                                     )}
                                   </td>
                                   {classIds.map((cid) => {
@@ -1510,23 +1523,25 @@ export default function AspexyCanvas() {
                                       <td
                                         key={`${dayName}-${slot.id}-${cid}`}
                                         className={cn(
-                                          "w-[140px] min-w-[140px] max-w-[140px] overflow-hidden border-b border-slate-100/80 px-1.5 align-top text-slate-700",
-                                          isBreak ? "py-2" : "py-2"
+                                          "w-[140px] min-w-[140px] max-w-[140px] overflow-hidden border-b border-l border-slate-100/80 px-2 align-middle text-slate-700",
+                                          isBreak ? "bg-slate-50/50 py-2" : "bg-white py-2"
                                         )}
                                       >
                                         {isBreak ? (
-                                          <span className="block truncate text-xs text-slate-400">{brk}</span>
+                                          <span className="flex min-h-[2.25rem] w-full items-center justify-center truncate text-xs text-slate-400">
+                                            {brk}
+                                          </span>
                                         ) : a ? (
-                                          <div className="flex min-h-[2.5rem] flex-col justify-center rounded-xl bg-violet-50/70 px-2.5 py-2 ring-1 ring-violet-100">
-                                            <p className="truncate text-xs font-semibold leading-tight text-slate-800" title={a.subject}>
+                                          <div className="flex min-h-[2.25rem] w-full flex-col items-center justify-center gap-0.5 px-1 text-center">
+                                            <p className="w-full truncate text-xs font-semibold leading-tight text-slate-800" title={a.subject}>
                                               {a.subject}
                                             </p>
-                                            <p className="truncate text-[10px] leading-tight text-slate-500" title={a.teacher}>
+                                            <p className="w-full truncate text-[10px] leading-tight text-slate-500" title={a.teacher}>
                                               {a.teacher}
                                             </p>
                                           </div>
                                         ) : (
-                                          <div className="flex min-h-[2.5rem] items-center justify-center">
+                                          <div className="flex min-h-[2.25rem] w-full items-center justify-center">
                                             <span className="text-slate-200">—</span>
                                           </div>
                                         )}

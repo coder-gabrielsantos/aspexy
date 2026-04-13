@@ -19,6 +19,7 @@ export function PlatformLogo({ className, size = 32, priority = false }: Platfor
       alt="Aspexy"
       width={size}
       height={size}
+      draggable={false}
       className={cn("object-contain", className)}
       priority={priority}
     />
