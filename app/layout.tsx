@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Great_Vibes, Inter } from "next/font/google";
+import { Inter, Outfit } from "next/font/google";
 
 import { AuthSessionProvider } from "@/components/providers/session-provider";
 
@@ -11,10 +11,9 @@ const inter = Inter({
   display: "swap"
 });
 
-const logoScript = Great_Vibes({
-  weight: "400",
+const logoFont = Outfit({
   subsets: ["latin"],
-  variable: "--font-logo-script",
+  variable: "--font-logo",
   display: "swap"
 });
 
@@ -32,8 +31,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${inter.variable} ${logoScript.variable}`} suppressHydrationWarning>
-      <body className={[inter.variable, logoScript.variable, "font-sans"].join(" ")} suppressHydrationWarning>
+    <html lang="pt-BR" className={`${inter.variable} ${logoFont.variable}`} suppressHydrationWarning>
+      <body className={[inter.variable, logoFont.variable, "font-sans"].join(" ")} suppressHydrationWarning>
         <AuthSessionProvider>{children}</AuthSessionProvider>
       </body>
     </html>

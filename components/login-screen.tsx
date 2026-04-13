@@ -138,7 +138,7 @@ export default function LoginScreen({ googleConfigured, oauthError }: LoginScree
 
           <div className="relative z-10 flex h-full flex-col items-center justify-center gap-6 p-10">
             <PlatformLogo size={64} className="h-14 w-14 opacity-90" priority />
-            <p className="font-logo text-5xl font-normal leading-tight tracking-normal text-white md:text-6xl">
+            <p className="font-logo text-5xl font-semibold leading-tight tracking-tight text-white md:text-6xl">
               Aspexy
             </p>
           </div>

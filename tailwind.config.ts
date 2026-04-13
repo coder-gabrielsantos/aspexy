@@ -22,7 +22,7 @@ const config: Config = {
         sans: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["SF Mono", "Fira Code", "ui-monospace", "monospace"],
         display: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
-        logo: ["var(--font-logo-script)", "cursive", "serif"]
+        logo: ["var(--font-logo)", "ui-sans-serif", "system-ui", "sans-serif"]
       },
       colors: {
         border: "hsl(var(--border))",
