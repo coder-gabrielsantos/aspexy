@@ -269,18 +269,16 @@ export default function LoginScreen({ googleConfigured, oauthError }: LoginScree
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:44px_44px] opacity-25" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_50%,transparent_0%,rgba(0,0,0,0.5)_100%)]" />
 
-          {/* Content */}
-          <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 py-12 sm:px-8">
-            {/* Logo + brand */}
-            <div className="mb-10 flex flex-col items-center gap-3">
+          {/* Content: logo no topo, login colado ao rodapé */}
+          <div className="relative z-10 flex min-h-[100dvh] flex-col px-6 sm:px-8">
+            <div className="flex flex-col items-center gap-3 pt-[max(2.75rem,env(safe-area-inset-top))] sm:pt-[max(3.25rem,env(safe-area-inset-top))]">
               <PlatformLogo size={48} className="h-11 w-11 opacity-90" priority />
               <p className="font-logo text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                 Aspexy
               </p>
             </div>
 
-            {/* Form */}
-            <div className="w-full max-w-sm">
+            <div className="mt-auto w-full max-w-sm self-center pb-[max(1.5rem,env(safe-area-inset-bottom))]">
               <LoginForm errorMessage={errorMessage} googleConfigured={googleConfigured} dark />
             </div>
           </div>
