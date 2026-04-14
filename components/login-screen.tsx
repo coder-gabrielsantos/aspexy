@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { signIn } from "next-auth/react";
 
 import { PlatformLogo } from "@/components/platform-logo";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 /** Logo Google oficial (multicolor). */
 function GoogleGIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -43,6 +44,95 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   Default: "Não foi possível concluir o login. Tente novamente."
 };
 
+function LoginForm({
+  errorMessage,
+  googleConfigured,
+  dark
+}: {
+  errorMessage: string | null;
+  googleConfigured: boolean;
+  dark?: boolean;
+}) {
+  return (
+    <>
+      <div className="space-y-1.5 text-center">
+        <h1
+          className={cn(
+            "text-2xl font-semibold tracking-tight",
+            dark ? "text-white" : "text-slate-900"
+          )}
+        >
+          Bem-vindo
+        </h1>
+        <p className={cn("text-sm", dark ? "text-slate-400" : "text-slate-500")}>
+          Faça login para continuar
+        </p>
+      </div>
+
+      <div className="mt-8 space-y-3">
+        {errorMessage ? (
+          <div
+            className={cn(
+              "rounded-xl border p-3 text-left text-sm",
+              dark
+                ? "border-rose-500/30 bg-rose-950/40 text-rose-300"
+                : "border-rose-200/80 bg-rose-50/80 text-rose-800"
+            )}
+          >
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div className="leading-relaxed">{errorMessage}</div>
+            </div>
+          </div>
+        ) : null}
+
+        {!googleConfigured ? (
+          <div
+            className={cn(
+              "rounded-xl border p-3 text-left text-sm",
+              dark
+                ? "border-amber-500/30 bg-amber-950/40 text-amber-300"
+                : "border-amber-200/80 bg-amber-50/80 text-amber-800"
+            )}
+          >
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div className="leading-relaxed">
+                Google OAuth ainda não configurado. Preencha `GOOGLE_CLIENT_ID` e
+                `GOOGLE_CLIENT_SECRET` no `.env.local`.
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="mt-6">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => signIn("google", { callbackUrl: "/" })}
+          disabled={!googleConfigured}
+          className={cn(
+            "h-12 w-full rounded-full text-sm font-semibold shadow-none transition-transform active:scale-[0.98]",
+            dark
+              ? "border-slate-600 bg-white text-slate-900 hover:bg-slate-100 hover:text-slate-900 disabled:border-slate-700 disabled:bg-slate-800 disabled:text-slate-500"
+              : "border-slate-700/90 bg-white text-slate-800 hover:bg-slate-50 hover:text-slate-800 disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+          )}
+        >
+          <span className="inline-flex min-w-0 items-center justify-center gap-3">
+            <GoogleGIcon className="h-5 w-5 shrink-0" />
+            Entrar com Google
+          </span>
+        </Button>
+      </div>
+
+      <p className={cn("mt-8 text-center text-xs leading-relaxed", dark ? "text-slate-500" : "text-slate-400")}>
+        Ao se conectar, você aceita nossos termos de uso e nossa política de privacidade.
+      </p>
+    </>
+  );
+}
+
 type LoginScreenProps = {
   googleConfigured: boolean;
   oauthError?: string;
@@ -51,6 +141,7 @@ type LoginScreenProps = {
 export default function LoginScreen({ googleConfigured, oauthError }: LoginScreenProps) {
   const glowRef = useRef<HTMLDivElement>(null);
   const asideRef = useRef<HTMLElement>(null);
+  const [glowLit, setGlowLit] = useState(true);
 
   const errorMessage = oauthError
     ? OAUTH_ERROR_MESSAGES[oauthError] ?? `${OAUTH_ERROR_MESSAGES.Default} (código: ${oauthError})`
@@ -72,41 +163,46 @@ export default function LoginScreen({ googleConfigured, oauthError }: LoginScree
     syncGlowFromClient(e.clientX, e.clientY);
   };
 
+  const handleShellMouseEnter = () => {
+    setGlowLit(true);
+  };
+
   const handleShellMouseLeave = () => {
-    glowRef.current?.style.setProperty("--mx", "50%");
-    glowRef.current?.style.setProperty("--my", "50%");
+    setGlowLit(false);
   };
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-[100dvh] bg-white">
       <div
-        className="grid min-h-screen lg:grid-cols-[1.4fr_1fr]"
+        className="grid min-h-[100dvh] lg:grid-cols-[1.4fr_1fr]"
         onMouseMove={handleShellMouseMove}
+        onMouseEnter={handleShellMouseEnter}
         onMouseLeave={handleShellMouseLeave}
       >
+        {/* ── Desktop aside (hidden on mobile) ── */}
         <aside
           ref={asideRef}
           className="relative hidden select-none overflow-hidden bg-[#03050a] lg:block"
         >
-          {/* Base e profundidade */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#080b14] via-[#03050a] to-[#0a0e18]" />
-          {/* Luz ambiente que segue o cursor (--mx / --my) */}
           <div
             ref={glowRef}
-            className="pointer-events-none absolute inset-0"
+            className={cn(
+              "pointer-events-none absolute inset-0 transition-opacity duration-500 ease-out",
+              glowLit ? "opacity-100" : "opacity-0"
+            )}
             style={
               {
                 "--mx": "50%",
                 "--my": "50%",
                 background: `
-                  radial-gradient(circle 120vmin at var(--mx) var(--my), rgba(99, 102, 241, 0.26), transparent 72%),
-                  radial-gradient(circle 95vmin at var(--mx) var(--my), rgba(14, 165, 233, 0.15), transparent 68%),
-                  radial-gradient(circle 145vmin at var(--mx) var(--my), rgba(255, 255, 255, 0.05), transparent 78%)
+                  radial-gradient(circle 100vmin at var(--mx) var(--my), rgba(99, 102, 241, 0.22), transparent 68%),
+                  radial-gradient(circle 82vmin at var(--mx) var(--my), rgba(14, 165, 233, 0.14), transparent 64%),
+                  radial-gradient(circle 120vmin at var(--mx) var(--my), rgba(255, 255, 255, 0.045), transparent 75%)
                 `
               } as React.CSSProperties
             }
           />
-          {/* Textura: linhas diagonais finas */}
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.45] mix-blend-soft-light"
             style={{
@@ -131,9 +227,7 @@ export default function LoginScreen({ googleConfigured, oauthError }: LoginScree
               )`
             }}
           />
-          {/* Grade técnica discreta */}
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] [background-size:52px_52px] opacity-[0.35]" />
-          {/* Vignette suave nas bordas */}
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_85%_75%_at_50%_50%,transparent_0%,rgba(0,0,0,0.45)_100%)]" />
 
           <div className="relative z-10 flex h-full flex-col items-center justify-center gap-6 p-10">
@@ -144,54 +238,58 @@ export default function LoginScreen({ googleConfigured, oauthError }: LoginScree
           </div>
         </aside>
 
-        <section className="flex items-center justify-center bg-slate-50/80 px-6 py-10 sm:px-10">
+        {/* ── Mobile / tablet: full-screen dark layout ── */}
+        <section className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-[#03050a] lg:hidden">
+          {/* Static background layers (no interactive glow) */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#080b14] via-[#03050a] to-[#0a0e18]" />
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.35] mix-blend-soft-light"
+            style={{
+              backgroundImage: `repeating-linear-gradient(
+                -28deg,
+                rgba(255,255,255,0.04) 0px,
+                rgba(255,255,255,0.04) 1px,
+                transparent 1px,
+                transparent 14px
+              )`
+            }}
+          />
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.2]"
+            style={{
+              backgroundImage: `repeating-linear-gradient(
+                58deg,
+                rgba(255,255,255,0.02) 0px,
+                rgba(255,255,255,0.02) 1px,
+                transparent 1px,
+                transparent 22px
+              )`
+            }}
+          />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:44px_44px] opacity-25" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_50%,transparent_0%,rgba(0,0,0,0.5)_100%)]" />
+
+          {/* Content */}
+          <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 py-12 sm:px-8">
+            {/* Logo + brand */}
+            <div className="mb-10 flex flex-col items-center gap-3">
+              <PlatformLogo size={48} className="h-11 w-11 opacity-90" priority />
+              <p className="font-logo text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                Aspexy
+              </p>
+            </div>
+
+            {/* Form */}
+            <div className="w-full max-w-sm">
+              <LoginForm errorMessage={errorMessage} googleConfigured={googleConfigured} dark />
+            </div>
+          </div>
+        </section>
+
+        {/* ── Desktop form ── */}
+        <section className="hidden items-center justify-center bg-slate-50/80 px-6 py-10 sm:px-10 lg:flex">
           <div className="w-full max-w-md rounded-2xl border border-slate-200/80 bg-white p-8 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.12)]">
-            <div className="space-y-1.5 text-center">
-              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Bem-vindo</h1>
-              <p className="text-sm text-slate-500">Faça login para continuar</p>
-            </div>
-
-            <div className="mt-8 space-y-3">
-              {errorMessage ? (
-                <div className="rounded-xl border border-rose-200/80 bg-rose-50/80 p-3 text-left text-sm text-rose-800">
-                  <div className="flex items-start gap-2.5">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <div className="leading-relaxed">{errorMessage}</div>
-                  </div>
-                </div>
-              ) : null}
-
-              {!googleConfigured ? (
-                <div className="rounded-xl border border-amber-200/80 bg-amber-50/80 p-3 text-left text-sm text-amber-800">
-                  <div className="flex items-start gap-2.5">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <div className="leading-relaxed">
-                      Google OAuth ainda não configurado. Preencha `GOOGLE_CLIENT_ID` e
-                      `GOOGLE_CLIENT_SECRET` no `.env.local`.
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="mt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => signIn("google", { callbackUrl: "/" })}
-                disabled={!googleConfigured}
-                className="h-12 w-full rounded-full border-slate-700/90 bg-white text-sm font-semibold text-slate-800 shadow-none hover:bg-slate-50 hover:text-slate-800 disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
-              >
-                <span className="inline-flex min-w-0 items-center justify-center gap-3">
-                  <GoogleGIcon className="h-5 w-5 shrink-0" />
-                  Entrar com Google
-                </span>
-              </Button>
-            </div>
-
-            <p className="mt-8 text-center text-xs leading-relaxed text-slate-400">
-              Ao se conectar, você aceita nossos termos de uso e nossa política de privacidade.
-            </p>
+            <LoginForm errorMessage={errorMessage} googleConfigured={googleConfigured} />
           </div>
         </section>
       </div>
