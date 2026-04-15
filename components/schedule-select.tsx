@@ -30,10 +30,10 @@ const selectClassNames: ClassNamesConfig<
   container: () => "w-full min-w-0",
   control: (props) =>
     cn(
-      "flex min-h-10 w-full cursor-default rounded-lg border bg-white text-sm text-slate-700 shadow-sm transition-all duration-200",
+      "flex min-h-10 w-full cursor-default rounded-md border bg-white text-sm text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-colors duration-150",
       props.isFocused
-        ? "border-violet-300/80 ring-2 ring-violet-100"
-        : "border-slate-200/80 hover:border-slate-300",
+        ? "border-indigo-400/95 ring-2 ring-indigo-600/18"
+        : "border-slate-200 hover:border-indigo-300/85",
       props.isDisabled && "cursor-not-allowed opacity-50"
     ),
   valueContainer: () => "flex min-w-0 flex-1 flex-wrap items-center gap-1 overflow-hidden py-1 pl-3 pr-1",
@@ -42,13 +42,13 @@ const selectClassNames: ClassNamesConfig<
   clearIndicator: () => "p-1.5 text-slate-400 hover:text-slate-600 transition-colors",
   indicatorSeparator: () => "hidden",
   menu: () =>
-    "mt-1.5 overflow-hidden rounded-xl border border-slate-200/60 bg-white py-1 shadow-premium-lg",
+    "mt-1.5 overflow-hidden rounded-lg border border-slate-200/90 bg-white py-1 shadow-premium-lg",
   menuList: () => "max-h-60 overflow-y-auto p-1",
   option: (props) =>
     cn(
-      "cursor-pointer rounded-lg px-2.5 py-2 text-sm transition-colors duration-150",
-      props.isSelected && "gradient-primary text-white",
-      props.isFocused && !props.isSelected && "bg-slate-50 text-slate-900",
+      "cursor-pointer rounded-md px-2.5 py-2 text-sm transition-colors duration-150",
+      props.isSelected && "bg-indigo-700 text-white",
+      props.isFocused && !props.isSelected && "bg-indigo-50 text-indigo-950",
       !props.isFocused && !props.isSelected && "text-slate-700"
     ),
   placeholder: () => "text-slate-400",
@@ -108,7 +108,7 @@ export default function ScheduleSelect({
       classNamePrefix="aspexy-select"
       menuPosition="fixed"
       menuPortalTarget={menuPortalTarget}
-      noOptionsMessage={() => "Nenhuma opcao encontrada"}
+      noOptionsMessage={() => "Nenhuma opção encontrada"}
       loadingMessage={() => "Carregando..."}
     />
   );

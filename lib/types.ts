@@ -1,0 +1,164 @@
+export type StepDef = {
+  id: string;
+  label: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement> & { className?: string }>;
+};
+
+export const DAYS = ["SEG", "TER", "QUA", "QUI", "SEX"] as const;
+
+export const DAY_FULL_LABEL: Record<(typeof DAYS)[number], string> = {
+  SEG: "Segunda-feira",
+  TER: "Terça-feira",
+  QUA: "Quarta-feira",
+  QUI: "Quinta-feira",
+  SEX: "Sexta-feira"
+};
+
+export const DEFAULT_START = "07:30";
+export const DEFAULT_END = "08:20";
+export const DEFAULT_SLOT_MINUTES = 50;
+
+export type SlotState = "lesson" | "free" | "break";
+export type TabMode = "grade" | "classes" | "teachers" | "subjects" | "generate";
+
+export type SlotRow = {
+  id: string;
+  start: string;
+  end: string;
+  cells: SlotState[];
+};
+
+export type SchoolProfile = {
+  school_id: string;
+  config: {
+    total_slots: number;
+    active_slots_count: number;
+    days: string[];
+    time_schema: Array<{
+      slot_index: number;
+      start: string;
+      end: string;
+      type: "lesson" | "break";
+    }>;
+  };
+  grid_matrix: Record<string, number[]>;
+};
+
+export type SolverAllocation = {
+  teacher: string;
+  subject: string;
+  class_id: string;
+  day_index: number;
+  day_name: string;
+  slot_index: number;
+};
+
+export type SolverResult = {
+  status: string;
+  days: Array<{
+    day_index: number;
+    slots: Array<{
+      slot_index: number;
+      assignments?: SolverAllocation[];
+    }>;
+  }>;
+};
+
+export type Teacher = {
+  id: string;
+  name: string;
+  unavailability: Record<string, number[]>;
+};
+
+export type SchoolClass = {
+  id: string;
+  name: string;
+};
+
+export type Subject = {
+  id: string;
+  name: string;
+  lessons_per_week: number;
+  teacher_id: string;
+  class_id: string;
+};
+
+export type StructureSummary = { id: string; name: string; updated_at: string };
+export type GeneratedSummary = { id: string; name: string; structure_id?: string | null; updated_at: string };
+
+export const STATE_CYCLE: SlotState[] = ["lesson", "free", "break"];
+
+export const stateLabelMap: Record<SlotState, string> = {
+  lesson: "AULA",
+  free: "LIVRE",
+  break: "INTERVALO"
+};
+
+export function createInitialSlot(index = 0): SlotRow {
+  return { id: `slot-${index + 1}`, start: DEFAULT_START, end: DEFAULT_END, cells: DAYS.map(() => "lesson" as SlotState) };
+}
+
+export function clamp(n: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, n));
+}
+
+export function parseTime24ToMinutes(value: string) {
+  const match = /^(\d{2}):(\d{2})$/.exec(value);
+  if (!match) return null;
+  const h = Number(match[1]);
+  const m = Number(match[2]);
+  if (Number.isNaN(h) || Number.isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) return null;
+  return h * 60 + m;
+}
+
+export function minutesToTime24(total: number) {
+  const c = ((total % 1440) + 1440) % 1440;
+  return `${String(Math.floor(c / 60)).padStart(2, "0")}:${String(c % 60).padStart(2, "0")}`;
+}
+
+export function addMinutesToTime24(value: string, delta: number) {
+  const base = parseTime24ToMinutes(value);
+  return base === null ? value : minutesToTime24(base + delta);
+}
+
+export function normalizeTime24(input: string) {
+  const digits = input.replace(/\D/g, "").slice(0, 4);
+  let h = Number(digits.slice(0, 2) || "0");
+  let m = Number(digits.slice(2, 4) || "0");
+  if (Number.isNaN(h)) h = 0;
+  if (Number.isNaN(m)) m = 0;
+  return `${String(clamp(h, 0, 23)).padStart(2, "0")}:${String(clamp(m, 0, 59)).padStart(2, "0")}`;
+}
+
+export function normalizeTime24OrFallback(input: string, fallback: string) {
+  return input.replace(/\D/g, "").length < 3 ? fallback : normalizeTime24(input);
+}
+
+export function formatTimeTyping(input: string) {
+  const d = input.replace(/\D/g, "").slice(0, 4);
+  return d.length <= 2 ? d : `${d.slice(0, 2)}:${d.slice(2)}`;
+}
+
+export function slotsFromProfile(profile: SchoolProfile): SlotRow[] {
+  const sorted = [...profile.config.time_schema].sort((a, b) => a.slot_index - b.slot_index);
+  return sorted.map((schema, idx) => ({
+    id: `slot-${idx + 1}`,
+    start: schema.start ?? DEFAULT_START,
+    end: schema.end ?? DEFAULT_END,
+    cells: DAYS.map((_, dayIndex) => {
+      if (schema.type === "break") return "break" as SlotState;
+      const valid = profile.grid_matrix[String(dayIndex)] ?? [];
+      return valid.includes(schema.slot_index) ? "lesson" : ("free" as SlotState);
+    })
+  }));
+}
+
+export async function readJsonSafe<T>(response: Response): Promise<T | null> {
+  const raw = await response.text();
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}

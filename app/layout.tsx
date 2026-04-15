@@ -18,10 +18,10 @@ const logoFont = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Aspexy Canvas",
+  title: "Aspexy",
   description: "Canvas de estrutura de horários para coordenação escolar.",
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }]
+    icon: [{ url: "/favicon.ico" }]
   }
 };
 

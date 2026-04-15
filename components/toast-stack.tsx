@@ -26,11 +26,12 @@ export default function ToastStack({ toasts, onDismiss }: ToastStackProps) {
       {toasts.map((t) => (
         <div
           key={t.id}
+          role={t.variant === "error" ? "alert" : "status"}
           className={cn(
-            "pointer-events-auto flex animate-slide-in-right items-start gap-2.5 rounded-xl border px-4 py-3 text-[13px] shadow-premium-lg",
+            "pointer-events-auto flex animate-slide-in-right items-start gap-2.5 rounded-xl border px-4 py-3 text-sm shadow-premium-lg",
             t.variant === "success"
-              ? "border-emerald-200/60 bg-white text-slate-800"
-              : "border-rose-200/60 bg-white text-slate-800"
+              ? "border-slate-200/90 bg-white text-slate-800"
+              : "border-slate-200/90 bg-white text-slate-800"
           )}
         >
           {t.variant === "success" ? (
@@ -43,7 +44,7 @@ export default function ToastStack({ toasts, onDismiss }: ToastStackProps) {
             type="button"
             onClick={() => onDismiss(t.id)}
             className="ml-auto shrink-0 rounded-lg p-0.5 text-slate-400 transition-colors hover:text-slate-600"
-            aria-label="Fechar"
+            aria-label="Fechar notificação"
           >
             ×
           </button>

@@ -8,25 +8,30 @@
     --font-mono: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", monospace;
     --font-display: var(--font-inter);
 
-    --background: 220 20% 97%;
-    --foreground: 224 71% 4%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
-    --primary: 245 82% 63%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 9% 46%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 245 90% 96%;
-    --accent-foreground: 245 82% 55%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 245 82% 63%;
-    --radius: 0.75rem;
+    /* Mesma família do login (glow #6366f1 + #0ea5e9), mais saturado no UI claro */
+    --brand-indigo: 243 75% 52%;
+    --brand-indigo-deep: 245 58% 42%;
+    --brand-sky: 201 96% 42%;
+    --brand-bg-deep: 229 47% 4%;
 
-    --gradient-start: 245 82% 63%;
-    --gradient-end: 270 80% 60%;
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --primary: var(--brand-indigo-deep);
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 96%;
+    --secondary-foreground: 222 17% 35%;
+    --muted: 214 32% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 214 32% 96%;
+    --accent-foreground: 245 45% 18%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: var(--brand-indigo-deep);
+    --radius: 0.5rem;
+
+    --app-header-h: 3.5rem;
   }
 
   * {
@@ -39,7 +44,7 @@
   }
 
   ::selection {
-    @apply bg-primary/15 text-foreground;
+    @apply bg-indigo-300/55 text-foreground;
   }
 }
 
@@ -54,47 +59,60 @@
     );
   }
 
+  .app-panel {
+    @apply rounded-xl border border-slate-200/85 bg-white shadow-[0_1px_2px_rgba(67,56,202,0.09),0_1px_2px_rgba(15,23,42,0.04)];
+  }
+
+  .app-shell-main {
+    @apply bg-white;
+  }
+
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(245, 82%, 63%), hsl(270, 80%, 60%));
+    background: linear-gradient(
+      135deg,
+      hsl(var(--brand-indigo-deep)),
+      hsl(var(--brand-sky))
+    );
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, hsl(245, 82%, 63%), hsl(270, 80%, 60%));
+    background: linear-gradient(
+      135deg,
+      hsl(245 58% 38%),
+      hsl(201 96% 36%)
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .glass {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
   }
 
   .glass-heavy {
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(32px) saturate(200%);
-    -webkit-backdrop-filter: blur(32px) saturate(200%);
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
   }
 
   .shadow-premium {
     box-shadow:
-      0 0 0 1px rgba(0, 0, 0, 0.03),
-      0 1px 2px rgba(0, 0, 0, 0.04),
-      0 8px 24px rgba(0, 0, 0, 0.06);
+      0 0 0 1px rgba(15, 23, 42, 0.04),
+      0 1px 2px rgba(15, 23, 42, 0.05);
   }
 
   .shadow-premium-lg {
     box-shadow:
-      0 0 0 1px rgba(0, 0, 0, 0.03),
-      0 2px 4px rgba(0, 0, 0, 0.04),
-      0 12px 40px rgba(0, 0, 0, 0.08);
+      0 0 0 1px rgba(15, 23, 42, 0.05),
+      0 4px 12px rgba(15, 23, 42, 0.07);
   }
 
   .shadow-glow {
     box-shadow:
-      0 0 0 1px hsl(245, 82%, 63%, 0.15),
-      0 4px 16px hsl(245, 82%, 63%, 0.12),
-      0 8px 32px hsl(245, 82%, 63%, 0.08);
+      0 0 0 1px rgba(15, 23, 42, 0.08),
+      0 2px 8px rgba(15, 23, 42, 0.08);
   }
 }

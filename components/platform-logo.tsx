@@ -3,7 +3,7 @@
 import Image from "next/image";
 
 import { cn } from "@/lib/utils";
-import platformLogo from "@/app/util/favicon.png";
+import platformLogo from "@/app/util/logo.png";
 
 type PlatformLogoProps = {
   className?: string;

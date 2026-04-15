@@ -27,9 +27,17 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login"
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, profile }) {
       if (user) {
         token.id = user.id;
+        // Google envia `picture` no perfil OpenID; `user.image` nem sempre vem preenchido no JWT flow.
+        const fromProfile =
+          profile && typeof profile === "object" && "picture" in profile
+            ? String((profile as { picture?: string }).picture ?? "").trim()
+            : "";
+        const fromUser = typeof user.image === "string" ? user.image.trim() : "";
+        const picture = fromUser || fromProfile || undefined;
+        if (picture) token.picture = picture;
       }
       return token;
     },
@@ -37,6 +45,9 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         // Com Google OAuth sem adapter, `sub` e o id estavel do usuario no provedor.
         session.user.id = (token.id as string) ?? (token.sub as string);
+        if (typeof token.picture === "string") {
+          session.user.image = token.picture;
+        }
       }
       return session;
     }
