@@ -79,7 +79,8 @@ export type Subject = {
   id: string;
   name: string;
   lessons_per_week: number;
-  teacher_id: string;
+  /** IDs de professores atribuídos à disciplina (pode haver mais de um). */
+  teacher_ids: string[];
   class_id: string;
 };
 

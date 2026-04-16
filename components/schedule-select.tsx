@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import Select, {
   type ClassNamesConfig,
   type GroupBase,
+  type MultiValue,
   type SingleValue,
   type StylesConfig
 } from "react-select";
@@ -12,19 +13,29 @@ import { cn } from "@/lib/utils";
 
 export type ScheduleSelectOption = { value: string; label: string };
 
-type ScheduleSelectProps = {
+type CommonScheduleSelectProps = {
   options: ScheduleSelectOption[];
-  value: string;
-  onChange: (value: string) => void;
   placeholder?: string;
   isClearable?: boolean;
   "aria-label"?: string;
   className?: string;
 };
 
+export type ScheduleSelectProps =
+  | (CommonScheduleSelectProps & {
+      isMulti?: false;
+      value: string;
+      onChange: (value: string) => void;
+    })
+  | (CommonScheduleSelectProps & {
+      isMulti: true;
+      value: string[];
+      onChange: (value: string[]) => void;
+    });
+
 const selectClassNames: ClassNamesConfig<
   ScheduleSelectOption,
-  false,
+  boolean,
   GroupBase<ScheduleSelectOption>
 > = {
   container: () => "w-full min-w-0",
@@ -53,42 +64,50 @@ const selectClassNames: ClassNamesConfig<
     ),
   placeholder: () => "text-slate-400",
   singleValue: () => "truncate text-slate-800",
+  multiValue: () =>
+    "inline-flex max-w-full items-center rounded-md border border-slate-200/90 bg-slate-100/95 text-xs text-slate-800",
+  multiValueLabel: () => "max-w-[12rem] truncate px-2 py-0.5",
+  multiValueRemove: () =>
+    "rounded-r-md px-1.5 py-0.5 text-slate-400 transition-colors hover:bg-slate-200/80 hover:text-slate-700",
   input: () => "m-0 p-0 text-slate-800 [&_input]:outline-none",
   noOptionsMessage: () => "cursor-default rounded-lg px-2.5 py-2 text-sm text-slate-500",
   loadingMessage: () => "cursor-default rounded-lg px-2.5 py-2 text-sm text-slate-500"
 };
 
-/** react-select sets menuPortal zIndex: 1 inline; sticky table headers use z-10, so we must override via styles. */
 const selectStyles: StylesConfig<
   ScheduleSelectOption,
-  false,
+  boolean,
   GroupBase<ScheduleSelectOption>
 > = {
   menuPortal: (base) => ({ ...base, zIndex: 100 }),
   menu: (base) => ({ ...base, zIndex: 100 })
 };
 
-export default function ScheduleSelect({
+type InnerCommon = {
+  instanceId: string;
+  menuPortalTarget: HTMLElement | null;
+  options: ScheduleSelectOption[];
+  placeholder: string;
+  isClearable: boolean;
+  ariaLabel?: string;
+  className?: string;
+};
+
+function ScheduleSelectSingle({
+  instanceId,
+  menuPortalTarget,
   options,
   value,
   onChange,
-  placeholder = "Selecione...",
-  isClearable = true,
-  "aria-label": ariaLabel,
+  placeholder,
+  isClearable,
+  ariaLabel,
   className
-}: ScheduleSelectProps) {
-  const reactId = useId();
-  const instanceId = useMemo(() => `aspexy-select-${reactId.replace(/:/g, "")}`, [reactId]);
-
-  const [menuPortalTarget, setMenuPortalTarget] = useState<HTMLElement | null>(null);
-  useEffect(() => {
-    setMenuPortalTarget(document.body);
-  }, []);
-
-  const selected = useMemo(
-    () => options.find((o) => o.value === value) ?? null,
-    [options, value]
-  );
+}: InnerCommon & {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const selected = useMemo(() => options.find((o) => o.value === value) ?? null, [options, value]);
 
   return (
     <Select<ScheduleSelectOption, false>
@@ -112,4 +131,83 @@ export default function ScheduleSelect({
       loadingMessage={() => "Carregando..."}
     />
   );
+}
+
+function ScheduleSelectMulti({
+  instanceId,
+  menuPortalTarget,
+  options,
+  value,
+  onChange,
+  placeholder,
+  isClearable,
+  ariaLabel,
+  className
+}: InnerCommon & {
+  value: string[];
+  onChange: (value: string[]) => void;
+}) {
+  const selected = useMemo(
+    () => value.map((v) => options.find((o) => o.value === v)).filter((o): o is ScheduleSelectOption => Boolean(o)),
+    [options, value]
+  );
+
+  return (
+    <Select<ScheduleSelectOption, true>
+      unstyled
+      className={cn("w-full min-w-0", className)}
+      instanceId={instanceId}
+      inputId={`${instanceId}-input`}
+      aria-label={ariaLabel}
+      options={options}
+      isMulti
+      value={selected}
+      onChange={(opts: MultiValue<ScheduleSelectOption>) => onChange(opts.map((o) => o.value))}
+      placeholder={placeholder}
+      isClearable={isClearable}
+      isSearchable
+      closeMenuOnSelect={false}
+      styles={selectStyles}
+      classNames={selectClassNames}
+      classNamePrefix="aspexy-select"
+      menuPosition="fixed"
+      menuPortalTarget={menuPortalTarget}
+      noOptionsMessage={() => "Nenhuma opção encontrada"}
+      loadingMessage={() => "Carregando..."}
+    />
+  );
+}
+
+export default function ScheduleSelect(props: ScheduleSelectProps) {
+  const reactId = useId();
+  const instanceId = useMemo(() => `aspexy-select-${reactId.replace(/:/g, "")}`, [reactId]);
+
+  const [menuPortalTarget, setMenuPortalTarget] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setMenuPortalTarget(document.body);
+  }, []);
+
+  const {
+    options,
+    placeholder = "Selecione...",
+    isClearable = true,
+    "aria-label": ariaLabel,
+    className
+  } = props;
+
+  const innerCommon: InnerCommon = {
+    instanceId,
+    menuPortalTarget,
+    options,
+    placeholder,
+    isClearable,
+    ariaLabel,
+    className
+  };
+
+  if ("isMulti" in props && props.isMulti) {
+    return <ScheduleSelectMulti {...innerCommon} value={props.value} onChange={props.onChange} />;
+  }
+
+  return <ScheduleSelectSingle {...innerCommon} value={props.value} onChange={props.onChange} />;
 }

@@ -9,6 +9,9 @@ type SaveSubjectBody = {
   subjectId?: string;
   name?: string;
   lessonsPerWeek?: number;
+  /** Lista preferida (múltiplos professores). */
+  teacherIds?: string[];
+  /** Legado: um único professor. */
   teacherId?: string;
   classId?: string;
 };
@@ -17,6 +20,59 @@ function parseObjectId(value?: string) {
   if (!value) return null;
   if (!ObjectId.isValid(value)) return null;
   return new ObjectId(value);
+}
+
+type SubjectDocLike = {
+  _id: ObjectId;
+  name: string;
+  lessons_per_week?: number;
+  teacher_ids?: unknown;
+  teacher_id?: unknown;
+  class_id?: unknown;
+  created_at?: Date;
+  updated_at?: Date;
+};
+
+function teacherIdsFromDoc(doc: {
+  teacher_ids?: unknown;
+  teacher_id?: unknown;
+}): string[] {
+  if (Array.isArray(doc.teacher_ids)) {
+    const ids = doc.teacher_ids
+      .filter((x): x is string => typeof x === "string")
+      .map((x) => x.trim())
+      .filter(Boolean);
+    if (ids.length > 0) return [...new Set(ids)];
+  }
+  if (typeof doc.teacher_id === "string" && doc.teacher_id.trim()) {
+    return [doc.teacher_id.trim()];
+  }
+  return [];
+}
+
+function subjectJsonFromDoc(doc: SubjectDocLike) {
+  return {
+    id: doc._id.toString(),
+    name: doc.name,
+    lessons_per_week: doc.lessons_per_week ?? 1,
+    teacher_ids: teacherIdsFromDoc(doc),
+    class_id: typeof doc.class_id === "string" ? doc.class_id : String(doc.class_id ?? ""),
+    created_at: doc.created_at,
+    updated_at: doc.updated_at
+  };
+}
+
+function parseTeacherIdsFromBody(body: SaveSubjectBody): string[] | null {
+  const fromArray = Array.isArray(body.teacherIds)
+    ? body.teacherIds.filter((x): x is string => typeof x === "string").map((x) => x.trim()).filter(Boolean)
+    : [];
+  const legacy =
+    typeof body.teacherId === "string" && body.teacherId.trim() ? [body.teacherId.trim()] : [];
+  const merged = [...fromArray, ...legacy];
+  const unique = [...new Set(merged)];
+  if (unique.length === 0) return null;
+  if (!unique.every((id) => parseObjectId(id))) return null;
+  return unique;
 }
 
 export async function GET(request: Request) {
@@ -46,34 +102,15 @@ export async function GET(request: Request) {
 
       return NextResponse.json({
         ok: true,
-        subject: {
-          id: doc._id.toString(),
-          name: doc.name,
-          lessons_per_week: doc.lessons_per_week ?? 1,
-          teacher_id: doc.teacher_id ?? "",
-          class_id: doc.class_id ?? "",
-          created_at: doc.created_at,
-          updated_at: doc.updated_at
-        }
+        subject: subjectJsonFromDoc(doc as SubjectDocLike)
       });
     }
 
-    const docs = await collection
-      .find({ user_id: session.user.id })
-      .sort({ name: 1 })
-      .toArray();
+    const docs = await collection.find({ user_id: session.user.id }).sort({ name: 1 }).toArray();
 
     return NextResponse.json({
       ok: true,
-      subjects: docs.map((doc) => ({
-        id: doc._id.toString(),
-        name: doc.name,
-        lessons_per_week: doc.lessons_per_week ?? 1,
-        teacher_id: doc.teacher_id ?? "",
-        class_id: doc.class_id ?? "",
-        created_at: doc.created_at,
-        updated_at: doc.updated_at
-      }))
+      subjects: docs.map((doc) => subjectJsonFromDoc(doc as SubjectDocLike))
     });
   } catch (error) {
     if (error instanceof MongoServerError) {
@@ -102,6 +139,15 @@ export async function POST(request: Request) {
 
     const lessonsPerWeek = Math.max(1, Math.min(20, Number(body.lessonsPerWeek) || 1));
 
+    const teacherIdsRaw = parseTeacherIdsFromBody(body);
+    const classIdRaw = typeof body.classId === "string" ? body.classId.trim() : "";
+    if (!teacherIdsRaw || !classIdRaw || !parseObjectId(classIdRaw)) {
+      return NextResponse.json(
+        { error: "Selecione ao menos um professor e uma turma válidos." },
+        { status: 400 }
+      );
+    }
+
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB ?? "aspexy");
     const collection = db.collection("subjects");
@@ -119,10 +165,11 @@ export async function POST(request: Request) {
           $set: {
             name,
             lessons_per_week: lessonsPerWeek,
-            teacher_id: body.teacherId ?? "",
-            class_id: body.classId ?? "",
+            teacher_ids: teacherIdsRaw,
+            class_id: classIdRaw,
             updated_at: now
-          }
+          },
+          $unset: { teacher_id: "" }
         },
         { returnDocument: "after", includeResultMetadata: false }
       );
@@ -133,15 +180,7 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         ok: true,
-        subject: {
-          id: updateResult._id.toString(),
-          name: updateResult.name,
-          lessons_per_week: updateResult.lessons_per_week ?? 1,
-          teacher_id: updateResult.teacher_id ?? "",
-          class_id: updateResult.class_id ?? "",
-          created_at: updateResult.created_at,
-          updated_at: updateResult.updated_at
-        }
+        subject: subjectJsonFromDoc(updateResult as SubjectDocLike)
       });
     }
 
@@ -150,8 +189,8 @@ export async function POST(request: Request) {
       user_email: session.user.email,
       name,
       lessons_per_week: lessonsPerWeek,
-      teacher_id: body.teacherId ?? "",
-      class_id: body.classId ?? "",
+      teacher_ids: teacherIdsRaw,
+      class_id: classIdRaw,
       created_at: now,
       updated_at: now
     });
@@ -162,8 +201,8 @@ export async function POST(request: Request) {
         id: result.insertedId.toString(),
         name,
         lessons_per_week: lessonsPerWeek,
-        teacher_id: body.teacherId ?? "",
-        class_id: body.classId ?? "",
+        teacher_ids: teacherIdsRaw,
+        class_id: classIdRaw,
         created_at: now,
         updated_at: now
       }

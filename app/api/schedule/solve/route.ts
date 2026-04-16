@@ -67,9 +67,36 @@ function runPythonSolver(payload: object): Promise<unknown> {
 type SubjectDoc = {
   name: string;
   lessons_per_week: number;
-  teacher_id: string;
+  teacher_id?: string;
+  teacher_ids?: unknown;
   class_id: string;
 };
+
+function teacherIdsFromSubjectDoc(sub: SubjectDoc): string[] {
+  if (Array.isArray(sub.teacher_ids)) {
+    const ids = sub.teacher_ids
+      .filter((x): x is string => typeof x === "string")
+      .map((x) => x.trim())
+      .filter(Boolean);
+    if (ids.length > 0) return [...new Set(ids)];
+  }
+  const legacy = typeof sub.teacher_id === "string" ? sub.teacher_id.trim() : "";
+  return legacy ? [legacy] : [];
+}
+
+/** Reparte aulas/semana entre professores (soma = total); necessário porque o solver trata cada professor como linha com carga própria. */
+function splitWeeklyLoadAcrossTeachers(weekly: number, teacherIds: string[]): { teacherId: string; load: number }[] {
+  const n = teacherIds.length;
+  if (n === 0 || weekly < 1) return [];
+  const base = Math.floor(weekly / n);
+  const remainder = weekly % n;
+  return teacherIds
+    .map((teacherId, i) => ({
+      teacherId,
+      load: base + (i < remainder ? 1 : 0)
+    }))
+    .filter((x) => x.load > 0);
+}
 
 type TeacherDoc = {
   _id: { toString(): string };
@@ -123,12 +150,19 @@ export async function POST(request: Request) {
       classNameById[c._id.toString()] = c.name;
     }
 
-    const assignments = subjectDocs.map((sub) => ({
-      teacher: teacherNameById[sub.teacher_id] || "Professor não atribuído",
-      subject: sub.name,
-      class_id: classNameById[sub.class_id] || sub.class_id || "Turma não atribuída",
-      weekly_load: sub.lessons_per_week ?? 1
-    }));
+    const assignments = subjectDocs.flatMap((sub) => {
+      const teacherIds = teacherIdsFromSubjectDoc(sub);
+      if (teacherIds.length === 0) {
+        throw new Error(`Disciplina "${sub.name}" sem professor cadastrado.`);
+      }
+      const loads = splitWeeklyLoadAcrossTeachers(sub.lessons_per_week ?? 1, teacherIds);
+      return loads.map(({ teacherId, load }) => ({
+        teacher: teacherNameById[teacherId] || "Professor não atribuído",
+        subject: sub.name,
+        class_id: classNameById[sub.class_id] || sub.class_id || "Turma não atribuída",
+        weekly_load: load
+      }));
+    });
 
     const result = await runPythonSolver({
       schoolProfile: body.schoolProfile,

@@ -75,7 +75,13 @@ export default function AspexyCanvas() {
     if (structures.length === 0 || classes.length === 0 || teachers.length === 0 || subjects.length === 0) return false;
     const tIds = new Set(teachers.map((t) => t.id));
     const cIds = new Set(classes.map((c) => c.id));
-    return subjects.every((s) => Boolean(s.teacher_id) && Boolean(s.class_id) && tIds.has(s.teacher_id) && cIds.has(s.class_id));
+    return subjects.every(
+      (s) =>
+        s.teacher_ids.length > 0 &&
+        Boolean(s.class_id) &&
+        s.teacher_ids.every((tid) => tIds.has(tid)) &&
+        cIds.has(s.class_id)
+    );
   }, [structures, classes, teachers, subjects]);
 
   const completedSteps = useMemo(() => {
@@ -83,7 +89,10 @@ export default function AspexyCanvas() {
     if (structures.length > 0) set.add("grade");
     if (classes.length > 0) set.add("classes");
     if (teachers.length > 0) set.add("teachers");
-    if (subjects.length > 0 && subjects.every((s) => Boolean(s.teacher_id) && Boolean(s.class_id)))
+    if (
+      subjects.length > 0 &&
+      subjects.every((s) => s.teacher_ids.length > 0 && Boolean(s.class_id))
+    )
       set.add("subjects");
     return set;
   }, [structures, classes, teachers, subjects]);
@@ -149,7 +158,7 @@ export default function AspexyCanvas() {
       />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:ml-[260px]">
-        <header className="sticky top-0 z-20 hidden h-[var(--app-header-h)] min-h-[3.5rem] items-center border-b border-indigo-200/70 bg-white/90 px-6 shadow-[0_1px_0_rgba(67,56,202,0.1)] backdrop-blur-sm lg:flex">
+        <header className="sticky top-0 z-20 hidden h-[var(--app-header-h)] min-h-[4rem] items-center border-b border-indigo-200/70 bg-white/90 px-6 shadow-[0_1px_0_rgba(67,56,202,0.1)] backdrop-blur-sm lg:flex">
           <nav className="flex items-center gap-2 text-sm text-slate-500" aria-label="Localização na aplicação">
             <span className="font-semibold text-indigo-700">Etapas</span>
             <span className="text-indigo-300" aria-hidden>

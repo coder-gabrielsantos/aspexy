@@ -1,14 +1,15 @@
 "use client";
 
 import { Fragment, useEffect } from "react";
+import Image from "next/image";
 import { Lock, LogOut, Menu, X } from "lucide-react";
 
-import { PlatformLogo } from "@/components/platform-logo";
+import platformLogo from "@/app/util/logo.png";
 import type { StepDef } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const HEADER_ROW =
-  "flex h-[var(--app-header-h)] min-h-[3.5rem] shrink-0 items-center border-b border-indigo-200/70 bg-white px-4 shadow-[0_1px_0_rgba(67,56,202,0.08)]";
+  "flex h-[var(--app-header-h)] min-h-[4rem] shrink-0 items-center justify-center border-b border-slate-200/70 bg-white px-4";
 
 function UserAvatar({
   imageUrl,
@@ -90,26 +91,32 @@ export default function AppSidebar({
         disabled={isLocked && !isActive}
         title={isLocked ? "Complete as etapas anteriores" : step.label}
         className={cn(
-          "group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors duration-150",
-          isActive &&
-            "bg-gradient-to-r from-indigo-700 to-indigo-800 text-white shadow-sm shadow-indigo-950/15",
-          !isActive && !isLocked && "text-slate-600 hover:bg-indigo-50/70 hover:text-indigo-950",
+          "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
+          isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
+          !isActive && !isLocked && "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
           !isActive && isLocked && "cursor-not-allowed text-slate-300"
         )}
       >
         <span
+          aria-hidden
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors",
-            isActive && "bg-white/15 text-white",
-            !isActive && !isLocked && isCompleted && "bg-indigo-100/80 text-indigo-800",
-            !isActive && !isCompleted && !isLocked && "bg-slate-50 text-slate-500 group-hover:bg-indigo-50/80 group-hover:text-indigo-700",
-            !isActive && isLocked && "bg-slate-50 text-slate-300"
+            "absolute left-1 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full transition-colors",
+            isActive ? "bg-white/85" : "bg-transparent"
+          )}
+        />
+        <span
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center transition-colors",
+            isActive && "text-white",
+            !isActive && !isLocked && isCompleted && "text-indigo-600",
+            !isActive && !isCompleted && !isLocked && "text-slate-500 group-hover:text-indigo-600",
+            !isActive && isLocked && "text-slate-300"
           )}
         >
           {isLocked && !isActive ? (
-            <Lock className="h-3.5 w-3.5" aria-hidden />
+            <Lock className="h-5 w-5" aria-hidden />
           ) : (
-            <Icon className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            <Icon className="h-5 w-5" strokeWidth={1.65} aria-hidden />
           )}
         </span>
         <span className="min-w-0 flex-1 truncate font-medium">{step.label}</span>
@@ -118,8 +125,8 @@ export default function AppSidebar({
   };
 
   const mobileNavContent = (
-    <nav className="flex flex-1 flex-col gap-0.5 px-3 pb-4 pt-3" aria-label="Navegação principal">
-      <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+    <nav className="flex flex-1 flex-col gap-1 px-3 pb-4 pt-4" aria-label="Navegação principal">
+      <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
         Etapas
       </p>
       {steps.map((step) => {
@@ -145,25 +152,32 @@ export default function AppSidebar({
               }}
               disabled={isLocked && !isActive}
               className={cn(
-                "group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm font-medium transition-colors duration-150",
-                isActive && "bg-gradient-to-r from-indigo-700 to-indigo-800 text-white shadow-sm shadow-indigo-950/15",
-                !isActive && !isLocked && "text-slate-600 hover:bg-indigo-50/70 hover:text-indigo-950",
+                "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
+                isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
+                !isActive && !isLocked && "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
                 !isActive && isLocked && "cursor-not-allowed text-slate-300"
               )}
             >
               <span
+                aria-hidden
                 className={cn(
-                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors",
-                  isActive && "bg-white/15 text-white",
-                  !isActive && !isLocked && isCompleted && "bg-indigo-100/80 text-indigo-800",
-                  !isActive && !isLocked && !isCompleted && "bg-slate-50 text-slate-500 group-hover:bg-indigo-50/80 group-hover:text-indigo-700",
-                  !isActive && isLocked && "bg-slate-50 text-slate-300"
+                  "absolute left-1 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full transition-colors",
+                  isActive ? "bg-white/85" : "bg-transparent"
+                )}
+              />
+              <span
+                className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center transition-colors",
+                  isActive && "text-white",
+                  !isActive && !isLocked && isCompleted && "text-indigo-600",
+                  !isActive && !isLocked && !isCompleted && "text-slate-500 group-hover:text-indigo-600",
+                  !isActive && isLocked && "text-slate-300"
                 )}
               >
                 {isLocked && !isActive ? (
-                  <Lock className="h-3.5 w-3.5" />
+                  <Lock className="h-5 w-5" />
                 ) : (
-                  <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  <Icon className="h-5 w-5" strokeWidth={1.65} />
                 )}
               </span>
               <span className="truncate">{step.label}</span>
@@ -181,18 +195,19 @@ export default function AppSidebar({
     <>
       <aside className="fixed bottom-0 left-0 top-0 z-30 hidden w-[260px] flex-col border-r border-indigo-200/80 bg-white lg:flex">
         <div className={HEADER_ROW}>
-          <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg border border-indigo-300/55 bg-gradient-to-br from-indigo-100/95 to-sky-100/80 p-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]">
-            <PlatformLogo size={32} className="h-7 w-7" priority />
-          </div>
-          <div className="min-w-0 pl-1">
-            <p className="truncate bg-gradient-to-r from-indigo-950 via-indigo-900 to-sky-800 bg-clip-text text-sm font-semibold tracking-tight text-transparent">
-              Aspexy
-            </p>
-          </div>
+          <Image
+            src={platformLogo}
+            alt="Aspexy"
+            width={220}
+            height={64}
+            draggable={false}
+            className="h-10 w-auto object-contain"
+            priority
+          />
         </div>
 
         <nav className="flex min-h-0 flex-1 flex-col gap-0.5 px-3 py-4" aria-label="Navegação principal">
-          <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
             Etapas
           </p>
           {mainSteps.map(renderDesktopNavItem)}
@@ -200,8 +215,8 @@ export default function AppSidebar({
           {generateStep.map(renderDesktopNavItem)}
         </nav>
 
-        <div className="border-t border-slate-200/80 p-3">
-          <div className="flex items-center gap-3 px-1 py-0.5">
+        <div className="border-t border-slate-200/80 bg-white p-3">
+          <div className="flex items-center gap-3 rounded-xl px-2 py-2">
             <UserAvatar imageUrl={userImage} initials={userInitials} nameLabel={userName} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-slate-800">{userName ?? "Usuário"}</p>
@@ -211,7 +226,7 @@ export default function AppSidebar({
               type="button"
               onClick={onSignOut}
               aria-label="Sair da conta"
-              className="shrink-0 rounded-md p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-800"
+              className="shrink-0 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900"
             >
               <LogOut className="h-4 w-4" />
             </button>
@@ -219,15 +234,16 @@ export default function AppSidebar({
         </div>
       </aside>
 
-      <header className="sticky top-0 z-[60] flex h-[var(--app-header-h)] min-h-[3.5rem] shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 lg:hidden">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg border border-indigo-300/55 bg-gradient-to-br from-indigo-100/95 to-sky-100/80 p-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]">
-            <PlatformLogo size={28} className="h-7 w-7" priority />
-          </div>
-          <span className="truncate bg-gradient-to-r from-indigo-950 via-indigo-900 to-sky-800 bg-clip-text text-sm font-semibold text-transparent">
-            Aspexy
-          </span>
-        </div>
+      <header className="sticky top-0 z-[60] flex h-[var(--app-header-h)] min-h-[4rem] shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 lg:hidden">
+        <Image
+          src={platformLogo}
+          alt="Aspexy"
+          width={140}
+          height={40}
+          draggable={false}
+          className="h-9 w-auto object-contain"
+          priority
+        />
         <button
           type="button"
           onClick={() => onMobileOpenChange(!mobileOpen)}

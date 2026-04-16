@@ -5,7 +5,7 @@ export function useSubjects(showToast: (msg: string, v?: "success" | "error") =>
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [newSubjectName, setNewSubjectName] = useState("");
   const [newSubjectLessons, setNewSubjectLessons] = useState("4");
-  const [newSubjectTeacherId, setNewSubjectTeacherId] = useState("");
+  const [newSubjectTeacherIds, setNewSubjectTeacherIds] = useState<string[]>([]);
   const [newSubjectClassId, setNewSubjectClassId] = useState("");
   const [isSavingSubject, setIsSavingSubject] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -20,6 +20,10 @@ export function useSubjects(showToast: (msg: string, v?: "success" | "error") =>
   const handleAddSubject = useCallback(async () => {
     const name = newSubjectName.trim();
     if (!name) return;
+    if (newSubjectTeacherIds.length === 0 || !newSubjectClassId.trim()) {
+      showToast("Selecione ao menos um professor e uma turma.", "error");
+      return;
+    }
     const lessons = Math.max(1, Math.min(20, Number(newSubjectLessons) || 1));
     setIsSavingSubject(true);
     try {
@@ -29,15 +33,15 @@ export function useSubjects(showToast: (msg: string, v?: "success" | "error") =>
         body: JSON.stringify({
           name,
           lessonsPerWeek: lessons,
-          teacherId: newSubjectTeacherId || undefined,
-          classId: newSubjectClassId || undefined
+          teacherIds: newSubjectTeacherIds,
+          classId: newSubjectClassId.trim()
         })
       });
       const d = await readJsonSafe<{ ok?: boolean; subject?: Subject; error?: string }>(r);
       if (!r.ok || !d?.ok || !d.subject) throw new Error(d?.error ?? "Falha ao adicionar disciplina.");
       setNewSubjectName("");
       setNewSubjectLessons("4");
-      setNewSubjectTeacherId("");
+      setNewSubjectTeacherIds([]);
       setNewSubjectClassId("");
       await loadSubjects();
       showToast("Disciplina adicionada.");
@@ -46,7 +50,7 @@ export function useSubjects(showToast: (msg: string, v?: "success" | "error") =>
     } finally {
       setIsSavingSubject(false);
     }
-  }, [newSubjectName, newSubjectLessons, newSubjectTeacherId, newSubjectClassId, loadSubjects, showToast]);
+  }, [newSubjectName, newSubjectLessons, newSubjectTeacherIds, newSubjectClassId, loadSubjects, showToast]);
 
   const runDeleteSubject = useCallback(async (subjectId: string) => {
     const r = await fetch(`/api/subjects?id=${subjectId}`, { method: "DELETE" });
@@ -62,8 +66,8 @@ export function useSubjects(showToast: (msg: string, v?: "success" | "error") =>
     setNewSubjectName,
     newSubjectLessons,
     setNewSubjectLessons,
-    newSubjectTeacherId,
-    setNewSubjectTeacherId,
+    newSubjectTeacherIds,
+    setNewSubjectTeacherIds,
     newSubjectClassId,
     setNewSubjectClassId,
     isSavingSubject,
