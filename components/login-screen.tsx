@@ -231,7 +231,7 @@ export default function LoginScreen({ googleConfigured, oauthError }: LoginScree
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_85%_75%_at_50%_50%,transparent_0%,rgba(0,0,0,0.45)_100%)]" />
 
           <div className="relative z-10 flex h-full flex-col items-center justify-center gap-6 p-10">
-            <PlatformLogo size={256} className="h-56 w-56 opacity-95" priority />
+            <PlatformLogo variant="white" size={256} className="h-56 w-56 opacity-95" priority />
           </div>
         </aside>
 
@@ -269,7 +269,7 @@ export default function LoginScreen({ googleConfigured, oauthError }: LoginScree
           {/* Content: logo no topo, login colado ao rodapé */}
           <div className="relative z-10 flex min-h-[100dvh] flex-col px-6 sm:px-8">
             <div className="flex flex-col items-center gap-3 pt-[max(2.75rem,env(safe-area-inset-top))] sm:pt-[max(3.25rem,env(safe-area-inset-top))]">
-              <PlatformLogo size={192} className="h-44 w-44 opacity-95 sm:h-48 sm:w-48" priority />
+              <PlatformLogo variant="white" size={192} className="h-44 w-44 opacity-95 sm:h-48 sm:w-48" priority />
             </div>
 
             <div className="mt-auto w-full max-w-sm self-center pb-[max(1.5rem,env(safe-area-inset-bottom))]">
