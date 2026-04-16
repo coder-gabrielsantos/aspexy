@@ -1,6 +1,3 @@
-import path from "path";
-import { spawn } from "child_process";
-
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
@@ -13,55 +10,46 @@ type SolverInputPayload = {
   timeLimitSeconds?: number;
 };
 
-function runPythonSolver(payload: object): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const pythonBin = process.env.PYTHON_BIN ?? "python";
-    const scriptPath = path.join(process.cwd(), "lib", "or", "engine.py");
+async function runRemoteSolver(payload: object): Promise<unknown> {
+  const base = process.env.ASPEXY_OR_SOLVER_URL?.trim();
+  if (!base) {
+    throw new Error(
+      "Serviço de otimização não configurado. Defina ASPEXY_OR_SOLVER_URL (URL do aspexy-or, ex.: https://seu-app.up.railway.app)."
+    );
+  }
 
-    const child = spawn(pythonBin, [scriptPath], {
-      stdio: ["pipe", "pipe", "pipe"]
+  const url = `${base.replace(/\/$/, "")}/solve`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+
+  try {
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal
     });
 
-    let stdout = "";
-    let stderr = "";
+    const text = await r.text();
+    let data: unknown = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      throw new Error("Resposta inválida do serviço de otimização.");
+    }
 
-    const timeout = setTimeout(() => {
-      child.kill();
-      reject(new Error("Tempo limite excedido ao executar solver."));
-    }, 60000);
+    if (!r.ok) {
+      const detail =
+        typeof data === "object" && data !== null && "detail" in data
+          ? String((data as { detail?: unknown }).detail)
+          : text || r.statusText;
+      throw new Error(detail || `Serviço retornou ${r.status}.`);
+    }
 
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk.toString();
-    });
-
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk.toString();
-    });
-
-    child.on("error", (error) => {
-      clearTimeout(timeout);
-      reject(error);
-    });
-
-    child.on("close", (code) => {
-      clearTimeout(timeout);
-
-      if (code !== 0) {
-        reject(new Error(stderr || `Solver retornou código ${code}.`));
-        return;
-      }
-
-      try {
-        const parsed = JSON.parse(stdout);
-        resolve(parsed);
-      } catch {
-        reject(new Error("Resposta inválida do solver Python."));
-      }
-    });
-
-    child.stdin.write(JSON.stringify(payload));
-    child.stdin.end();
-  });
+    return data;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 type SubjectDoc = {
@@ -164,7 +152,7 @@ export async function POST(request: Request) {
       }));
     });
 
-    const result = await runPythonSolver({
+    const result = await runRemoteSolver({
       schoolProfile: body.schoolProfile,
       assignments,
       teacherUnavailability,
