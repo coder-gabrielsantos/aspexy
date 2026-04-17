@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { patchSolverResultCell, slotIndexForViewRow } from "@/lib/patch-schedule-result";
 import {
   readJsonSafe,
   slotsFromProfile,
@@ -20,6 +21,7 @@ export function useScheduleGeneration(
   const [solverResult, setSolverResult] = useState<SolverResult | null>(null);
   const [viewerProfile, setViewerProfile] = useState<SchoolProfile | null>(null);
   const [isSolving, setIsSolving] = useState(false);
+  const [isSavingCellEdit, setIsSavingCellEdit] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const classIds = useMemo(() => {
@@ -41,6 +43,11 @@ export function useScheduleGeneration(
           m[`${day.day_index}-${slot.slot_index}-${e.class_id}`] = e;
     return m;
   }, [solverResult]);
+
+  const resolveSlotIndex = useCallback(
+    (rowIndex: number) => slotIndexForViewRow(viewerProfile, rowIndex),
+    [viewerProfile]
+  );
 
   const viewSlots = useMemo(() => (viewerProfile ? slotsFromProfile(viewerProfile) : []), [viewerProfile]);
 
@@ -90,7 +97,6 @@ export function useScheduleGeneration(
     }
     setSolverResult(d.generatedSchedule.result_json);
     setViewerProfile(d.generatedSchedule.school_profile);
-    showToast("Horário carregado com sucesso.");
   }, [showToast]);
 
   const handleGenerateSchedule = useCallback(async () => {
@@ -149,6 +155,58 @@ export function useScheduleGeneration(
     setGenerationStructureId((prev) => prev || id);
   }, []);
 
+  const patchCellAndPersist = useCallback(
+    async (
+      dayIndex: number,
+      rowIndex: number,
+      classId: string,
+      next: { teacher: string; subject: string } | null
+    ) => {
+      if (!solverResult || !viewerProfile) {
+        showToast("Não há horário carregado.", "error");
+        return;
+      }
+      if (!selectedGeneratedScheduleId) {
+        showToast("Selecione um horário salvo na lista ou gere e salve antes de editar.", "error");
+        return;
+      }
+      const slotIndex = slotIndexForViewRow(viewerProfile, rowIndex);
+      const previous = solverResult;
+      const patched = patchSolverResultCell(previous, dayIndex, slotIndex, classId, next);
+      setSolverResult(patched);
+      setIsSavingCellEdit(true);
+      try {
+        const r = await fetch("/api/generated-schedules", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduleId: selectedGeneratedScheduleId,
+            resultJson: patched
+          })
+        });
+        const d = await readJsonSafe<{ ok?: boolean; error?: string }>(r);
+        if (!r.ok || !d?.ok) {
+          setSolverResult(previous);
+          throw new Error(d?.error ?? "Falha ao salvar edição.");
+        }
+        showToast("Célula atualizada.");
+        await loadGeneratedSchedules();
+      } catch (e) {
+        setSolverResult(previous);
+        showToast(e instanceof Error ? e.message : "Falha ao salvar edição.", "error");
+      } finally {
+        setIsSavingCellEdit(false);
+      }
+    },
+    [
+      solverResult,
+      viewerProfile,
+      selectedGeneratedScheduleId,
+      showToast,
+      loadGeneratedSchedules
+    ]
+  );
+
   return {
     generationStructureId,
     generationProfile,
@@ -157,9 +215,11 @@ export function useScheduleGeneration(
     solverResult,
     viewerProfile,
     isSolving,
+    isSavingCellEdit,
     isLoading,
     classIds,
     scheduleByDaySlotClass,
+    resolveSlotIndex,
     viewSlots,
     generatedSelectOptions,
     loadGeneratedSchedules,
@@ -168,5 +228,6 @@ export function useScheduleGeneration(
     handleGenerateSchedule,
     runDeleteGeneratedSchedule,
     setDefaultGenerationStructure,
+    patchCellAndPersist,
   };
 }

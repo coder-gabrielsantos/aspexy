@@ -47,13 +47,8 @@ export default function ClassesTab({ classesHook: c, onRequestDelete }: ClassesT
   return (
     <div className="animate-fade-in grid grid-cols-1 gap-6 lg:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)] lg:items-start">
       <section className="app-panel overflow-hidden">
-        <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-          <h2 className="text-sm font-semibold text-slate-900">Adicionar</h2>
-          <span className="rounded-md border border-slate-200/80 bg-slate-50 px-2 py-0.5 text-xs font-medium tabular-nums text-slate-600">
-            {c.classes.length}
-          </span>
-        </div>
         <div className="p-5">
+          <p className="mb-1.5 text-xs font-medium text-slate-500">Nova turma</p>
           <div className="flex items-center gap-2">
             <Input
               value={c.newClassName}
@@ -65,22 +60,19 @@ export default function ClassesTab({ classesHook: c, onRequestDelete }: ClassesT
               className="min-w-0 flex-1"
             />
             <Button
+              type="button"
               onClick={() => void c.handleAddClass()}
               disabled={!c.newClassName.trim() || c.isSavingClass}
-              className="h-9 shrink-0 gap-1.5"
+              aria-label="Adicionar turma"
+              className="h-9 shrink-0 px-3"
             >
               <Plus className="h-3.5 w-3.5" />
-              Adicionar
             </Button>
           </div>
         </div>
       </section>
 
       <section className="app-panel overflow-hidden">
-        <div className="border-b border-slate-100 px-5 py-4">
-          <h2 className="text-sm font-semibold text-slate-900">Lista</h2>
-        </div>
-
         {c.classes.length === 0 ? (
           <div className="px-5 py-12 text-center">
             <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-slate-100/80">

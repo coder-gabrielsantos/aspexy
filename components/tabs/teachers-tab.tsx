@@ -51,9 +51,6 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
   return (
     <div className="animate-fade-in space-y-6">
       <section className="app-panel overflow-hidden">
-        <div className="border-b border-slate-100 px-5 py-4">
-          <h2 className="text-sm font-semibold text-slate-900">Cadastro e estrutura</h2>
-        </div>
         <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
           <div className="min-w-0 flex-1">
             <p className="mb-1.5 text-xs font-medium text-slate-500">Novo professor</p>
@@ -66,12 +63,13 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                 className="min-w-0 flex-1"
               />
               <Button
+                type="button"
                 onClick={() => void t.handleAddTeacher()}
                 disabled={!t.newTeacherName.trim() || t.isSavingTeacher}
-                className="h-9 shrink-0 gap-1.5"
+                aria-label="Adicionar professor"
+                className="h-9 shrink-0 px-3"
               >
                 <UserPlus className="h-3.5 w-3.5" />
-                Adicionar
               </Button>
             </div>
           </div>

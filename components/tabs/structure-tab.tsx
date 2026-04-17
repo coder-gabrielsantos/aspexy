@@ -27,18 +27,6 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
   return (
     <div className="animate-fade-in space-y-6">
       <section className="app-panel overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-          <h2 className="text-sm font-semibold text-slate-900">Nome e salvamento</h2>
-          <div className="flex items-center gap-2">
-            <span className="rounded-md border border-slate-200/80 bg-slate-50 px-2 py-0.5 text-xs font-medium tabular-nums text-slate-600">
-              {s.slots.length} slots
-            </span>
-            <span className="rounded-md border border-slate-200/80 bg-white px-2 py-0.5 text-xs font-medium tabular-nums text-slate-700">
-              {s.activeSlotsCount} aulas
-            </span>
-          </div>
-        </div>
-
         <div className="flex flex-wrap items-end gap-3 px-5 py-4">
           <div className="flex min-w-0 flex-1 flex-wrap items-end gap-3">
             <div className="min-w-[180px]">
@@ -61,7 +49,13 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
               />
             </div>
           </div>
-          <div className="ml-auto flex shrink-0 items-center gap-2">
+          <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">
+            <span className="rounded-md border border-slate-200/80 bg-slate-50 px-2 py-0.5 text-xs font-medium tabular-nums text-slate-600">
+              {s.slots.length} slots
+            </span>
+            <span className="rounded-md border border-slate-200/80 bg-white px-2 py-0.5 text-xs font-medium tabular-nums text-slate-700">
+              {s.activeSlotsCount} aulas
+            </span>
             {s.selectedStructureId && (
               <Button
                 type="button"
@@ -166,9 +160,14 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
         </div>
 
         <div className="flex flex-col gap-3 border-t border-slate-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <Button onClick={s.addSlotRow} variant="outline" className="h-9 gap-1.5 border-dashed text-xs text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800">
+          <Button
+            type="button"
+            onClick={s.addSlotRow}
+            variant="outline"
+            aria-label="Adicionar slot"
+            className="h-9 gap-1.5 border-dashed px-3 text-xs text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
+          >
             <Plus className="h-3.5 w-3.5" />
-            Adicionar slot
           </Button>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500" aria-label="Legenda">

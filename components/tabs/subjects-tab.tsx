@@ -31,9 +31,6 @@ export default function SubjectsTab({
   return (
     <div className="animate-fade-in space-y-6">
       <section className="app-panel overflow-hidden">
-        <div className="border-b border-slate-100 px-5 py-4">
-          <h2 className="text-sm font-semibold text-slate-900">Nova disciplina</h2>
-        </div>
         <div className="space-y-3 px-5 py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
             <div className="min-w-0 flex-1 sm:min-w-[12rem]">
@@ -69,6 +66,7 @@ export default function SubjectsTab({
             </div>
             <div className="flex items-end sm:shrink-0">
               <Button
+                type="button"
                 onClick={() => void s.handleAddSubject()}
                 disabled={
                   !s.newSubjectName.trim() ||
@@ -76,10 +74,10 @@ export default function SubjectsTab({
                   !s.newSubjectClassId ||
                   s.isSavingSubject
                 }
-                className="h-9 w-full shrink-0 gap-1.5 sm:w-auto"
+                aria-label="Adicionar disciplina"
+                className="h-9 w-full shrink-0 px-3 sm:w-auto"
               >
                 <Plus className="h-3.5 w-3.5" />
-                Adicionar
               </Button>
             </div>
           </div>

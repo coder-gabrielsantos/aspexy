@@ -28,7 +28,7 @@ const STEPS: StepDef[] = [
   { id: "classes", label: "Turmas", icon: GraduationCap },
   { id: "teachers", label: "Professores", icon: Users },
   { id: "subjects", label: "Disciplinas", icon: BookOpen },
-  { id: "generate", label: "Gerar", icon: WandSparkles }
+  { id: "generate", label: "Horários", icon: WandSparkles }
 ];
 
 const PAGE_TITLE: Record<TabMode, string> = {
@@ -36,7 +36,7 @@ const PAGE_TITLE: Record<TabMode, string> = {
   classes: "Turmas",
   teachers: "Professores",
   subjects: "Disciplinas",
-  generate: "Gerar horário"
+  generate: "Horários"
 };
 
 export default function AspexyCanvas() {
@@ -225,6 +225,9 @@ export default function AspexyCanvas() {
               generationHook={generationHook}
               structureSelectOptions={structuresHook.structureSelectOptions}
               onRequestDeleteGenerated={() => setConfirmTarget("generated")}
+              teacherSelectOptions={teachersHook.teacherSelectOptions}
+              subjects={subjectsHook.subjects}
+              classNameById={classesHook.classNameById}
             />
           )}
         </main>

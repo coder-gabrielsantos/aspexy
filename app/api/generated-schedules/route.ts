@@ -12,6 +12,11 @@ type SaveGeneratedScheduleBody = {
   resultJson?: unknown;
 };
 
+type PatchGeneratedScheduleBody = {
+  scheduleId?: string;
+  resultJson?: unknown;
+};
+
 function parseObjectId(value?: string) {
   if (!value) return null;
   if (!ObjectId.isValid(value)) return null;
@@ -143,6 +148,59 @@ export async function POST(request: Request) {
     }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Falha ao salvar horário." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+    }
+
+    const body = (await request.json()) as PatchGeneratedScheduleBody;
+    const objectId = parseObjectId(body.scheduleId);
+    if (!objectId) {
+      return NextResponse.json({ error: "scheduleId inválido." }, { status: 400 });
+    }
+    if (!body.resultJson || typeof body.resultJson !== "object") {
+      return NextResponse.json({ error: "Campo resultJson é obrigatório." }, { status: 400 });
+    }
+
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB ?? "aspexy");
+    const now = new Date();
+
+    const updateResult = await db.collection("generated_schedules").findOneAndUpdate(
+      { _id: objectId, user_id: session.user.id },
+      { $set: { result_json: body.resultJson, updated_at: now } },
+      { returnDocument: "after", includeResultMetadata: false }
+    );
+
+    if (!updateResult) {
+      return NextResponse.json({ error: "Horário não encontrado." }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      generatedSchedule: {
+        id: updateResult._id.toString(),
+        name: updateResult.name,
+        structure_id: updateResult.structure_id?.toString?.() ?? updateResult.structure_id ?? null,
+        school_profile: updateResult.school_profile,
+        result_json: updateResult.result_json,
+        updated_at: updateResult.updated_at
+      }
+    });
+  } catch (error) {
+    if (error instanceof MongoServerError) {
+      const status = error.code === 18 ? 401 : 500;
+      return NextResponse.json({ error: error.message, code: error.code }, { status });
+    }
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Falha ao atualizar horário." },
       { status: 500 }
     );
   }

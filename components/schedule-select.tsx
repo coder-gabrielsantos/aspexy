@@ -19,6 +19,8 @@ type CommonScheduleSelectProps = {
   isClearable?: boolean;
   "aria-label"?: string;
   className?: string;
+  /** Aproximação de quantas linhas do menu ficam visíveis antes do scroll (padrão: ~10). */
+  maxVisibleMenuItems?: number;
 };
 
 export type ScheduleSelectProps =
@@ -47,7 +49,8 @@ const selectClassNames: ClassNamesConfig<
         : "border-slate-200 hover:border-indigo-300/85",
       props.isDisabled && "cursor-not-allowed opacity-50"
     ),
-  valueContainer: () => "flex min-w-0 flex-1 flex-wrap items-center gap-1 overflow-hidden py-1 pl-3 pr-1",
+  valueContainer: () =>
+    "flex min-w-0 flex-1 flex-wrap items-center gap-1.5 overflow-hidden py-1.5 pl-3 pr-1",
   indicatorsContainer: () => "flex shrink-0 items-center",
   dropdownIndicator: () => "p-1.5 text-slate-400 hover:text-slate-600 transition-colors",
   clearIndicator: () => "p-1.5 text-slate-400 hover:text-slate-600 transition-colors",
@@ -65,23 +68,30 @@ const selectClassNames: ClassNamesConfig<
   placeholder: () => "text-slate-400",
   singleValue: () => "truncate text-slate-800",
   multiValue: () =>
-    "inline-flex max-w-full items-center rounded-md border border-slate-200/90 bg-slate-100/95 text-xs text-slate-800",
-  multiValueLabel: () => "max-w-[12rem] truncate px-2 py-0.5",
+    "inline-flex max-w-full items-center gap-1 rounded-md border border-slate-200/90 bg-slate-100/95 text-xs text-slate-800",
+  multiValueLabel: () => "max-w-[14rem] truncate py-1 pl-3 pr-1 text-slate-800",
   multiValueRemove: () =>
-    "rounded-r-md px-1.5 py-0.5 text-slate-400 transition-colors hover:bg-slate-200/80 hover:text-slate-700",
+    "rounded-r-md p-1.5 text-slate-400 transition-colors hover:bg-rose-100 hover:text-rose-600",
   input: () => "m-0 p-0 text-slate-800 [&_input]:outline-none",
   noOptionsMessage: () => "cursor-default rounded-lg px-2.5 py-2 text-sm text-slate-500",
   loadingMessage: () => "cursor-default rounded-lg px-2.5 py-2 text-sm text-slate-500"
 };
 
-const selectStyles: StylesConfig<
+function mergeSelectStyles(maxVisibleMenuItems?: number): StylesConfig<
   ScheduleSelectOption,
   boolean,
   GroupBase<ScheduleSelectOption>
-> = {
-  menuPortal: (base) => ({ ...base, zIndex: 100 }),
-  menu: (base) => ({ ...base, zIndex: 100 })
-};
+> {
+  return {
+    menuPortal: (base) => ({ ...base, zIndex: 100 }),
+    menu: (base) => ({ ...base, zIndex: 100 }),
+    menuList: (base) => {
+      if (maxVisibleMenuItems == null) return base;
+      const n = Math.max(1, Math.min(20, maxVisibleMenuItems));
+      return { ...base, maxHeight: `${n * 2.25}rem` };
+    }
+  };
+}
 
 type InnerCommon = {
   instanceId: string;
@@ -91,6 +101,7 @@ type InnerCommon = {
   isClearable: boolean;
   ariaLabel?: string;
   className?: string;
+  maxVisibleMenuItems?: number;
 };
 
 function ScheduleSelectSingle({
@@ -102,12 +113,14 @@ function ScheduleSelectSingle({
   placeholder,
   isClearable,
   ariaLabel,
-  className
+  className,
+  maxVisibleMenuItems
 }: InnerCommon & {
   value: string;
   onChange: (value: string) => void;
 }) {
   const selected = useMemo(() => options.find((o) => o.value === value) ?? null, [options, value]);
+  const styles = useMemo(() => mergeSelectStyles(maxVisibleMenuItems), [maxVisibleMenuItems]);
 
   return (
     <Select<ScheduleSelectOption, false>
@@ -122,7 +135,7 @@ function ScheduleSelectSingle({
       placeholder={placeholder}
       isClearable={isClearable}
       isSearchable
-      styles={selectStyles}
+      styles={styles}
       classNames={selectClassNames}
       classNamePrefix="aspexy-select"
       menuPosition="fixed"
@@ -142,7 +155,8 @@ function ScheduleSelectMulti({
   placeholder,
   isClearable,
   ariaLabel,
-  className
+  className,
+  maxVisibleMenuItems
 }: InnerCommon & {
   value: string[];
   onChange: (value: string[]) => void;
@@ -151,6 +165,7 @@ function ScheduleSelectMulti({
     () => value.map((v) => options.find((o) => o.value === v)).filter((o): o is ScheduleSelectOption => Boolean(o)),
     [options, value]
   );
+  const styles = useMemo(() => mergeSelectStyles(maxVisibleMenuItems), [maxVisibleMenuItems]);
 
   return (
     <Select<ScheduleSelectOption, true>
@@ -167,7 +182,7 @@ function ScheduleSelectMulti({
       isClearable={isClearable}
       isSearchable
       closeMenuOnSelect={false}
-      styles={selectStyles}
+      styles={styles}
       classNames={selectClassNames}
       classNamePrefix="aspexy-select"
       menuPosition="fixed"
@@ -192,7 +207,8 @@ export default function ScheduleSelect(props: ScheduleSelectProps) {
     placeholder = "Selecione...",
     isClearable = true,
     "aria-label": ariaLabel,
-    className
+    className,
+    maxVisibleMenuItems
   } = props;
 
   const innerCommon: InnerCommon = {
@@ -202,7 +218,8 @@ export default function ScheduleSelect(props: ScheduleSelectProps) {
     placeholder,
     isClearable,
     ariaLabel,
-    className
+    className,
+    maxVisibleMenuItems
   };
 
   if ("isMulti" in props && props.isMulti) {
