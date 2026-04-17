@@ -143,28 +143,31 @@ export default function GenerateTab({ generationHook: g, structureSelectOptions,
 
 function ByDayView({ g }: { g: ReturnType<typeof useScheduleGeneration> }) {
   return (
-    <>
-      {DAYS.map((dayName, dayIndex) => (
-        <div key={dayName} className="app-panel overflow-hidden">
-          <div className="border-b border-slate-100/80 px-5 py-3">
-            <h3 className="text-sm font-semibold tracking-tight text-slate-800">
-              {DAY_FULL_LABEL[dayName]}
-            </h3>
-          </div>
-          <div className="max-h-[min(70vh,560px)] overflow-auto">
+    <div className="app-panel overflow-hidden">
+      <div className="max-h-[min(85vh,880px)] overflow-auto">
+        {DAYS.map((dayName, dayIndex) => (
+          <section
+            key={dayName}
+            className={cn(dayIndex > 0 && "border-t border-slate-200/90")}
+          >
+            <div className="bg-slate-50/90 px-5 py-2.5">
+              <h3 className="text-sm font-semibold tracking-tight text-slate-800">
+                {DAY_FULL_LABEL[dayName]}
+              </h3>
+            </div>
             <table
               className="table-fixed border-collapse text-xs"
               style={{ width: `${140 + g.classIds.length * 140}px` }}
             >
               <thead>
                 <tr>
-                  <th className="sticky left-0 top-0 z-[30] w-[140px] min-w-[140px] max-w-[140px] whitespace-nowrap border-b border-slate-200/90 bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[2px_2px_0_0_rgba(15,23,42,0.06)]">
+                  <th className="sticky left-0 top-0 z-[30] w-[140px] min-w-[140px] max-w-[140px] whitespace-nowrap border-b border-slate-200 bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[2px_2px_0_0_rgba(15,23,42,0.06)]">
                     Horário
                   </th>
                   {g.classIds.map((cid) => (
                     <th
                       key={`${dayName}-${cid}`}
-                      className="sticky top-0 z-[20] w-[140px] min-w-[140px] max-w-[140px] overflow-hidden border-b border-l border-slate-200/90 bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[0_2px_0_0_rgba(15,23,42,0.06)]"
+                      className="sticky top-0 z-[20] w-[140px] min-w-[140px] max-w-[140px] overflow-hidden border-b border-l border-slate-200 bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[0_2px_0_0_rgba(15,23,42,0.06)]"
                     >
                       <span className="block truncate" title={`Turma ${cid}`}>
                         Turma {cid}
@@ -243,10 +246,10 @@ function ByDayView({ g }: { g: ReturnType<typeof useScheduleGeneration> }) {
                 })}
               </tbody>
             </table>
-          </div>
-        </div>
-      ))}
-    </>
+          </section>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -270,13 +273,13 @@ function ByClassView({ g, classId }: { g: ReturnType<typeof useScheduleGeneratio
           </colgroup>
           <thead>
             <tr>
-              <th className="sticky left-0 top-0 z-[30] border-b border-slate-200/90 bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[2px_2px_0_0_rgba(15,23,42,0.06)]">
+              <th className="sticky left-0 top-0 z-[30] border-b border-slate-200 bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[2px_2px_0_0_rgba(15,23,42,0.06)]">
                 Horário
               </th>
               {DAYS.map((day) => (
                 <th
                   key={day}
-                  className="sticky top-0 z-[20] border-b border-l border-slate-200/90 bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[0_2px_0_0_rgba(15,23,42,0.06)]"
+                  className="sticky top-0 z-[20] border-b border-l border-slate-200 bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[0_2px_0_0_rgba(15,23,42,0.06)]"
                 >
                   {DAY_FULL_LABEL[day]}
                 </th>

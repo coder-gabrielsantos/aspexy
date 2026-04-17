@@ -7,7 +7,7 @@ import ScheduleSelect from "@/components/schedule-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { DAYS } from "@/lib/types";
+import { DAYS, teacherSlotLabelMap, type TeacherSlotState } from "@/lib/types";
 import type { useTeachers } from "@/hooks/use-teachers";
 
 type TeachersTabProps = {
@@ -209,7 +209,7 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                       {t.selectedTeacher.name}
                     </p>
                     <p className="text-xs text-slate-400">
-                      Clique onde o professor <span className="font-medium text-rose-500">não pode</span> dar aula.
+                      Clique para alternar: neutro, preferência de horário ou bloqueio.
                     </p>
                   </div>
                   <div className="min-h-0 min-w-0 flex-1 overflow-auto">
@@ -222,13 +222,13 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                       </colgroup>
                       <thead>
                         <tr>
-                          <th className="sticky top-0 z-10 border-b border-slate-200/80 bg-slate-50/90 px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                          <th className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                             Horário
                           </th>
                           {DAYS.map((day) => (
                             <th
                               key={day}
-                              className="sticky top-0 z-10 border-b border-slate-200/80 bg-slate-50/90 px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500"
+                              className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500"
                             >
                               {day}
                             </th>
@@ -258,21 +258,24 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                                 {slot.start} – {slot.end}
                               </td>
                               {DAYS.map((_, di) => {
-                                const unavailable = t.isTeacherUnavailable(di, si);
+                                const slotState: TeacherSlotState = t.teacherSlotState(di, si);
                                 return (
                                   <td key={`${slot.id}-${DAYS[di]}`} className="border-b border-slate-100/80 px-1.5 py-2 align-middle">
                                     <button
                                       type="button"
-                                      onClick={() => void t.toggleTeacherAvailability(di, si)}
-                                      aria-label={unavailable ? "Marcar como disponível" : "Marcar como indisponível"}
+                                      onClick={() => void t.toggleTeacherSlotState(di, si)}
+                                      aria-label={`${teacherSlotLabelMap[slotState]} — clique para alternar`}
                                       className={cn(
-                                        "box-border h-9 w-full rounded-lg text-[10px] font-semibold tracking-wide transition-all duration-200",
-                                        unavailable
-                                                  ? "bg-rose-50 text-rose-600 ring-1 ring-rose-200/80 hover:bg-rose-100"
-                                                  : "bg-slate-50 text-slate-700 ring-1 ring-slate-200/80 hover:bg-slate-100"
+                                        "box-border flex h-9 w-full items-center justify-center rounded-lg text-[10px] font-semibold tracking-wide transition-colors duration-200",
+                                        slotState === "available" &&
+                                          "bg-slate-50 text-slate-700 ring-1 ring-slate-200/80 hover:bg-slate-100",
+                                        slotState === "preference" &&
+                                          "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/80 hover:bg-emerald-100/90",
+                                        slotState === "unavailable" &&
+                                          "bg-rose-50 text-rose-600 ring-1 ring-rose-200/80 hover:bg-rose-100"
                                       )}
                                     >
-                                      {unavailable ? "INDISPONÍVEL" : "DISPONÍVEL"}
+                                      {teacherSlotLabelMap[slotState]}
                                     </button>
                                   </td>
                                 );
@@ -282,6 +285,27 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                         })}
                       </tbody>
                     </table>
+                  </div>
+                  <div
+                    className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-100 px-4 py-3 text-xs text-slate-500"
+                    aria-label="Legenda"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block h-2.5 w-2.5 rounded-sm bg-slate-50 ring-1 ring-slate-200" />
+                      Disponível
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-50 ring-1 ring-emerald-200/80" />
+                      Preferência (motor tenta priorizar)
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block h-2.5 w-2.5 rounded-sm bg-rose-50 ring-1 ring-rose-200/80" />
+                      Indisponível
+                    </span>
+                    <span className="hidden items-center gap-1.5 text-slate-400 sm:ml-2 sm:flex">
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400" aria-hidden />
+                      clique para alternar
+                    </span>
                   </div>
                 </>
               )}

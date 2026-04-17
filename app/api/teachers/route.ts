@@ -9,6 +9,7 @@ type SaveTeacherBody = {
   teacherId?: string;
   name?: string;
   unavailability?: Record<string, number[]>;
+  preference?: Record<string, number[]>;
 };
 
 function parseObjectId(value?: string) {
@@ -48,6 +49,7 @@ export async function GET(request: Request) {
           id: doc._id.toString(),
           name: doc.name,
           unavailability: doc.unavailability ?? {},
+          preference: doc.preference ?? {},
           created_at: doc.created_at,
           updated_at: doc.updated_at
         }
@@ -65,6 +67,7 @@ export async function GET(request: Request) {
         id: doc._id.toString(),
         name: doc.name,
         unavailability: doc.unavailability ?? {},
+        preference: doc.preference ?? {},
         created_at: doc.created_at,
         updated_at: doc.updated_at
       }))
@@ -109,6 +112,9 @@ export async function POST(request: Request) {
       if (body.unavailability !== undefined) {
         updateFields.unavailability = body.unavailability;
       }
+      if (body.preference !== undefined) {
+        updateFields.preference = body.preference;
+      }
 
       const updateResult = await collection.findOneAndUpdate(
         { _id: objectId, user_id: session.user.id },
@@ -126,6 +132,7 @@ export async function POST(request: Request) {
           id: updateResult._id.toString(),
           name: updateResult.name,
           unavailability: updateResult.unavailability ?? {},
+          preference: updateResult.preference ?? {},
           created_at: updateResult.created_at,
           updated_at: updateResult.updated_at
         }
@@ -137,6 +144,7 @@ export async function POST(request: Request) {
       user_email: session.user.email,
       name,
       unavailability: body.unavailability ?? {},
+      preference: body.preference ?? {},
       created_at: now,
       updated_at: now
     });
@@ -147,6 +155,7 @@ export async function POST(request: Request) {
         id: result.insertedId.toString(),
         name,
         unavailability: body.unavailability ?? {},
+        preference: body.preference ?? {},
         created_at: now,
         updated_at: now
       }

@@ -1,5 +1,28 @@
 import { useCallback, useMemo, useState } from "react";
-import { readJsonSafe, slotsFromProfile, type SchoolProfile, type SlotRow, type Teacher } from "@/lib/types";
+import {
+  readJsonSafe,
+  slotsFromProfile,
+  cycleTeacherSlotMaps,
+  getTeacherSlotState,
+  type SchoolProfile,
+  type SlotRow,
+  type Teacher,
+  type TeacherSlotState,
+} from "@/lib/types";
+
+function normalizeTeacherFromApi(t: {
+  id: string;
+  name: string;
+  unavailability?: Record<string, number[]>;
+  preference?: Record<string, number[]>;
+}): Teacher {
+  return {
+    id: t.id,
+    name: t.name,
+    unavailability: t.unavailability ?? {},
+    preference: t.preference ?? {},
+  };
+}
 
 export function useTeachers(showToast: (msg: string, v?: "success" | "error") => void) {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -26,10 +49,10 @@ export function useTeachers(showToast: (msg: string, v?: "success" | "error") =>
     [teachers, selectedTeacherId]
   );
 
-  const isTeacherUnavailable = useCallback(
-    (dayIndex: number, slotIndex: number) => {
-      if (!selectedTeacher) return false;
-      return (selectedTeacher.unavailability[String(dayIndex)] ?? []).includes(slotIndex);
+  const teacherSlotState = useCallback(
+    (dayIndex: number, slotIndex: number): TeacherSlotState => {
+      if (!selectedTeacher) return "available";
+      return getTeacherSlotState(selectedTeacher, dayIndex, slotIndex);
     },
     [selectedTeacher]
   );
@@ -37,7 +60,7 @@ export function useTeachers(showToast: (msg: string, v?: "success" | "error") =>
   const loadTeachers = useCallback(async () => {
     const r = await fetch("/api/teachers");
     const d = await readJsonSafe<{ ok?: boolean; teachers?: Teacher[] }>(r);
-    if (r.ok && d?.ok) setTeachers(d.teachers ?? []);
+    if (r.ok && d?.ok) setTeachers((d.teachers ?? []).map(normalizeTeacherFromApi));
     setIsLoading(false);
   }, []);
 
@@ -49,7 +72,7 @@ export function useTeachers(showToast: (msg: string, v?: "success" | "error") =>
       const r = await fetch("/api/teachers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name })
+        body: JSON.stringify({ name }),
       });
       const d = await readJsonSafe<{ ok?: boolean; teacher?: Teacher; error?: string }>(r);
       if (!r.ok || !d?.ok || !d.teacher) throw new Error(d?.error ?? "Falha ao adicionar professor.");
@@ -74,48 +97,60 @@ export function useTeachers(showToast: (msg: string, v?: "success" | "error") =>
     showToast("Professor excluído.");
   }, [selectedTeacherId, loadTeachers, showToast]);
 
-  const handleLoadStructureForTeacher = useCallback(async (id: string) => {
-    setTeacherStructureId(id);
-    if (!id) {
-      setTeacherSlots([]);
-      return;
-    }
-    const r = await fetch(`/api/schedule-structures?id=${id}`);
-    const d = await readJsonSafe<{ ok?: boolean; structure?: { school_profile: SchoolProfile }; error?: string }>(r);
-    if (!r.ok || !d?.ok || !d.structure) {
-      showToast(d?.error ?? "Falha ao carregar estrutura.", "error");
-      setTeacherSlots([]);
-      return;
-    }
-    setTeacherSlots(slotsFromProfile(d.structure.school_profile));
-  }, [showToast]);
+  const handleLoadStructureForTeacher = useCallback(
+    async (id: string) => {
+      setTeacherStructureId(id);
+      if (!id) {
+        setTeacherSlots([]);
+        return;
+      }
+      const r = await fetch(`/api/schedule-structures?id=${id}`);
+      const d = await readJsonSafe<{
+        ok?: boolean;
+        structure?: { school_profile: SchoolProfile };
+        error?: string;
+      }>(r);
+      if (!r.ok || !d?.ok || !d.structure) {
+        showToast(d?.error ?? "Falha ao carregar estrutura.", "error");
+        setTeacherSlots([]);
+        return;
+      }
+      setTeacherSlots(slotsFromProfile(d.structure.school_profile));
+    },
+    [showToast]
+  );
 
-  const toggleTeacherAvailability = useCallback(async (dayIndex: number, slotIndex: number) => {
-    if (!selectedTeacher) return;
-    const key = String(dayIndex);
-    const current = selectedTeacher.unavailability[key] ?? [];
-    const next = current.includes(slotIndex)
-      ? current.filter((s) => s !== slotIndex)
-      : [...current, slotIndex];
-    const newUnavailability = { ...selectedTeacher.unavailability, [key]: next };
+  const toggleTeacherSlotState = useCallback(
+    async (dayIndex: number, slotIndex: number) => {
+      if (!selectedTeacher) return;
+      const { unavailability, preference } = cycleTeacherSlotMaps(selectedTeacher, dayIndex, slotIndex);
 
-    setTeachers((prev) =>
-      prev.map((t) => (t.id === selectedTeacher.id ? { ...t, unavailability: newUnavailability } : t))
-    );
+      setTeachers((prev) =>
+        prev.map((t) =>
+          t.id === selectedTeacher.id ? { ...t, unavailability, preference } : t
+        )
+      );
 
-    try {
-      const r = await fetch("/api/teachers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ teacherId: selectedTeacher.id, name: selectedTeacher.name, unavailability: newUnavailability })
-      });
-      const d = await readJsonSafe<{ ok?: boolean; error?: string }>(r);
-      if (!r.ok || !d?.ok) throw new Error(d?.error ?? "Falha ao salvar disponibilidade.");
-    } catch (e) {
-      await loadTeachers();
-      showToast(e instanceof Error ? e.message : "Falha ao salvar disponibilidade.", "error");
-    }
-  }, [selectedTeacher, loadTeachers, showToast]);
+      try {
+        const r = await fetch("/api/teachers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            teacherId: selectedTeacher.id,
+            name: selectedTeacher.name,
+            unavailability,
+            preference,
+          }),
+        });
+        const d = await readJsonSafe<{ ok?: boolean; error?: string }>(r);
+        if (!r.ok || !d?.ok) throw new Error(d?.error ?? "Falha ao salvar grade do professor.");
+      } catch (e) {
+        await loadTeachers();
+        showToast(e instanceof Error ? e.message : "Falha ao salvar grade do professor.", "error");
+      }
+    },
+    [selectedTeacher, loadTeachers, showToast]
+  );
 
   return {
     teachers,
@@ -130,11 +165,11 @@ export function useTeachers(showToast: (msg: string, v?: "success" | "error") =>
     teacherSelectOptions,
     teacherNameById,
     selectedTeacher,
-    isTeacherUnavailable,
+    teacherSlotState,
     loadTeachers,
     handleAddTeacher,
     runDeleteTeacher,
     handleLoadStructureForTeacher,
-    toggleTeacherAvailability,
+    toggleTeacherSlotState,
   };
 }

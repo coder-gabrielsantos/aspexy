@@ -68,6 +68,8 @@ export type Teacher = {
   id: string;
   name: string;
   unavailability: Record<string, number[]>;
+  /** Índices de slot por dia em que o professor prefere ministrar (objetivo mole no solver). */
+  preference: Record<string, number[]>;
 };
 
 export type SchoolClass = {
@@ -94,6 +96,50 @@ export const stateLabelMap: Record<SlotState, string> = {
   free: "LIVRE",
   break: "INTERVALO"
 };
+
+/** Ciclo na grade de professores: disponível → preferência → indisponível (como na estrutura). */
+export type TeacherSlotState = "available" | "preference" | "unavailable";
+
+export const TEACHER_SLOT_CYCLE: TeacherSlotState[] = ["available", "preference", "unavailable"];
+
+export const teacherSlotLabelMap: Record<TeacherSlotState, string> = {
+  available: "DISPONÍVEL",
+  preference: "PREFERÊNCIA",
+  unavailable: "INDISPONÍVEL"
+};
+
+export function getTeacherSlotState(teacher: Teacher, dayIndex: number, slotIndex: number): TeacherSlotState {
+  const key = String(dayIndex);
+  if ((teacher.unavailability[key] ?? []).includes(slotIndex)) return "unavailable";
+  if ((teacher.preference[key] ?? []).includes(slotIndex)) return "preference";
+  return "available";
+}
+
+/** Avança no ciclo disponível → preferência → indisponível e devolve os mapas atualizados. */
+export function cycleTeacherSlotMaps(
+  teacher: Teacher,
+  dayIndex: number,
+  slotIndex: number
+): { unavailability: Record<string, number[]>; preference: Record<string, number[]> } {
+  const current = getTeacherSlotState(teacher, dayIndex, slotIndex);
+  const next = TEACHER_SLOT_CYCLE[(TEACHER_SLOT_CYCLE.indexOf(current) + 1) % TEACHER_SLOT_CYCLE.length];
+  const key = String(dayIndex);
+
+  const un = { ...teacher.unavailability };
+  const pref = { ...teacher.preference };
+  un[key] = (un[key] ?? []).filter((s) => s !== slotIndex);
+  pref[key] = (pref[key] ?? []).filter((s) => s !== slotIndex);
+  if ((un[key]?.length ?? 0) === 0) delete un[key];
+  if ((pref[key]?.length ?? 0) === 0) delete pref[key];
+
+  if (next === "unavailable") {
+    un[key] = [...(un[key] ?? []), slotIndex].sort((a, b) => a - b);
+  } else if (next === "preference") {
+    pref[key] = [...(pref[key] ?? []), slotIndex].sort((a, b) => a - b);
+  }
+
+  return { unavailability: un, preference: pref };
+}
 
 export function createInitialSlot(index = 0): SlotRow {
   return { id: `slot-${index + 1}`, start: DEFAULT_START, end: DEFAULT_END, cells: DAYS.map(() => "lesson" as SlotState) };

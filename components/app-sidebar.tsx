@@ -9,7 +9,7 @@ import type { StepDef } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const HEADER_ROW =
-  "flex h-[var(--app-header-h)] min-h-[4rem] shrink-0 items-center justify-center border-b border-slate-200/70 bg-white px-4";
+  "flex h-[var(--app-header-h)] min-h-[4rem] shrink-0 items-center justify-center border-b border-slate-200 bg-white px-4 shadow-[0_1px_0_rgba(15,23,42,0.06),0_4px_12px_-2px_rgba(15,23,42,0.06)]";
 
 function UserAvatar({
   imageUrl,
@@ -234,7 +234,7 @@ export default function AppSidebar({
         </div>
       </aside>
 
-      <header className="sticky top-0 z-[60] flex h-[var(--app-header-h)] min-h-[4rem] shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 lg:hidden">
+      <header className="sticky top-0 z-[60] flex h-[var(--app-header-h)] min-h-[4rem] shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-[0_1px_0_rgba(15,23,42,0.06),0_4px_12px_-2px_rgba(15,23,42,0.08)] lg:hidden">
         <Image
           src={platformLogo}
           alt="Aspexy"

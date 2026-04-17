@@ -90,6 +90,7 @@ type TeacherDoc = {
   _id: { toString(): string };
   name: string;
   unavailability?: Record<string, number[]>;
+  preference?: Record<string, number[]>;
 };
 
 type ClassDoc = {
@@ -125,11 +126,15 @@ export async function POST(request: Request) {
 
     const teacherNameById: Record<string, string> = {};
     const teacherUnavailability: Record<string, Record<string, number[]>> = {};
+    const teacherPreference: Record<string, Record<string, number[]>> = {};
     for (const t of teacherDocs) {
       const id = t._id.toString();
       teacherNameById[id] = t.name;
       if (t.unavailability && Object.keys(t.unavailability).length > 0) {
         teacherUnavailability[t.name] = t.unavailability;
+      }
+      if (t.preference && Object.keys(t.preference).length > 0) {
+        teacherPreference[t.name] = t.preference;
       }
     }
 
@@ -156,6 +161,7 @@ export async function POST(request: Request) {
       schoolProfile: body.schoolProfile,
       assignments,
       teacherUnavailability,
+      teacherPreference,
       maxDailySameSubject: body.maxDailySameSubject ?? 2,
       timeLimitSeconds: body.timeLimitSeconds ?? 10
     });

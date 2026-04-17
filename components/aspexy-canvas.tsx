@@ -158,7 +158,7 @@ export default function AspexyCanvas() {
       />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:ml-[260px]">
-        <header className="sticky top-0 z-20 hidden h-[var(--app-header-h)] min-h-[4rem] items-center border-b border-indigo-200/70 bg-white/90 px-6 shadow-[0_1px_0_rgba(67,56,202,0.1)] backdrop-blur-sm lg:flex">
+        <header className="sticky top-0 z-40 hidden h-[var(--app-header-h)] min-h-[4rem] items-center border-b border-slate-200 bg-white/95 px-6 shadow-[0_1px_0_rgba(15,23,42,0.06),0_4px_12px_-2px_rgba(15,23,42,0.08)] backdrop-blur-sm lg:flex">
           <nav className="flex items-center gap-2 text-sm text-slate-500" aria-label="Localização na aplicação">
             <span className="font-semibold text-indigo-700">Etapas</span>
             <span className="text-indigo-300" aria-hidden>

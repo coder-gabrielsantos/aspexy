@@ -99,7 +99,7 @@ export default function SubjectsTab({
 
       {s.subjects.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200/90 bg-white/80 p-12 text-center">
-          <div className="mx-auto grid h-11 w-11 place-items-center rounded-lg border border-slate-200/80 bg-slate-50">
+          <div className="mx-auto grid h-11 w-11 place-items-center rounded-lg border border-slate-200 bg-slate-50">
             <BookOpen className="h-5 w-5 text-slate-400" />
           </div>
           <p className="mt-3 text-sm font-medium text-slate-600">Nenhuma disciplina cadastrada</p>
@@ -118,19 +118,19 @@ export default function SubjectsTab({
               </colgroup>
               <thead>
                 <tr>
-                  <th className="sticky top-0 z-10 border-b border-slate-200/80 bg-slate-50/90 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Disciplina
                   </th>
-                  <th className="sticky top-0 z-10 border-b border-slate-200/80 bg-slate-50/90 px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Aulas
                   </th>
-                  <th className="sticky top-0 z-10 border-b border-slate-200/80 bg-slate-50/90 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Professores
                   </th>
-                  <th className="sticky top-0 z-10 border-b border-slate-200/80 bg-slate-50/90 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Turma
                   </th>
-                  <th className="sticky top-0 z-10 border-b border-slate-200/80 bg-slate-50/90 px-1 py-2.5" aria-label="Ações" />
+                  <th className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-1 py-2.5" aria-label="Ações" />
                 </tr>
               </thead>
               <tbody>
@@ -149,7 +149,7 @@ export default function SubjectsTab({
                     <tr key={sub.id} className="group transition-colors duration-150 hover:bg-slate-50/50">
                       <td className="border-b border-slate-100/80 px-4 py-2.5 font-medium text-slate-800">
                         <div className="flex min-w-0 items-center gap-2.5">
-                          <div className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-slate-200/80 bg-slate-50 text-slate-600">
+                          <div className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-slate-200 bg-slate-50 text-slate-600">
                             <BookOpen className="h-3 w-3" />
                           </div>
                           <span className="min-w-0 truncate" title={sub.name}>
