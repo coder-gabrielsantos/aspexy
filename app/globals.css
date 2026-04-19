@@ -120,4 +120,28 @@
       0 0 0 1px rgba(15, 23, 42, 0.08),
       0 2px 8px rgba(15, 23, 42, 0.08);
   }
+
+  /**
+   * Esconde o “olho” nativo do navegador (Edge/Chrome) dentro de `input[type=password]`,
+   * para não duplicar o toggle customizado do login.
+   */
+  .password-field-custom-toggle input[type="password"]::-ms-reveal,
+  .password-field-custom-toggle input[type="password"]::-ms-clear {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .password-field-custom-toggle input[type="password"]::-webkit-credentials-auto-fill-button {
+    display: none !important;
+    visibility: hidden;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+    margin: 0;
+  }
+
+  .password-field-custom-toggle input[type="password"]::-webkit-textfield-decoration-container {
+    display: none !important;
+  }
 }

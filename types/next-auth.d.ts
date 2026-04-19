@@ -11,6 +11,8 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
+    email?: string;
+    name?: string | null;
     /** URL da foto de perfil (ex.: Google userinfo `picture`) */
     picture?: string | null;
   }

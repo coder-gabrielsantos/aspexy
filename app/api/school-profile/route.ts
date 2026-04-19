@@ -7,7 +7,7 @@ import clientPromise from "@/lib/mongodb";
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id || !session.user.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
@@ -24,7 +24,6 @@ export async function POST(request: Request) {
 
   const result = await db.collection("school_profiles").insertOne({
     user_id: session.user.id,
-    user_email: session.user.email,
     school_profile: body.schoolProfile,
     created_at: new Date(),
     updated_at: new Date()

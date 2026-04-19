@@ -127,7 +127,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id || !session.user.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
     }
 
@@ -186,7 +186,6 @@ export async function POST(request: Request) {
 
     const result = await collection.insertOne({
       user_id: session.user.id,
-      user_email: session.user.email,
       name,
       lessons_per_week: lessonsPerWeek,
       teacher_ids: teacherIdsRaw,
