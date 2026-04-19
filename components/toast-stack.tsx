@@ -34,8 +34,9 @@ export default function ToastStack({ toasts, onDismiss }: ToastStackProps) {
               : { animationDelay: `${Math.min(index, 5) * 52}ms` }
           }
           className={cn(
-            "pointer-events-auto relative flex w-max max-w-full items-center gap-3 overflow-hidden rounded-lg border py-3 pl-4 pr-3 text-sm shadow-[0_2px_8px_rgba(15,23,42,0.06),0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl motion-reduce:animate-none motion-reduce:blur-none motion-reduce:opacity-100 motion-reduce:shadow-premium-lg",
-            t.dismissing ? "animate-toast-out" : "animate-toast-in",
+            "relative flex w-full max-w-md items-center gap-3 overflow-hidden rounded-lg border py-3 pl-4 pr-3 text-sm shadow-[0_2px_8px_rgba(15,23,42,0.06),0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl motion-reduce:animate-none motion-reduce:blur-none motion-reduce:opacity-100 motion-reduce:shadow-premium-lg",
+            /* Durante a saída o toast some visualmente mas ainda ocupava hit-area e bloqueava cliques atrás. */
+            t.dismissing ? "pointer-events-none animate-toast-out" : "pointer-events-auto animate-toast-in",
             t.variant === "success" &&
               "border-emerald-200/40 bg-gradient-to-br from-white/95 to-emerald-50/30 text-slate-800 ring-1 ring-emerald-500/[0.07]",
             t.variant === "error" &&

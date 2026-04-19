@@ -7,14 +7,12 @@ export function useToasts() {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const dismissToast = useCallback((id: number) => {
-    let scheduled = false;
     setToasts((prev) => {
       const target = prev.find((t) => t.id === id);
       if (!target || target.dismissing) return prev;
-      scheduled = true;
       return prev.map((t) => (t.id === id ? { ...t, dismissing: true } : t));
     });
-    if (!scheduled) return;
+    /* Sempre agenda remoção: o filtro é idempotente e evita depender de variável setada dentro do updater do setState. */
     window.setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, TOAST_EXIT_MS);
