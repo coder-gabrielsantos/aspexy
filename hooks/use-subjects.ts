@@ -49,7 +49,7 @@ export function useSubjects(showToast: (msg: string, v?: "success" | "error") =>
       await loadSubjects();
       showToast(
         classIds.length > 1
-          ? `${classIds.length} disciplinas adicionadas (mesma configuração, uma por turma).`
+          ? `${classIds.length} disciplinas adicionadas.`
           : "Disciplina adicionada."
       );
     } catch (e) {
