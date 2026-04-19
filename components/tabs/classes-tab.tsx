@@ -121,7 +121,7 @@ export default function ClassesTab({ classesHook: c, onRequestDelete }: ClassesT
                         type="button"
                         aria-label="Renomear turma"
                         onClick={() => startEdit(cls.id, cls.name)}
-                        className="rounded-lg p-1.5 text-slate-300 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-slate-100 hover:text-slate-600"
+                        className="rounded-lg p-1.5 text-slate-300 opacity-100 transition-all duration-200 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 hover:bg-slate-100 hover:text-slate-600"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
@@ -129,7 +129,7 @@ export default function ClassesTab({ classesHook: c, onRequestDelete }: ClassesT
                         type="button"
                         aria-label="Excluir turma"
                         onClick={() => onRequestDelete(cls.id)}
-                        className="rounded-lg p-1.5 text-slate-300 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-500"
+                        className="rounded-lg p-1.5 text-slate-300 opacity-100 transition-all duration-200 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-500"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
