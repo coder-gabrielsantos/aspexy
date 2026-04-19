@@ -130,7 +130,7 @@ export default function AppSidebar({
         onClick={() => onStepChange(step.id)}
         title={step.label}
         className={cn(
-          "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
+          "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
           isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
           !isActive && "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
         )}
@@ -175,7 +175,7 @@ export default function AppSidebar({
               onMobileOpenChange(false);
             }}
             className={cn(
-              "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
+              "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
               isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
               !isActive && "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
             )}
@@ -200,7 +200,12 @@ export default function AppSidebar({
           </button>
         );
       })}
-      <p className={cn(GROUP_LABEL, "mt-4")}>Geração</p>
+      <div
+        className="mx-1 my-3 h-px shrink-0 bg-slate-200/90"
+        role="separator"
+        aria-hidden="true"
+      />
+      <p className={GROUP_LABEL}>Geração</p>
       {geracaoSteps.map((step) => {
         const isActive = step.id === activeStep;
         const Icon = step.icon;
@@ -213,7 +218,7 @@ export default function AppSidebar({
               onMobileOpenChange(false);
             }}
             className={cn(
-              "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
+              "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
               isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
               !isActive && "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
             )}
@@ -266,7 +271,12 @@ export default function AppSidebar({
         <nav className="flex min-h-0 flex-1 flex-col gap-0.5 px-3 py-4" aria-label="Navegação principal">
           <p className={GROUP_LABEL}>Cadastro</p>
           {cadastroSteps.map(renderDesktopNavItem)}
-          <p className={cn(GROUP_LABEL, "mt-4")}>Geração</p>
+          <div
+            className="mx-1 my-3 h-px shrink-0 bg-slate-200/90"
+            role="separator"
+            aria-hidden="true"
+          />
+          <p className={GROUP_LABEL}>Geração</p>
           {geracaoSteps.map(renderDesktopNavItem)}
         </nav>
 
