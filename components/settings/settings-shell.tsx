@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { CreditCard, KeyRound, LogOut, Mail, UserRound } from "lucide-react";
+import { CreditCard, KeyRound, LogOut, UserRound } from "lucide-react";
 
 import platformLogo from "@/app/util/logo.png";
 import { cn } from "@/lib/utils";
@@ -13,8 +13,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 const NAV = [
   { href: "/settings/profile", label: "Perfil", icon: UserRound },
-  { href: "/settings/emails", label: "E-mails", icon: Mail },
-  { href: "/settings/password", label: "Senha", icon: KeyRound },
+  { href: "/settings/autenticacao", label: "Autenticação", icon: KeyRound },
   { href: "/settings/billing", label: "Faturamento", icon: CreditCard }
 ] as const;
 
@@ -72,7 +71,13 @@ export function SettingsShell({ children }: SettingsShellProps) {
         >
           <ul className="space-y-0.5">
             {NAV.map(({ href, label, icon: Icon }) => {
-              const active = pathname === href || (href === "/settings/profile" && pathname === "/settings");
+              const active =
+                pathname === href ||
+                (href === "/settings/profile" && pathname === "/settings") ||
+                (href === "/settings/autenticacao" &&
+                  (pathname === "/settings/emails" ||
+                    pathname === "/settings/password" ||
+                    pathname === "/settings/email-senha"));
               return (
                 <li key={href}>
                   <Link

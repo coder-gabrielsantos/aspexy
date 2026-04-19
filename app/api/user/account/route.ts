@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { CREDENTIALS_USERS_COLLECTION, normalizeEmail } from "@/lib/credentials-user";
+import { EMAIL_CHANGE_VERIFICATION_COLLECTION } from "@/lib/email-change-otp";
 import clientPromise from "@/lib/mongodb";
 import { SIGNUP_VERIFICATION_COLLECTION } from "@/lib/signup-verification";
 
@@ -43,6 +44,8 @@ export async function DELETE() {
     if (email) {
       await db.collection(SIGNUP_VERIFICATION_COLLECTION).deleteMany({ email });
     }
+
+    await db.collection(EMAIL_CHANGE_VERIFICATION_COLLECTION).deleteMany({ user_id: userId });
 
     const del = await db.collection(CREDENTIALS_USERS_COLLECTION).deleteOne({ _id: new ObjectId(userId) });
     if (del.deletedCount === 0) {

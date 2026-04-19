@@ -156,7 +156,14 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login"
   },
   callbacks: {
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user, account, profile, trigger, session }) {
+      if (trigger === "update" && session && typeof session === "object") {
+        const s = session as Record<string, unknown>;
+        if (typeof s.email === "string" && s.email.trim()) {
+          token.email = normalizeEmail(s.email.trim());
+        }
+      }
+
       if (user) {
         const fromProfile =
           profile && typeof profile === "object" && "picture" in profile
