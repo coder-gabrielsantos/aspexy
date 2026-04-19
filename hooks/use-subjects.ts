@@ -6,7 +6,7 @@ export function useSubjects(showToast: (msg: string, v?: "success" | "error") =>
   const [newSubjectName, setNewSubjectName] = useState("");
   const [newSubjectLessons, setNewSubjectLessons] = useState("4");
   const [newSubjectTeacherIds, setNewSubjectTeacherIds] = useState<string[]>([]);
-  const [newSubjectClassId, setNewSubjectClassId] = useState("");
+  const [newSubjectClassIds, setNewSubjectClassIds] = useState<string[]>([]);
   const [isSavingSubject, setIsSavingSubject] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -20,37 +20,44 @@ export function useSubjects(showToast: (msg: string, v?: "success" | "error") =>
   const handleAddSubject = useCallback(async () => {
     const name = newSubjectName.trim();
     if (!name) return;
-    if (newSubjectTeacherIds.length === 0 || !newSubjectClassId.trim()) {
+    const classIds = [...new Set(newSubjectClassIds.map((id) => id.trim()).filter(Boolean))];
+    if (newSubjectTeacherIds.length === 0 || classIds.length === 0) {
       showToast("Selecione ao menos um professor e uma turma.", "error");
       return;
     }
     const lessons = Math.max(1, Math.min(20, Number(newSubjectLessons) || 1));
     setIsSavingSubject(true);
     try {
-      const r = await fetch("/api/subjects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          lessonsPerWeek: lessons,
-          teacherIds: newSubjectTeacherIds,
-          classId: newSubjectClassId.trim()
-        })
-      });
-      const d = await readJsonSafe<{ ok?: boolean; subject?: Subject; error?: string }>(r);
-      if (!r.ok || !d?.ok || !d.subject) throw new Error(d?.error ?? "Falha ao adicionar disciplina.");
+      for (const classId of classIds) {
+        const r = await fetch("/api/subjects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            lessonsPerWeek: lessons,
+            teacherIds: newSubjectTeacherIds,
+            classId
+          })
+        });
+        const d = await readJsonSafe<{ ok?: boolean; subject?: Subject; error?: string }>(r);
+        if (!r.ok || !d?.ok || !d.subject) throw new Error(d?.error ?? "Falha ao adicionar disciplina.");
+      }
       setNewSubjectName("");
       setNewSubjectLessons("4");
       setNewSubjectTeacherIds([]);
-      setNewSubjectClassId("");
+      setNewSubjectClassIds([]);
       await loadSubjects();
-      showToast("Disciplina adicionada.");
+      showToast(
+        classIds.length > 1
+          ? `${classIds.length} disciplinas adicionadas (mesma configuração, uma por turma).`
+          : "Disciplina adicionada."
+      );
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Falha ao adicionar disciplina.", "error");
     } finally {
       setIsSavingSubject(false);
     }
-  }, [newSubjectName, newSubjectLessons, newSubjectTeacherIds, newSubjectClassId, loadSubjects, showToast]);
+  }, [newSubjectName, newSubjectLessons, newSubjectTeacherIds, newSubjectClassIds, loadSubjects, showToast]);
 
   const runDeleteSubject = useCallback(async (subjectId: string) => {
     const r = await fetch(`/api/subjects?id=${subjectId}`, { method: "DELETE" });
@@ -68,8 +75,8 @@ export function useSubjects(showToast: (msg: string, v?: "success" | "error") =>
     setNewSubjectLessons,
     newSubjectTeacherIds,
     setNewSubjectTeacherIds,
-    newSubjectClassId,
-    setNewSubjectClassId,
+    newSubjectClassIds,
+    setNewSubjectClassIds,
     isSavingSubject,
     isLoading,
     loadSubjects,

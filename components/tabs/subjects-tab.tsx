@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Plus, Trash2 } from "lucide-react";
+import { BookOpen, Trash2 } from "lucide-react";
 
 import ScheduleSelect from "@/components/schedule-select";
 import { Button } from "@/components/ui/button";
@@ -32,8 +32,8 @@ export default function SubjectsTab({
     <div className="animate-fade-in space-y-6">
       <section className="app-panel overflow-hidden">
         <div className="space-y-3 px-5 py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-            <div className="min-w-0 flex-1 sm:min-w-[12rem]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-3">
+            <div className="min-w-0 flex-1 sm:min-w-[10rem]">
               <p className="mb-1.5 text-xs font-medium text-slate-500">Disciplina</p>
               <Input
                 value={s.newSubjectName}
@@ -42,9 +42,34 @@ export default function SubjectsTab({
                   if (e.key === "Enter") void s.handleAddSubject();
                 }}
                 placeholder="Nome da disciplina"
+                className="h-11"
               />
             </div>
-            <div className="w-full sm:w-[4.5rem]">
+            <div className="min-w-0 flex-1">
+              <p className="mb-1.5 text-xs font-medium text-slate-500">Turmas</p>
+              <ScheduleSelect
+                isMulti
+                aria-label="Turmas da disciplina"
+                options={classSelectOptions}
+                value={s.newSubjectClassIds}
+                onChange={s.setNewSubjectClassIds}
+                placeholder="Selecione uma ou mais turmas"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="mb-1.5 text-xs font-medium text-slate-500">Professores</p>
+              <ScheduleSelect
+                isMulti
+                aria-label="Professores da disciplina"
+                options={teacherSelectOptions}
+                value={s.newSubjectTeacherIds}
+                onChange={s.setNewSubjectTeacherIds}
+                placeholder="Selecione os professores"
+              />
+            </div>
+            <div className="w-full shrink-0 sm:w-[4.5rem]">
               <p className="mb-1.5 text-xs font-medium text-slate-500">Aulas/sem.</p>
               <Input
                 type="number"
@@ -52,45 +77,24 @@ export default function SubjectsTab({
                 max={20}
                 value={s.newSubjectLessons}
                 onChange={(e) => s.setNewSubjectLessons(e.target.value)}
-                className="tabular-nums"
+                className="h-11 tabular-nums"
               />
             </div>
-            <div className="min-w-0 sm:min-w-[9rem] sm:flex-1">
-              <p className="mb-1.5 text-xs font-medium text-slate-500">Turma</p>
-              <ScheduleSelect
-                options={classSelectOptions}
-                value={s.newSubjectClassId}
-                onChange={s.setNewSubjectClassId}
-                placeholder="Selecione a turma"
-              />
-            </div>
-            <div className="flex items-end sm:shrink-0">
+            <div className="flex shrink-0">
               <Button
                 type="button"
                 onClick={() => void s.handleAddSubject()}
                 disabled={
                   !s.newSubjectName.trim() ||
                   s.newSubjectTeacherIds.length === 0 ||
-                  !s.newSubjectClassId ||
+                  s.newSubjectClassIds.length === 0 ||
                   s.isSavingSubject
                 }
-                aria-label="Adicionar disciplina"
-                className="h-9 w-full shrink-0 px-3 sm:w-auto"
+                className="h-11 min-h-11 w-full min-w-[7.5rem] px-4 py-0 sm:w-auto"
               >
-                <Plus className="h-3.5 w-3.5" />
+                Adicionar
               </Button>
             </div>
-          </div>
-          <div className="min-w-0">
-            <p className="mb-1.5 text-xs font-medium text-slate-500">Professores</p>
-            <ScheduleSelect
-              isMulti
-              aria-label="Professores da disciplina"
-              options={teacherSelectOptions}
-              value={s.newSubjectTeacherIds}
-              onChange={s.setNewSubjectTeacherIds}
-              placeholder="Selecione os professores"
-            />
           </div>
         </div>
       </section>
