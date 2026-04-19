@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect } from "react";
 import Image from "next/image";
-import { Lock, LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 
 import platformLogo from "@/app/util/logo.png";
 import type { StepDef } from "@/lib/types";
@@ -45,7 +45,6 @@ type AppSidebarProps = {
   steps: StepDef[];
   activeStep: string;
   completedSteps: Set<string>;
-  lockedSteps: Set<string>;
   onStepChange: (id: string) => void;
   userName?: string | null;
   userImage?: string | null;
@@ -59,7 +58,6 @@ export default function AppSidebar({
   steps,
   activeStep,
   completedSteps,
-  lockedSteps,
   onStepChange,
   userName,
   userImage,
@@ -79,22 +77,18 @@ export default function AppSidebar({
   const renderDesktopNavItem = (step: StepDef) => {
     const isActive = step.id === activeStep;
     const isCompleted = completedSteps.has(step.id);
-    const isLocked = lockedSteps.has(step.id);
-    const isClickable = !isLocked || isActive;
     const Icon = step.icon;
 
     return (
       <button
         key={step.id}
         type="button"
-        onClick={() => isClickable && onStepChange(step.id)}
-        disabled={isLocked && !isActive}
-        title={isLocked ? "Complete as etapas anteriores" : step.label}
+        onClick={() => onStepChange(step.id)}
+        title={step.label}
         className={cn(
           "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors",
           isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
-          !isActive && !isLocked && "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
-          !isActive && isLocked && "cursor-not-allowed text-slate-300"
+          !isActive && "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
         )}
       >
         <span
@@ -108,16 +102,11 @@ export default function AppSidebar({
           className={cn(
             "flex h-10 w-10 shrink-0 items-center justify-center transition-colors",
             isActive && "text-white",
-            !isActive && !isLocked && isCompleted && "text-indigo-600",
-            !isActive && !isCompleted && !isLocked && "text-slate-500 group-hover:text-indigo-600",
-            !isActive && isLocked && "text-slate-300"
+            !isActive && isCompleted && "text-indigo-600",
+            !isActive && !isCompleted && "text-slate-500 group-hover:text-indigo-600"
           )}
         >
-          {isLocked && !isActive ? (
-            <Lock className="h-5 w-5" aria-hidden />
-          ) : (
-            <Icon className="h-5 w-5" strokeWidth={1.65} aria-hidden />
-          )}
+          <Icon className="h-5 w-5" strokeWidth={1.65} aria-hidden />
         </span>
         <span className="min-w-0 flex-1 truncate font-medium">{step.label}</span>
       </button>
@@ -131,8 +120,6 @@ export default function AppSidebar({
       </p>
       {steps.map((step) => {
         const isActive = step.id === activeStep;
-        const isLocked = lockedSteps.has(step.id);
-        const isClickable = !isLocked || isActive;
         const Icon = step.icon;
         const isGenerate = step.id === "generate";
         const isCompleted = completedSteps.has(step.id);
@@ -145,17 +132,13 @@ export default function AppSidebar({
             <button
               type="button"
               onClick={() => {
-                if (isClickable) {
-                  onStepChange(step.id);
-                  onMobileOpenChange(false);
-                }
+                onStepChange(step.id);
+                onMobileOpenChange(false);
               }}
-              disabled={isLocked && !isActive}
               className={cn(
                 "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
                 isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
-                !isActive && !isLocked && "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
-                !isActive && isLocked && "cursor-not-allowed text-slate-300"
+                !isActive && "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
               )}
             >
               <span
@@ -169,16 +152,11 @@ export default function AppSidebar({
                 className={cn(
                   "flex h-10 w-10 shrink-0 items-center justify-center transition-colors",
                   isActive && "text-white",
-                  !isActive && !isLocked && isCompleted && "text-indigo-600",
-                  !isActive && !isLocked && !isCompleted && "text-slate-500 group-hover:text-indigo-600",
-                  !isActive && isLocked && "text-slate-300"
+                  !isActive && isCompleted && "text-indigo-600",
+                  !isActive && !isCompleted && "text-slate-500 group-hover:text-indigo-600"
                 )}
               >
-                {isLocked && !isActive ? (
-                  <Lock className="h-5 w-5" />
-                ) : (
-                  <Icon className="h-5 w-5" strokeWidth={1.65} />
-                )}
+                <Icon className="h-5 w-5" strokeWidth={1.65} />
               </span>
               <span className="truncate">{step.label}</span>
             </button>

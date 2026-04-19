@@ -6,8 +6,10 @@ import { BookOpen, GraduationCap, LayoutGrid, Users, WandSparkles } from "lucide
 
 import AppSidebar from "@/components/app-sidebar";
 import ConfirmDialog from "@/components/confirm-dialog";
+import StepPrerequisiteGuide from "@/components/step-prerequisite-guide";
 import ToastStack from "@/components/toast-stack";
 import { SkeletonPanel, SkeletonTable } from "@/components/ui/skeleton";
+import { getTabPrerequisiteGuide } from "@/lib/step-prerequisites";
 import type { StepDef, TabMode } from "@/lib/types";
 
 import StructureTab from "@/components/tabs/structure-tab";
@@ -71,19 +73,6 @@ export default function AspexyCanvas() {
   const { teachers } = teachersHook;
   const { subjects } = subjectsHook;
 
-  const canOpenGenerateTab = useMemo(() => {
-    if (structures.length === 0 || classes.length === 0 || teachers.length === 0 || subjects.length === 0) return false;
-    const tIds = new Set(teachers.map((t) => t.id));
-    const cIds = new Set(classes.map((c) => c.id));
-    return subjects.every(
-      (s) =>
-        s.teacher_ids.length > 0 &&
-        Boolean(s.class_id) &&
-        s.teacher_ids.every((tid) => tIds.has(tid)) &&
-        cIds.has(s.class_id)
-    );
-  }, [structures, classes, teachers, subjects]);
-
   const completedSteps = useMemo(() => {
     const set = new Set<string>();
     if (structures.length > 0) set.add("grade");
@@ -97,25 +86,15 @@ export default function AspexyCanvas() {
     return set;
   }, [structures, classes, teachers, subjects]);
 
-  const lockedSteps = useMemo(() => {
-    const set = new Set<string>();
-    if (structures.length === 0) set.add("classes");
-    if (classes.length === 0) set.add("teachers");
-    if (teachers.length === 0) set.add("subjects");
-    if (!canOpenGenerateTab) set.add("generate");
-    return set;
-  }, [structures, classes, teachers, canOpenGenerateTab]);
-
-  const handleTabChange = useCallback(
-    (tab: TabMode | string) => {
-      if (lockedSteps.has(tab)) {
-        showToast("Complete as etapas anteriores para desbloquear esta aba.", "error");
-        return;
-      }
-      setActiveTab(tab as TabMode);
-    },
-    [lockedSteps, showToast]
+  const tabPrerequisiteGuide = useMemo(
+    () => getTabPrerequisiteGuide(activeTab, { structures, classes, teachers, subjects }),
+    [activeTab, structures, classes, teachers, subjects]
   );
+
+  const navigateToStep = useCallback((tab: TabMode | string) => {
+    setActiveTab(tab as TabMode);
+    setSidebarOpen(false);
+  }, []);
 
   const runConfirmDelete = async () => {
     setIsDeleting(true);
@@ -147,8 +126,7 @@ export default function AspexyCanvas() {
         steps={STEPS}
         activeStep={activeTab}
         completedSteps={completedSteps}
-        lockedSteps={lockedSteps}
-        onStepChange={handleTabChange}
+        onStepChange={navigateToStep}
         userName={session?.user?.name}
         userImage={session?.user?.image}
         userInitials={userInitials}
@@ -189,46 +167,62 @@ export default function AspexyCanvas() {
           )}
 
           {!initialLoading && activeTab === "classes" && (
-            <ClassesTab
-              classesHook={classesHook}
-              onRequestDelete={(id) => {
-                setConfirmClassId(id);
-                setConfirmTarget("class");
-              }}
-            />
+            tabPrerequisiteGuide ? (
+              <StepPrerequisiteGuide {...tabPrerequisiteGuide} onNavigate={navigateToStep} />
+            ) : (
+              <ClassesTab
+                classesHook={classesHook}
+                onRequestDelete={(id) => {
+                  setConfirmClassId(id);
+                  setConfirmTarget("class");
+                }}
+              />
+            )
           )}
 
           {!initialLoading && activeTab === "teachers" && (
-            <TeachersTab
-              teachersHook={teachersHook}
-              structureSelectOptions={structuresHook.structureSelectOptions}
-              onRequestDelete={() => setConfirmTarget("teacher")}
-            />
+            tabPrerequisiteGuide ? (
+              <StepPrerequisiteGuide {...tabPrerequisiteGuide} onNavigate={navigateToStep} />
+            ) : (
+              <TeachersTab
+                teachersHook={teachersHook}
+                structureSelectOptions={structuresHook.structureSelectOptions}
+                onRequestDelete={() => setConfirmTarget("teacher")}
+              />
+            )
           )}
 
           {!initialLoading && activeTab === "subjects" && (
-            <SubjectsTab
-              subjectsHook={subjectsHook}
-              teacherSelectOptions={teachersHook.teacherSelectOptions}
-              classSelectOptions={classesHook.classSelectOptions}
-              teacherNameById={teachersHook.teacherNameById}
-              classNameById={classesHook.classNameById}
-              onRequestDelete={(id) => {
-                setConfirmSubjectId(id);
-                setConfirmTarget("subject");
-              }}
-            />
+            tabPrerequisiteGuide ? (
+              <StepPrerequisiteGuide {...tabPrerequisiteGuide} onNavigate={navigateToStep} />
+            ) : (
+              <SubjectsTab
+                subjectsHook={subjectsHook}
+                teacherSelectOptions={teachersHook.teacherSelectOptions}
+                classSelectOptions={classesHook.classSelectOptions}
+                teacherNameById={teachersHook.teacherNameById}
+                classNameById={classesHook.classNameById}
+                onRequestDelete={(id) => {
+                  setConfirmSubjectId(id);
+                  setConfirmTarget("subject");
+                }}
+              />
+            )
           )}
 
           {!initialLoading && activeTab === "generate" && (
-            <GenerateTab
-              generationHook={generationHook}
-              structureSelectOptions={structuresHook.structureSelectOptions}
-              onRequestDeleteGenerated={() => setConfirmTarget("generated")}
-              teacherSelectOptions={teachersHook.teacherSelectOptions}
-              subjects={subjectsHook.subjects}
-              classNameById={classesHook.classNameById}
-            />
+            tabPrerequisiteGuide ? (
+              <StepPrerequisiteGuide {...tabPrerequisiteGuide} onNavigate={navigateToStep} />
+            ) : (
+              <GenerateTab
+                generationHook={generationHook}
+                structureSelectOptions={structuresHook.structureSelectOptions}
+                onRequestDeleteGenerated={() => setConfirmTarget("generated")}
+                teacherSelectOptions={teachersHook.teacherSelectOptions}
+                subjects={subjectsHook.subjects}
+                classNameById={classesHook.classNameById}
+              />
+            )
           )}
         </main>
       </div>
