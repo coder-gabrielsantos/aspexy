@@ -12,10 +12,12 @@ import {
 } from "@/lib/credentials-user";
 import { ensureCredentialsUsersIndexes } from "@/lib/credentials-users-index";
 import clientPromise from "@/lib/mongodb";
+import { verifySignupRegistrationToken } from "@/lib/signup-registration-jwt";
 
 type Body = {
   email?: unknown;
   password?: unknown;
+  registrationToken?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -23,6 +25,8 @@ export async function POST(request: Request) {
     const body = (await request.json()) as Body;
     const emailRaw = typeof body.email === "string" ? body.email : "";
     const password = typeof body.password === "string" ? body.password : "";
+    const registrationToken =
+      typeof body.registrationToken === "string" ? body.registrationToken.trim() : "";
 
     if (!isValidSignupEmail(emailRaw)) {
       return NextResponse.json({ error: "E-mail inválido." }, { status: 400 });
@@ -33,6 +37,13 @@ export async function POST(request: Request) {
     }
 
     const email = normalizeEmail(emailRaw);
+    const tokenEmail = registrationToken ? await verifySignupRegistrationToken(registrationToken) : null;
+    if (!tokenEmail || tokenEmail !== email) {
+      return NextResponse.json(
+        { error: "Valide o código enviado ao seu e-mail antes de criar a conta." },
+        { status: 401 }
+      );
+    }
     const name = defaultDisplayNameFromEmail(email);
     const password_hash = await hashPassword(password);
     const now = new Date();

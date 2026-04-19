@@ -1,13 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { AlertTriangle, Eye, EyeOff } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, ArrowLeft, Eye, EyeOff, Info, Mail } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 import { PlatformLogo } from "@/components/platform-logo";
+import { SignupOtpField } from "@/components/signup-otp-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { isCompleteOtp } from "@/lib/signup-verification-shared";
 import { readJsonSafe } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -130,6 +132,30 @@ function PasswordToggleField({
   );
 }
 
+function SignupStepIndicator({
+  step,
+  dark
+}: {
+  step: "email" | "code" | "password";
+  dark?: boolean;
+}) {
+  const steps: ("email" | "code" | "password")[] = ["email", "code", "password"];
+  const active = steps.indexOf(step);
+  return (
+    <div className="flex gap-1.5" aria-hidden>
+      {steps.map((_, i) => (
+        <div
+          key={i}
+          className={cn(
+            "h-1 flex-1 rounded-full transition-colors duration-300",
+            i <= active ? "bg-indigo-500" : dark ? "bg-slate-700" : "bg-slate-200"
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
 function LoginForm({
   oauthErrorMessage,
   googleConfigured,
@@ -141,7 +167,13 @@ function LoginForm({
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [signupStep, setSignupStep] = useState<"email" | "code" | "password">("email");
   const [email, setEmail] = useState("");
+  const [signupOtp, setSignupOtp] = useState("");
+  const [signupCodeDelivery, setSignupCodeDelivery] = useState<"email" | "console" | null>(null);
+  const [otpFocusTick, setOtpFocusTick] = useState(0);
+  const [registrationToken, setRegistrationToken] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -149,7 +181,27 @@ function LoginForm({
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = window.setInterval(() => {
+      setResendCooldown((s) => (s <= 1 ? 0 : s - 1));
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [resendCooldown]);
+
   const bannerError = localError ?? oauthErrorMessage;
+
+  const resetSignupWizard = () => {
+    setSignupStep("email");
+    setSignupOtp("");
+    setSignupCodeDelivery(null);
+    setRegistrationToken(null);
+    setResendCooldown(0);
+    setPassword("");
+    setConfirmPassword("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  };
 
   const goHomeAfterSignIn = async () => {
     const res = await signIn("credentials", {
@@ -179,9 +231,81 @@ function LoginForm({
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const postSendCode = async () => {
+    const r = await fetch("/api/auth/signup/send-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim() })
+    });
+    const d = await readJsonSafe<{ ok?: boolean; error?: string; delivery?: string }>(r);
+    if (!r.ok || !d?.ok) {
+      setLocalError(d?.error ?? "Não foi possível enviar o código.");
+      return false;
+    }
+    setSignupCodeDelivery(d.delivery === "console" ? "console" : "email");
+    setSignupOtp("");
+    setSignupStep("code");
+    setOtpFocusTick((n) => n + 1);
+    setResendCooldown(60);
+    return true;
+  };
+
+  const handleSignupEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
+    setBusy(true);
+    try {
+      await postSendCode();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSignupResend = async () => {
+    if (resendCooldown > 0 || busy) return;
+    setLocalError(null);
+    setBusy(true);
+    try {
+      await postSendCode();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSignupVerifySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLocalError(null);
+    if (!isCompleteOtp(signupOtp)) {
+      setLocalError("Digite os 6 dígitos do código.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const r = await fetch("/api/auth/signup/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), code: signupOtp })
+      });
+      const d = await readJsonSafe<{ ok?: boolean; error?: string; registrationToken?: string }>(r);
+      if (!r.ok || !d?.ok || !d.registrationToken) {
+        setLocalError(d?.error ?? "Código inválido.");
+        return;
+      }
+      setRegistrationToken(d.registrationToken);
+      setSignupStep("password");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSignupRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLocalError(null);
+    if (!registrationToken) {
+      setLocalError("Sessão de verificação expirada. Confirme o código novamente.");
+      setSignupStep("code");
+      return;
+    }
     if (password !== confirmPassword) {
       setLocalError("As senhas não coincidem.");
       return;
@@ -193,7 +317,8 @@ function LoginForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: email.trim(),
-          password
+          password,
+          registrationToken
         })
       });
       const d = await readJsonSafe<{ ok?: boolean; error?: string }>(r);
@@ -210,11 +335,30 @@ function LoginForm({
   const switchMode = (next: "signin" | "signup") => {
     setMode(next);
     setLocalError(null);
+    if (next === "signup") {
+      setEmail("");
+      resetSignupWizard();
+    } else {
+      resetSignupWizard();
+      setEmail("");
+    }
     setPassword("");
-    setConfirmPassword("");
     setShowPassword(false);
-    setShowConfirmPassword(false);
   };
+
+  const headline =
+    mode === "signin"
+      ? { title: "Bem-vindo", subtitle: "Entre com e-mail e senha ou use o Google" }
+      : signupStep === "email"
+        ? { title: "Criar conta", subtitle: "Enviaremos um código para seu e-mail" }
+        : signupStep === "code"
+          ? signupCodeDelivery === "console"
+            ? {
+                title: "Código gerado",
+                subtitle: `Em ambiente local o e-mail não é enviado — o código para ${email.trim()} aparece no terminal do servidor`
+              }
+            : { title: "Verifique seu e-mail", subtitle: `Enviamos um código de 6 dígitos para ${email.trim()}` }
+          : { title: "Defina sua senha", subtitle: "Último passo: escolha uma senha segura para sua conta" };
 
   return (
     <>
@@ -225,11 +369,14 @@ function LoginForm({
             dark ? "text-white" : "text-slate-900"
           )}
         >
-          Bem-vindo
+          {headline.title}
         </h1>
-        <p className={cn("text-sm", dark ? "text-slate-400" : "text-slate-500")}>
-          {mode === "signin" ? "Entre com e-mail e senha ou use o Google." : "Crie sua conta com e-mail e senha."}
-        </p>
+        <p className={cn("text-sm leading-relaxed", dark ? "text-slate-400" : "text-slate-500")}>{headline.subtitle}</p>
+        {mode === "signup" ? (
+          <div className="mx-auto max-w-[280px] pt-1">
+            <SignupStepIndicator step={signupStep} dark={dark} />
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-6 space-y-3">
@@ -262,54 +409,208 @@ function LoginForm({
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <div className="leading-relaxed">
                 Login com Google opcional: defina <code className="rounded bg-black/20 px-1">GOOGLE_CLIENT_ID</code> e{" "}
-                <code className="rounded bg-black/20 px-1">GOOGLE_CLIENT_SECRET</code> no ambiente.
+                <code className="rounded bg-black/20 px-1">GOOGLE_CLIENT_SECRET</code> no ambiente
               </div>
             </div>
           </div>
         ) : null}
       </div>
 
-      <form className="mt-6 space-y-3.5" onSubmit={mode === "signin" ? handleSignIn : handleSignUp}>
-        <div>
-          <label
-            htmlFor={dark ? "email-m" : "email"}
-            className={cn("mb-1.5 block text-xs font-medium", dark ? "text-slate-300" : "text-slate-600")}
-          >
-            E-mail
-          </label>
-          <Input
-            id={dark ? "email-m" : "email"}
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={fieldClass(dark)}
-            placeholder="seu@email.com"
-          />
-        </div>
+      {mode === "signin" ? (
+        <form className="mt-6 space-y-3.5" onSubmit={handleSignIn}>
+          <div>
+            <label
+              htmlFor={dark ? "email-m" : "email"}
+              className={cn("mb-1.5 block text-xs font-medium", dark ? "text-slate-300" : "text-slate-600")}
+            >
+              E-mail
+            </label>
+            <Input
+              id={dark ? "email-m" : "email"}
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={fieldClass(dark)}
+              placeholder="seu@email.com"
+            />
+          </div>
 
-        <div>
-          <label
-            htmlFor={dark ? "pw-m" : "pw"}
-            className={cn("mb-1.5 block text-xs font-medium", dark ? "text-slate-300" : "text-slate-600")}
-          >
-            Senha
-          </label>
-          <PasswordToggleField
-            id={dark ? "pw-m" : "pw"}
-            dark={dark}
-            value={password}
-            onChange={setPassword}
-            visible={showPassword}
-            onToggleVisible={() => setShowPassword((v) => !v)}
-            autoComplete={mode === "signin" ? "current-password" : "new-password"}
-            placeholder={mode === "signin" ? "••••••••" : "Mínimo 8 caracteres"}
-            minLength={mode === "signup" ? 8 : undefined}
-          />
-        </div>
+          <div>
+            <label
+              htmlFor={dark ? "pw-m" : "pw"}
+              className={cn("mb-1.5 block text-xs font-medium", dark ? "text-slate-300" : "text-slate-600")}
+            >
+              Senha
+            </label>
+            <PasswordToggleField
+              id={dark ? "pw-m" : "pw"}
+              dark={dark}
+              value={password}
+              onChange={setPassword}
+              visible={showPassword}
+              onToggleVisible={() => setShowPassword((v) => !v)}
+              autoComplete="current-password"
+              placeholder="••••••••"
+            />
+          </div>
 
-        {mode === "signup" ? (
+          <Button
+            type="submit"
+            disabled={busy}
+            className={cn(
+              "h-11 w-full rounded-full text-sm font-semibold shadow-sm transition-transform active:scale-[0.99]",
+              dark ? "bg-indigo-500 text-white hover:bg-indigo-400" : ""
+            )}
+          >
+            {busy ? "Aguarde…" : "Entrar"}
+          </Button>
+        </form>
+      ) : signupStep === "email" ? (
+        <form className="mt-6 space-y-3.5" onSubmit={handleSignupEmailSubmit}>
+          <div>
+            <label
+              htmlFor={dark ? "email-m" : "email"}
+              className={cn("mb-1.5 block text-xs font-medium", dark ? "text-slate-300" : "text-slate-600")}
+            >
+              E-mail
+            </label>
+            <div className="relative">
+              <Mail
+                className={cn(
+                  "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2",
+                  dark ? "text-slate-500" : "text-slate-400"
+                )}
+                aria-hidden
+              />
+              <Input
+                id={dark ? "email-m" : "email"}
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={cn(fieldClass(dark), "pl-10")}
+                placeholder="seu@email.com"
+              />
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={busy}
+            className={cn(
+              "h-11 w-full rounded-full text-sm font-semibold shadow-sm transition-transform active:scale-[0.99]",
+              dark ? "bg-indigo-500 text-white hover:bg-indigo-400" : ""
+            )}
+          >
+            {busy ? "Enviando…" : "Continuar"}
+          </Button>
+        </form>
+      ) : signupStep === "code" ? (
+        <form className="mt-6 space-y-4" onSubmit={handleSignupVerifySubmit}>
+          {signupCodeDelivery === "console" ? (
+            <div
+              className={cn(
+                "flex gap-2.5 rounded-xl border p-3 text-left text-sm",
+                dark
+                  ? "border-sky-500/35 bg-sky-950/35 text-sky-100"
+                  : "border-sky-200/90 bg-sky-50/90 text-sky-950"
+              )}
+            >
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-500 dark:text-sky-400" aria-hidden />
+              <div className="leading-relaxed">
+                Abra o terminal onde está rodando <code className="rounded bg-black/10 px-1 dark:bg-white/10">npm run dev</code> e
+                procure a linha{" "}
+                <code className="rounded bg-black/10 px-1 text-xs dark:bg-white/10">[signup] código para…</code> — para receber
+                e-mail de verdade, configure <code className="rounded bg-black/10 px-1 dark:bg-white/10">RESEND_API_KEY</code>
+              </div>
+            </div>
+          ) : null}
+          <div>
+            <p className={cn("mb-2 text-xs font-medium", dark ? "text-slate-400" : "text-slate-600")}>Código</p>
+            <SignupOtpField
+              value={signupOtp}
+              onChange={setSignupOtp}
+              dark={dark}
+              disabled={busy}
+              focusTrigger={otpFocusTick}
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <button
+              type="button"
+              className={cn(
+                "inline-flex items-center gap-1.5 font-medium transition-colors",
+                dark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900"
+              )}
+              onClick={() => {
+                setSignupStep("email");
+                setSignupOtp("");
+                setLocalError(null);
+              }}
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+              Alterar e-mail
+            </button>
+            <button
+              type="button"
+              disabled={resendCooldown > 0 || busy}
+              className={cn(
+                "font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+                dark ? "text-indigo-300 hover:text-indigo-200" : "text-indigo-700 hover:text-indigo-800"
+              )}
+              onClick={handleSignupResend}
+            >
+              {resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : "Reenviar código"}
+            </button>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={busy || !isCompleteOtp(signupOtp)}
+            className={cn(
+              "h-11 w-full rounded-full text-sm font-semibold shadow-sm transition-transform active:scale-[0.99]",
+              dark ? "bg-indigo-500 text-white hover:bg-indigo-400" : ""
+            )}
+          >
+            {busy ? "Verificando…" : "Confirmar código"}
+          </Button>
+        </form>
+      ) : (
+        <form className="mt-6 space-y-3.5" onSubmit={handleSignupRegisterSubmit}>
+          <div
+            className={cn(
+              "rounded-lg border px-3 py-2.5 text-sm",
+              dark ? "border-slate-600/80 bg-slate-900/40 text-slate-300" : "border-slate-200 bg-slate-50 text-slate-700"
+            )}
+          >
+            <span className="text-xs font-medium opacity-80">E-mail</span>
+            <p className="truncate font-medium">{email.trim()}</p>
+          </div>
+
+          <div>
+            <label
+              htmlFor={dark ? "pw-m" : "pw"}
+              className={cn("mb-1.5 block text-xs font-medium", dark ? "text-slate-300" : "text-slate-600")}
+            >
+              Senha
+            </label>
+            <PasswordToggleField
+              id={dark ? "pw-m" : "pw"}
+              dark={dark}
+              value={password}
+              onChange={setPassword}
+              visible={showPassword}
+              onToggleVisible={() => setShowPassword((v) => !v)}
+              autoComplete="new-password"
+              placeholder="Mínimo 8 caracteres"
+              minLength={8}
+            />
+          </div>
+
           <div>
             <label
               htmlFor={dark ? "pw2-m" : "pw2"}
@@ -329,19 +630,34 @@ function LoginForm({
               minLength={8}
             />
           </div>
-        ) : null}
 
-        <Button
-          type="submit"
-          disabled={busy}
-          className={cn(
-            "h-11 w-full rounded-full text-sm font-semibold shadow-sm transition-transform active:scale-[0.99]",
-            dark ? "bg-indigo-500 text-white hover:bg-indigo-400" : ""
-          )}
-        >
-          {busy ? "Aguarde…" : mode === "signin" ? "Entrar" : "Criar conta"}
-        </Button>
-      </form>
+          <button
+            type="button"
+            className={cn(
+              "mb-1 flex w-full items-center justify-center gap-1.5 text-sm font-medium transition-colors",
+              dark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900"
+            )}
+            onClick={() => {
+              resetSignupWizard();
+              setLocalError(null);
+            }}
+          >
+            <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
+            Recomeçar verificação
+          </button>
+
+          <Button
+            type="submit"
+            disabled={busy}
+            className={cn(
+              "h-11 w-full rounded-full text-sm font-semibold shadow-sm transition-transform active:scale-[0.99]",
+              dark ? "bg-indigo-500 text-white hover:bg-indigo-400" : ""
+            )}
+          >
+            {busy ? "Aguarde…" : "Criar conta"}
+          </Button>
+        </form>
+      )}
 
       <p className={cn("mt-4 text-center text-sm", dark ? "text-slate-400" : "text-slate-500")}>
         {mode === "signin" ? (
@@ -399,7 +715,7 @@ function LoginForm({
       ) : null}
 
       <p className={cn("mt-8 text-center text-xs leading-relaxed", dark ? "text-slate-500" : "text-slate-400")}>
-        Ao se conectar, você aceita nossos termos de uso e nossa política de privacidade.
+        Ao entrar, você aceita os termos e a política de privacidade
       </p>
     </>
   );
