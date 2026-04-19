@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   DAYS,
   DEFAULT_START,
@@ -15,12 +15,28 @@ import {
   type StructureSummary,
 } from "@/lib/types";
 
+function buildProfileFingerprint(slots: SlotRow[]): string {
+  return JSON.stringify(
+    slots.map((row, idx) => ({
+      idx,
+      start: row.start,
+      end: row.end,
+      cells: [...row.cells]
+    }))
+  );
+}
+
 export function useStructures(showToast: (msg: string, v?: "success" | "error") => void) {
+  const lastLoadedStructureIdRef = useRef("");
   const [schoolId, setSchoolId] = useState(() => crypto.randomUUID());
   const [slots, setSlots] = useState<SlotRow[]>([createInitialSlot(0), createInitialSlot(1)]);
   const [structureName, setStructureName] = useState("Estrutura Principal");
   const [structures, setStructures] = useState<StructureSummary[]>([]);
   const [selectedStructureId, setSelectedStructureId] = useState("");
+  /** Nome da estrutura no último carregamento bem-sucedido (para decidir atualizar vs. criar nova). */
+  const [committedName, setCommittedName] = useState("");
+  /** Impressão digital da grade após o último carregar/salvar com seleção. */
+  const [committedProfileFingerprint, setCommittedProfileFingerprint] = useState("");
   const [isSavingStructure, setIsSavingStructure] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -33,6 +49,28 @@ export function useStructures(showToast: (msg: string, v?: "success" | "error") 
     () => structures.map((s) => ({ value: s.id, label: s.name })),
     [structures]
   );
+
+  const currentProfileFingerprint = useMemo(() => buildProfileFingerprint(slots), [slots]);
+
+  const isStructureDirty = useMemo(() => {
+    if (!selectedStructureId) return true;
+    const nameChanged = structureName.trim() !== committedName.trim();
+    const profileChanged = currentProfileFingerprint !== committedProfileFingerprint;
+    return nameChanged || profileChanged;
+  }, [selectedStructureId, structureName, committedName, currentProfileFingerprint, committedProfileFingerprint]);
+
+  const saveCreatesNewStructure = useMemo(() => {
+    if (!selectedStructureId) return true;
+    return structureName.trim() !== committedName.trim();
+  }, [selectedStructureId, structureName, committedName]);
+
+  const saveButtonLabel = useMemo(() => {
+    if (isSavingStructure) return "Salvando…";
+    if (!selectedStructureId) return "Salvar";
+    if (!isStructureDirty) return "Sem alterações";
+    if (saveCreatesNewStructure) return "Salvar como nova estrutura";
+    return "Salvar modificações";
+  }, [isSavingStructure, selectedStructureId, isStructureDirty, saveCreatesNewStructure]);
 
   const generateSchoolProfile = useCallback((): SchoolProfile => {
     const timeSchema = slots.map((slot, i) => ({
@@ -68,41 +106,79 @@ export function useStructures(showToast: (msg: string, v?: "success" | "error") 
   }, []);
 
   const handleLoadStructureInGrade = useCallback(async (id: string) => {
+    if (!id) {
+      setSelectedStructureId("");
+      setCommittedName("");
+      setCommittedProfileFingerprint("");
+      lastLoadedStructureIdRef.current = "";
+      return;
+    }
     setSelectedStructureId(id);
-    if (!id) return;
     const r = await fetch(`/api/schedule-structures?id=${id}`);
     const d = await readJsonSafe<{ ok?: boolean; structure?: { name: string; school_profile: SchoolProfile }; error?: string }>(r);
     if (!r.ok || !d?.ok || !d.structure) {
       showToast(d?.error ?? "Falha ao carregar estrutura.", "error");
+      setSelectedStructureId(lastLoadedStructureIdRef.current);
       return;
     }
+    const loadedRows = slotsFromProfile(d.structure.school_profile);
+    const fp = buildProfileFingerprint(loadedRows);
+    setCommittedName(d.structure.name.trim());
+    setCommittedProfileFingerprint(fp);
     setStructureName(d.structure.name);
     applyProfileToEditor(d.structure.school_profile);
+    lastLoadedStructureIdRef.current = id;
   }, [showToast, applyProfileToEditor]);
 
   const handleSaveStructure = useCallback(async (onSaved?: (id: string) => void) => {
     const profile = generateSchoolProfile();
+    const fpAfterSave = buildProfileFingerprint(slots);
     setIsSavingStructure(true);
     try {
+      const hasSelection = Boolean(selectedStructureId);
+      const renamedFromLoaded = hasSelection && structureName.trim() !== committedName.trim();
+      const structureIdForRequest = hasSelection && !renamedFromLoaded ? selectedStructureId : undefined;
+
       const r = await fetch("/api/schedule-structures", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ structureId: selectedStructureId || undefined, name: structureName, schoolProfile: profile })
+        body: JSON.stringify({
+          structureId: structureIdForRequest,
+          name: structureName,
+          schoolProfile: profile
+        })
       });
       const d = await readJsonSafe<{ ok?: boolean; structure?: { id: string; name: string }; error?: string }>(r);
       if (!r.ok || !d?.ok || !d.structure) throw new Error(d?.error ?? "Falha ao salvar estrutura.");
       const saved = d.structure;
       await loadStructures();
       setSelectedStructureId(saved.id);
+      lastLoadedStructureIdRef.current = saved.id;
       setStructureName(saved.name);
+      setCommittedName(saved.name.trim());
+      setCommittedProfileFingerprint(fpAfterSave);
       onSaved?.(saved.id);
-      showToast("Estrutura salva com sucesso.");
+      if (renamedFromLoaded) {
+        showToast("Nova estrutura salva com sucesso.");
+      } else if (!hasSelection) {
+        showToast("Estrutura salva com sucesso.");
+      } else {
+        showToast("Estrutura atualizada com sucesso.");
+      }
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Falha ao salvar estrutura.", "error");
     } finally {
       setIsSavingStructure(false);
     }
-  }, [generateSchoolProfile, selectedStructureId, structureName, loadStructures, showToast]);
+  }, [
+    generateSchoolProfile,
+    selectedStructureId,
+    structureName,
+    committedName,
+    slots,
+    loadStructures,
+    showToast
+  ]);
 
   const runDeleteStructure = useCallback(async () => {
     if (!selectedStructureId) return;
@@ -110,7 +186,10 @@ export function useStructures(showToast: (msg: string, v?: "success" | "error") 
     const d = await readJsonSafe<{ ok?: boolean; error?: string }>(r);
     if (!r.ok || !d?.ok) throw new Error(d?.error ?? "Falha ao excluir.");
     setSelectedStructureId("");
+    lastLoadedStructureIdRef.current = "";
     setStructureName("Estrutura Principal");
+    setCommittedName("");
+    setCommittedProfileFingerprint("");
     setSlots([createInitialSlot(0), createInitialSlot(1)]);
     await loadStructures();
     showToast("Estrutura excluída com sucesso.");
@@ -159,6 +238,8 @@ export function useStructures(showToast: (msg: string, v?: "success" | "error") 
     loadStructures,
     handleLoadStructureInGrade,
     handleSaveStructure,
+    isStructureDirty,
+    saveButtonLabel,
     runDeleteStructure,
     toggleCellState,
     updateSlotTime,

@@ -63,11 +63,11 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
             )}
             <Button
               onClick={() => void s.handleSaveStructure(onStructureSaved)}
-              disabled={s.isSavingStructure}
+              disabled={s.isSavingStructure || (Boolean(s.selectedStructureId) && !s.isStructureDirty)}
               className="h-9 gap-1.5"
             >
               <Save className="h-3.5 w-3.5" />
-              {s.isSavingStructure ? "Salvando…" : "Salvar"}
+              {s.saveButtonLabel}
             </Button>
           </div>
         </div>
