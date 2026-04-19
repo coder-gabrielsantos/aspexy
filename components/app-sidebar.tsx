@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronRight, Loader2, Menu, X } from "lucide-react";
 
 import platformLogo from "@/app/util/logo.png";
 import type { StepDef } from "@/lib/types";
@@ -77,15 +78,37 @@ function ProfileAccountLink({
   onNavigate: () => void;
 }) {
   const displayName = userName?.trim() || "Usuário";
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    onNavigate();
+    if (
+      e.defaultPrevented ||
+      e.button !== 0 ||
+      e.metaKey ||
+      e.ctrlKey ||
+      e.shiftKey ||
+      e.altKey
+    ) {
+      return;
+    }
+    e.preventDefault();
+    startTransition(() => {
+      router.push("/settings/profile");
+    });
+  }
 
   return (
     <Link
       href="/settings/profile"
-      onClick={onNavigate}
+      onClick={handleClick}
+      aria-busy={isPending}
       aria-label={`Abrir página de perfil e conta de ${displayName}`}
       className={cn(
         "group flex w-full min-w-0 items-center gap-3 border-t border-slate-200/80 bg-white px-3 py-2.5 outline-none transition-colors sm:px-3.5 sm:py-3",
-        "hover:bg-indigo-50/80 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500/35"
+        "hover:bg-indigo-50/80 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500/35",
+        isPending && "pointer-events-none opacity-90"
       )}
     >
       <UserAvatar imageUrl={userImage} initials={userInitials} nameLabel={userName} size="md" />
@@ -93,10 +116,17 @@ function ProfileAccountLink({
         <p className="truncate text-sm font-semibold text-slate-800 sm:text-[15px]">{displayName}</p>
         <p className="mt-0.5 truncate text-xs font-medium text-indigo-700 sm:text-[13px]">Perfil e conta</p>
       </div>
-      <ChevronRight
-        className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-600 sm:h-[18px] sm:w-[18px]"
-        aria-hidden
-      />
+      {isPending ? (
+        <Loader2
+          className="h-4 w-4 shrink-0 animate-spin text-indigo-600 sm:h-[18px] sm:w-[18px]"
+          aria-hidden
+        />
+      ) : (
+        <ChevronRight
+          className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-600 sm:h-[18px] sm:w-[18px]"
+          aria-hidden
+        />
+      )}
     </Link>
   );
 }
