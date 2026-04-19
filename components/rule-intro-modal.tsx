@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { UsersRound, X } from "lucide-react";
+import { CalendarClock, UsersRound, X, type LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type RuleIntroRuleKey = "teacher_mutex";
+export type RuleIntroRuleKey = "teacher_mutex" | "general_limits";
 
 type RuleIntroModalProps = {
   open: boolean;
@@ -14,6 +14,40 @@ type RuleIntroModalProps = {
   onOpenChange: (open: boolean) => void;
   onAcknowledge: () => void;
 };
+
+type RuleContent = {
+  Icon: LucideIcon;
+  eyebrow: string;
+  title: string;
+  description: string;
+  bullets: string[];
+};
+
+function ruleContent(rule: RuleIntroRuleKey): RuleContent {
+  if (rule === "general_limits") {
+    return {
+      Icon: CalendarClock,
+      eyebrow: "Regra de geração",
+      title: "Limites gerais",
+      description:
+        "Define o teto padrão de aulas por dia para cada professor na geração do horário e, se quiser, limita quantas aulas seguidas a mesma turma pode ter no mesmo dia (em períodos consecutivos da grade).",
+      bullets: [
+        "O limite diário vale para todos os professores, salvo se você definir um limite próprio na aba Professores."
+      ]
+    };
+  }
+  return {
+    Icon: UsersRound,
+    eyebrow: "Regra de geração",
+    title: "Sem aula simultânea",
+    description:
+      "Use quando só um deles pode estar dando aula naquele momento — por exemplo, mesma sala ou recurso que não dá para dividir.",
+    bullets: [
+      "Cada lista reúne professores que não podem ter aula ao mesmo tempo.",
+      "Se precisar, crie mais de uma lista para situações diferentes."
+    ]
+  };
+}
 
 export default function RuleIntroModal({ open, rule, onOpenChange, onAcknowledge }: RuleIntroModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -50,12 +84,9 @@ export default function RuleIntroModal({ open, rule, onOpenChange, onAcknowledge
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, close]);
 
-  if (!open || rule !== "teacher_mutex") return null;
+  if (!open || rule === null) return null;
 
-  const bullets = [
-    "Cada lista reúne professores que não podem ter aula ao mesmo tempo.",
-    "Se precisar, crie mais de uma lista para situações diferentes."
-  ];
+  const { Icon, eyebrow, title, description, bullets } = ruleContent(rule);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
@@ -84,12 +115,15 @@ export default function RuleIntroModal({ open, rule, onOpenChange, onAcknowledge
               className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-700"
               aria-hidden
             >
-              <UsersRound className="h-5 w-5" strokeWidth={1.65} />
+              <Icon className="h-5 w-5" strokeWidth={1.65} />
             </span>
             <div className="min-w-0 pt-0.5">
-              <p className="text-xs font-medium text-slate-500">Regra de geração</p>
-              <h2 id="rule-intro-title" className="mt-1 text-base font-semibold leading-snug tracking-tight text-slate-900 sm:text-[17px]">
-                Sem aula simultânea
+              <p className="text-xs font-medium text-slate-500">{eyebrow}</p>
+              <h2
+                id="rule-intro-title"
+                className="mt-1 text-base font-semibold leading-snug tracking-tight text-slate-900 sm:text-[17px]"
+              >
+                {title}
               </h2>
             </div>
           </div>
@@ -105,13 +139,15 @@ export default function RuleIntroModal({ open, rule, onOpenChange, onAcknowledge
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
           <p id="rule-intro-desc" className="text-sm leading-relaxed text-slate-600">
-            Use quando só um deles pode estar dando aula naquele momento — por exemplo, mesma sala ou recurso que não
-            dá para dividir.
+            {description}
           </p>
 
           <ul className="mt-6 space-y-0 divide-y divide-slate-100 rounded-xl border border-slate-100 bg-slate-50/50">
             {bullets.map((b) => (
-              <li key={b} className="flex gap-3 px-4 py-3.5 text-sm leading-relaxed text-slate-600 first:rounded-t-xl last:rounded-b-xl">
+              <li
+                key={b}
+                className="flex gap-3 px-4 py-3.5 text-sm leading-relaxed text-slate-600 first:rounded-t-xl last:rounded-b-xl"
+              >
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" aria-hidden />
                 <span>{b}</span>
               </li>

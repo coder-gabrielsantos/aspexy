@@ -3,6 +3,12 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import clientPromise from "@/lib/mongodb";
+import {
+  MAX_LESSONS_PER_DAY_PER_TEACHER_MAX,
+  MAX_LESSONS_PER_DAY_PER_TEACHER_MIN,
+  parseMaxConsecutiveLessonsPerClass,
+  parseMaxLessonsPerDayPerTeacher
+} from "@/lib/schedule-constraint-defaults";
 
 type SolverInputPayload = {
   schoolProfile?: unknown;
@@ -91,6 +97,7 @@ type TeacherDoc = {
   name: string;
   unavailability?: Record<string, number[]>;
   preference?: Record<string, number[]>;
+  max_lessons_per_day?: number | null;
 };
 
 type ClassDoc = {
@@ -128,6 +135,7 @@ export async function POST(request: Request) {
     const teacherNameById: Record<string, string> = {};
     const teacherUnavailability: Record<string, Record<string, number[]>> = {};
     const teacherPreference: Record<string, Record<string, number[]>> = {};
+    const teacherMaxLessonsPerDay: Record<string, number> = {};
     for (const t of teacherDocs) {
       const id = t._id.toString();
       teacherNameById[id] = t.name;
@@ -137,7 +145,23 @@ export async function POST(request: Request) {
       if (t.preference && Object.keys(t.preference).length > 0) {
         teacherPreference[t.name] = t.preference;
       }
+      const cap = t.max_lessons_per_day;
+      if (
+        typeof cap === "number" &&
+        Number.isInteger(cap) &&
+        cap >= MAX_LESSONS_PER_DAY_PER_TEACHER_MIN &&
+        cap <= MAX_LESSONS_PER_DAY_PER_TEACHER_MAX
+      ) {
+        teacherMaxLessonsPerDay[t.name] = cap;
+      }
     }
+
+    const maxLessonsPerDayPerTeacher = parseMaxLessonsPerDayPerTeacher(
+      constraintsDoc?.max_lessons_per_day_per_teacher
+    );
+    const maxConsecutiveLessonsPerClass = parseMaxConsecutiveLessonsPerClass(
+      constraintsDoc?.max_consecutive_lessons_per_class
+    );
 
     const classNameById: Record<string, string> = {};
     for (const c of classDocs) {
@@ -208,6 +232,9 @@ export async function POST(request: Request) {
       teacherPreference,
       teacherMutexGroups,
       maxDailySameSubject: body.maxDailySameSubject ?? 2,
+      maxLessonsPerDayPerTeacher,
+      teacherMaxLessonsPerDay,
+      maxConsecutiveLessonsPerClass,
       timeLimitSeconds: body.timeLimitSeconds ?? 10
     });
 

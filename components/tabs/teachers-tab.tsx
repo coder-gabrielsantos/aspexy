@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, LayoutGrid, Pencil, Trash2, UserPlus, Users, X } from "lucide-react";
 
 import ScheduleSelect from "@/components/schedule-select";
@@ -14,11 +14,22 @@ type TeachersTabProps = {
   teachersHook: ReturnType<typeof useTeachers>;
   structureSelectOptions: Array<{ value: string; label: string }>;
   onRequestDelete: () => void;
+  showToast: (msg: string, v?: "success" | "error") => void;
 };
 
-export default function TeachersTab({ teachersHook: t, structureSelectOptions, onRequestDelete }: TeachersTabProps) {
+export default function TeachersTab({ teachersHook: t, structureSelectOptions, onRequestDelete, showToast }: TeachersTabProps) {
   const [editingId, setEditingId] = useState("");
   const [editingName, setEditingName] = useState("");
+  const [maxDayDraft, setMaxDayDraft] = useState("");
+
+  useEffect(() => {
+    const st = t.selectedTeacher;
+    if (!st) {
+      setMaxDayDraft("");
+      return;
+    }
+    setMaxDayDraft(st.max_lessons_per_day != null ? String(st.max_lessons_per_day) : "");
+  }, [t.selectedTeacher]);
 
   const startEdit = (id: string, name: string) => {
     setEditingId(id);
@@ -202,10 +213,66 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                 </div>
               ) : (
                 <>
-                  <div className="shrink-0 border-b border-slate-100/80 px-5 py-3">
-                    <p className="text-sm font-semibold text-slate-800">
-                      {t.selectedTeacher.name}
-                    </p>
+                  <div className="shrink-0 border-b border-slate-200 bg-slate-100 px-3 py-2 sm:px-4">
+                    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                      <p className="min-w-0 truncate text-sm font-semibold tracking-tight text-slate-800">
+                        {t.selectedTeacher.name}
+                      </p>
+                      <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+                        <label
+                          htmlFor="teacher-max-day"
+                          className="flex shrink-0 flex-wrap items-baseline gap-x-1 gap-y-0 text-[11px] font-medium uppercase tracking-wide text-slate-500"
+                        >
+                          <span>Máx. aulas/dia</span>
+                          <span className="font-semibold normal-case tracking-normal text-slate-400">(opcional)</span>
+                        </label>
+                        <Input
+                          id="teacher-max-day"
+                          type="number"
+                          min={1}
+                          max={20}
+                          inputMode="numeric"
+                          title="Opcional. Vazio = limite da aba Regras. Número de 1 a 20 só para este professor."
+                          className="h-8 w-[3.25rem] shrink-0 rounded-md border-slate-200/90 bg-white px-1.5 text-center text-xs tabular-nums shadow-none focus-visible:ring-1 sm:w-12"
+                          placeholder=""
+                          value={maxDayDraft}
+                          onChange={(e) => setMaxDayDraft(e.target.value)}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "h-8 shrink-0 gap-1 px-3 text-xs font-semibold text-indigo-950",
+                            "border border-indigo-400/70 bg-white",
+                            "shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_1px_2px_rgba(67,56,202,0.12)]",
+                            "transition-[border-color,box-shadow,background-color,color] duration-200",
+                            "hover:border-indigo-500 hover:bg-indigo-50/95 hover:shadow-[0_2px_12px_rgba(79,70,229,0.18)]",
+                            "focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/30 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-100",
+                            "disabled:border-slate-200 disabled:bg-slate-50/80 disabled:text-slate-400 disabled:shadow-none"
+                          )}
+                          title="Aplicar limite"
+                          disabled={t.isSavingTeacher || !t.selectedTeacher}
+                          onClick={() => {
+                            if (!t.selectedTeacher) return;
+                            const trimmed = maxDayDraft.trim();
+                            if (trimmed === "") {
+                              void t.saveTeacherMaxLessonsPerDay(t.selectedTeacher.id, null);
+                              return;
+                            }
+                            const n = Number.parseInt(trimmed, 10);
+                            if (Number.isNaN(n) || n < 1 || n > 20) {
+                              showToast("Use um número entre 1 e 20, ou deixe vazio para o padrão.", "error");
+                              return;
+                            }
+                            void t.saveTeacherMaxLessonsPerDay(t.selectedTeacher.id, n);
+                          }}
+                        >
+                          <Check className="h-3.5 w-3.5 opacity-90" strokeWidth={2.5} aria-hidden />
+                          Aplicar
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                   <div className="min-h-0 min-w-0 flex-1 overflow-auto">
                     <table className="w-full min-w-[600px] table-fixed border-collapse text-xs">

@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { BookOpen, GraduationCap, LayoutGrid, Link2, Users, WandSparkles } from "lucide-react";
 
 import AppSidebar from "@/components/app-sidebar";
 import ConfirmDialog from "@/components/confirm-dialog";
+import UnsavedChangesDialog from "@/components/unsaved-changes-dialog";
 import StepPrerequisiteGuide from "@/components/step-prerequisite-guide";
 import ToastStack from "@/components/toast-stack";
 import { SkeletonPanel, SkeletonTable } from "@/components/ui/skeleton";
@@ -41,7 +42,7 @@ const PAGE_TITLE: Record<TabMode, string> = {
   classes: "Turmas",
   teachers: "Professores",
   subjects: "Disciplinas",
-  constraints: "Regras de geração",
+  constraints: "Regras",
   generate: "Horários"
 };
 
@@ -57,12 +58,21 @@ export default function AspexyCanvas() {
   const teachersHook = useTeachers(showToast);
   const subjectsHook = useSubjects(showToast);
   const constraintsHook = useScheduleConstraints(showToast);
+  const {
+    isConstraintsDirty,
+    saveConstraints: saveScheduleConstraints,
+    discardConstraintsChanges: discardScheduleConstraints
+  } = constraintsHook;
   const generationHook = useScheduleGeneration(showToast, classesHook.classes);
 
   const [confirmTarget, setConfirmTarget] = useState<"structure" | "generated" | "teacher" | "class" | "subject" | null>(null);
   const [confirmClassId, setConfirmClassId] = useState("");
   const [confirmSubjectId, setConfirmSubjectId] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const pendingConstraintsNavRef = useRef<TabMode | null>(null);
+  const [constraintsLeaveOpen, setConstraintsLeaveOpen] = useState(false);
+  const [constraintsLeavePending, setConstraintsLeavePending] = useState(false);
 
   useEffect(() => {
     void structuresHook.loadStructures();
@@ -91,10 +101,49 @@ export default function AspexyCanvas() {
     [activeTab, structures, classes, teachers, subjects]
   );
 
-  const navigateToStep = useCallback((tab: TabMode | string) => {
-    setActiveTab(tab as TabMode);
-    setSidebarOpen(false);
+  const finalizeConstraintsNavigation = useCallback(() => {
+    const target = pendingConstraintsNavRef.current;
+    pendingConstraintsNavRef.current = null;
+    if (target) {
+      setActiveTab(target);
+      setSidebarOpen(false);
+    }
+    setConstraintsLeaveOpen(false);
   }, []);
+
+  const navigateToStep = useCallback(
+    (tab: TabMode | string) => {
+      const next = tab as TabMode;
+      if (activeTab === "constraints" && next !== "constraints" && isConstraintsDirty) {
+        pendingConstraintsNavRef.current = next;
+        setConstraintsLeaveOpen(true);
+        return;
+      }
+      setActiveTab(next);
+      setSidebarOpen(false);
+    },
+    [activeTab, isConstraintsDirty]
+  );
+
+  const handleConstraintsTabLeaveSave = useCallback(async () => {
+    setConstraintsLeavePending(true);
+    try {
+      const ok = await saveScheduleConstraints();
+      if (ok) finalizeConstraintsNavigation();
+    } finally {
+      setConstraintsLeavePending(false);
+    }
+  }, [saveScheduleConstraints, finalizeConstraintsNavigation]);
+
+  const handleConstraintsTabLeaveDiscard = useCallback(async () => {
+    setConstraintsLeavePending(true);
+    try {
+      await discardScheduleConstraints();
+      finalizeConstraintsNavigation();
+    } finally {
+      setConstraintsLeavePending(false);
+    }
+  }, [discardScheduleConstraints, finalizeConstraintsNavigation]);
 
   const runConfirmDelete = async () => {
     setIsDeleting(true);
@@ -188,6 +237,7 @@ export default function AspexyCanvas() {
                 teachersHook={teachersHook}
                 structureSelectOptions={structuresHook.structureSelectOptions}
                 onRequestDelete={() => setConfirmTarget("teacher")}
+                showToast={showToast}
               />
             )
           )}
@@ -236,6 +286,21 @@ export default function AspexyCanvas() {
       </div>
 
       <ToastStack toasts={toasts} onDismiss={dismissToast} />
+
+      <UnsavedChangesDialog
+        open={constraintsLeaveOpen}
+        onOpenChange={(open) => {
+          if (!open && !constraintsLeavePending) {
+            pendingConstraintsNavRef.current = null;
+            setConstraintsLeaveOpen(false);
+          }
+        }}
+        title="Salvar alterações nas regras?"
+        description="Existem alterações na aba Regras que ainda não foram salvas. Salve para conservá-las ou descarte para sair."
+        isPending={constraintsLeavePending || constraintsHook.isSaving}
+        onSave={handleConstraintsTabLeaveSave}
+        onDiscard={handleConstraintsTabLeaveDiscard}
+      />
 
       <ConfirmDialog
         open={confirmTarget !== null}

@@ -76,6 +76,11 @@ export type Teacher = {
   unavailability: Record<string, number[]>;
   /** Índices de slot por dia em que o professor prefere ministrar (objetivo mole no solver). */
   preference: Record<string, number[]>;
+  /**
+   * Limite diário de aulas na geração; quando null, usa o padrão em Regras.
+   * Número inteiro entre 1 e 20.
+   */
+  max_lessons_per_day: number | null;
 };
 
 export type SchoolClass = {

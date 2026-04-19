@@ -1,9 +1,15 @@
 import { ObjectId } from "mongodb";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import clientPromise from "@/lib/mongodb";
+import {
+  parseMaxConsecutiveLessonsPerClass,
+  parseMaxLessonsPerDayPerTeacher
+} from "@/lib/schedule-constraint-defaults";
 
 function validTeacherIds(ids: unknown): string[] | null {
   if (!Array.isArray(ids)) return null;
@@ -58,16 +64,39 @@ function legacyPairsToGroups(
   return dedupeGroups(out);
 }
 
-export async function GET() {
+/** Sessão via cookies do pedido (JWT); fallback ao token quando `getServerSession` não enxerga o cookie no App Router. */
+async function getAuthedUserId(request: Request): Promise<string | null> {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const sid = session?.user?.id;
+    if (typeof sid === "string" && sid) return sid;
+  } catch {
+    // continua para getToken
+  }
+
+  try {
+    const secret = authOptions.secret ?? process.env.NEXTAUTH_SECRET;
+    if (!secret) return null;
+    const token = await getToken({ req: request as NextRequest, secret });
+    if (!token) return null;
+    const id = typeof token.id === "string" && token.id ? token.id : undefined;
+    const sub = typeof token.sub === "string" && token.sub ? token.sub : undefined;
+    return id ?? sub ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const userId = await getAuthedUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
     }
 
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB ?? "aspexy");
-    const doc = await db.collection("schedule_constraints").findOne({ user_id: session.user.id });
+    const doc = await db.collection("schedule_constraints").findOne({ user_id: userId });
 
     const rawGroups = doc?.teacher_mutex_groups ?? [];
     const parsed: Array<{ teacherIds: string[] }> = [];
@@ -81,9 +110,14 @@ export async function GET() {
       teacherMutexGroups = legacyPairsToGroups(doc.teacher_mutex_pairs as { teacher_id_a?: string; teacher_id_b?: string }[]);
     }
 
+    const maxLessonsPerDayPerTeacher = parseMaxLessonsPerDayPerTeacher(doc?.max_lessons_per_day_per_teacher);
+    const maxConsecutiveLessonsPerClass = parseMaxConsecutiveLessonsPerClass(doc?.max_consecutive_lessons_per_class);
+
     return NextResponse.json({
       ok: true,
-      teacherMutexGroups
+      teacherMutexGroups,
+      maxLessonsPerDayPerTeacher,
+      maxConsecutiveLessonsPerClass
     });
   } catch (error) {
     return NextResponse.json(
@@ -95,21 +129,34 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const userId = await getAuthedUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
     }
 
-    const body = (await request.json()) as { teacherMutexGroups?: unknown };
+    let body: {
+      teacherMutexGroups?: unknown;
+      maxLessonsPerDayPerTeacher?: unknown;
+      maxConsecutiveLessonsPerClass?: unknown;
+    };
+    try {
+      body = (await request.json()) as typeof body;
+    } catch {
+      return NextResponse.json({ error: "JSON inválido no corpo da requisição." }, { status: 400 });
+    }
     if (!Array.isArray(body.teacherMutexGroups)) {
       return NextResponse.json({ error: "Campo teacherMutexGroups deve ser um array." }, { status: 400 });
     }
+
+    const maxLessonsPerDayPerTeacher = parseMaxLessonsPerDayPerTeacher(body.maxLessonsPerDayPerTeacher);
+    const maxConsecutiveLessonsPerClass = parseMaxConsecutiveLessonsPerClass(body.maxConsecutiveLessonsPerClass);
 
     const parsed: Array<{ teacherIds: string[] }> = [];
     for (const item of body.teacherMutexGroups) {
       if (!item || typeof item !== "object") continue;
       const o = item as Record<string, unknown>;
-      const ids = validTeacherIds(o.teacherIds);
+      const rawIds = Array.isArray(o.teacherIds) ? o.teacherIds : Array.isArray(o.teacher_ids) ? o.teacher_ids : null;
+      const ids = validTeacherIds(rawIds);
       if (ids) parsed.push({ teacherIds: ids });
     }
     const teacherMutexGroups = dedupeGroups(parsed);
@@ -122,11 +169,13 @@ export async function PUT(request: Request) {
     const now = new Date();
 
     await db.collection("schedule_constraints").updateOne(
-      { user_id: session.user.id },
+      { user_id: userId },
       {
         $set: {
-          user_id: session.user.id,
+          user_id: userId,
           teacher_mutex_groups,
+          max_lessons_per_day_per_teacher: maxLessonsPerDayPerTeacher,
+          max_consecutive_lessons_per_class: maxConsecutiveLessonsPerClass,
           updated_at: now
         },
         $unset: { teacher_mutex_pairs: "" }
@@ -134,7 +183,12 @@ export async function PUT(request: Request) {
       { upsert: true }
     );
 
-    return NextResponse.json({ ok: true, teacherMutexGroups });
+    return NextResponse.json({
+      ok: true,
+      teacherMutexGroups,
+      maxLessonsPerDayPerTeacher,
+      maxConsecutiveLessonsPerClass
+    });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Falha ao salvar regras." },

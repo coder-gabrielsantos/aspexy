@@ -15,12 +15,16 @@ function normalizeTeacherFromApi(t: {
   name: string;
   unavailability?: Record<string, number[]>;
   preference?: Record<string, number[]>;
+  max_lessons_per_day?: number | null;
 }): Teacher {
+  const cap = t.max_lessons_per_day;
   return {
     id: t.id,
     name: t.name,
     unavailability: t.unavailability ?? {},
     preference: t.preference ?? {},
+    max_lessons_per_day:
+      typeof cap === "number" && Number.isInteger(cap) && cap >= 1 && cap <= 20 ? cap : null
   };
 }
 
@@ -120,6 +124,37 @@ export function useTeachers(showToast: (msg: string, v?: "success" | "error") =>
     [showToast]
   );
 
+  const saveTeacherMaxLessonsPerDay = useCallback(
+    async (teacherId: string, maxLessonsPerDay: number | null) => {
+      const teacher = teachers.find((x) => x.id === teacherId);
+      if (!teacher) return;
+      setIsSavingTeacher(true);
+      try {
+        const r = await fetch("/api/teachers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            teacherId: teacher.id,
+            name: teacher.name,
+            unavailability: teacher.unavailability,
+            preference: teacher.preference,
+            max_lessons_per_day: maxLessonsPerDay
+          })
+        });
+        const d = await readJsonSafe<{ ok?: boolean; teacher?: Teacher; error?: string }>(r);
+        if (!r.ok || !d?.ok || !d.teacher) throw new Error(d?.error ?? "Falha ao salvar limite.");
+        setTeachers((prev) => prev.map((t) => (t.id === d.teacher!.id ? normalizeTeacherFromApi(d.teacher!) : t)));
+        showToast("Limite diário atualizado.");
+      } catch (e) {
+        showToast(e instanceof Error ? e.message : "Falha ao salvar limite.", "error");
+        await loadTeachers();
+      } finally {
+        setIsSavingTeacher(false);
+      }
+    },
+    [teachers, loadTeachers, showToast]
+  );
+
   const toggleTeacherSlotState = useCallback(
     async (dayIndex: number, slotIndex: number) => {
       if (!selectedTeacher) return;
@@ -171,5 +206,6 @@ export function useTeachers(showToast: (msg: string, v?: "success" | "error") =>
     runDeleteTeacher,
     handleLoadStructureForTeacher,
     toggleTeacherSlotState,
+    saveTeacherMaxLessonsPerDay,
   };
 }
