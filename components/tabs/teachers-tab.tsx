@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, LayoutGrid, Pencil, Trash2, UserPlus, Users, X } from "lucide-react";
 
 import ScheduleSelect from "@/components/schedule-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { DAYS, teacherSlotLabelMap, type TeacherSlotState } from "@/lib/types";
+import {
+  DAYS,
+  teacherAvailabilityCellsInRect,
+  teacherSlotLabelMap,
+  type TeacherSlotState,
+} from "@/lib/types";
 import type { useTeachers } from "@/hooks/use-teachers";
 
 type TeachersTabProps = {
@@ -17,10 +22,40 @@ type TeachersTabProps = {
   showToast: (msg: string, v?: "success" | "error") => void;
 };
 
+type DragRect = { di0: number; si0: number; di1: number; si1: number };
+
+function readAvailabilityCellFromHit(target: EventTarget | null): { di: number; si: number } | null {
+  const el = (target as HTMLElement | null)?.closest?.("[data-availability-cell]");
+  if (!el) return null;
+  const di = Number((el as HTMLElement).dataset.day);
+  const si = Number((el as HTMLElement).dataset.slot);
+  if (!Number.isFinite(di) || !Number.isFinite(si)) return null;
+  return { di, si };
+}
+
+function cellInDragPreview(di: number, si: number, rect: DragRect | null): boolean {
+  if (!rect) return false;
+  const dMin = Math.min(rect.di0, rect.di1);
+  const dMax = Math.max(rect.di0, rect.di1);
+  const sMin = Math.min(rect.si0, rect.si1);
+  const sMax = Math.max(rect.si0, rect.si1);
+  return di >= dMin && di <= dMax && si >= sMin && si <= sMax;
+}
+
 export default function TeachersTab({ teachersHook: t, structureSelectOptions, onRequestDelete, showToast }: TeachersTabProps) {
   const [editingId, setEditingId] = useState("");
   const [editingName, setEditingName] = useState("");
   const [maxDayDraft, setMaxDayDraft] = useState("");
+  const [dragRect, setDragRect] = useState<DragRect | null>(null);
+
+  const teachersApiRef = useRef({
+    toggle: t.toggleTeacherSlotState,
+    applyBulk: t.applyTeacherSlotsBulk,
+    teacherSlots: t.teacherSlots,
+  });
+  teachersApiRef.current.toggle = t.toggleTeacherSlotState;
+  teachersApiRef.current.applyBulk = t.applyTeacherSlotsBulk;
+  teachersApiRef.current.teacherSlots = t.teacherSlots;
 
   useEffect(() => {
     const st = t.selectedTeacher;
@@ -57,6 +92,44 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
     } catch {
       /* keep editing state open on error */
     }
+  };
+
+  const beginAvailabilityDrag = (e: React.PointerEvent, anchorDi: number, anchorSi: number) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const brush = t.teacherSlotState(anchorDi, anchorSi);
+    setDragRect({ di0: anchorDi, si0: anchorSi, di1: anchorDi, si1: anchorSi });
+
+    const onMove = (ev: PointerEvent) => {
+      const hit = readAvailabilityCellFromHit(document.elementFromPoint(ev.clientX, ev.clientY));
+      if (hit) {
+        setDragRect({ di0: anchorDi, si0: anchorSi, di1: hit.di, si1: hit.si });
+      }
+    };
+
+    const finish = (ev: PointerEvent) => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", finish);
+      window.removeEventListener("pointercancel", finish);
+
+      const api = teachersApiRef.current;
+      const hit = readAvailabilityCellFromHit(document.elementFromPoint(ev.clientX, ev.clientY));
+      const endDi = hit?.di ?? anchorDi;
+      const endSi = hit?.si ?? anchorSi;
+      setDragRect(null);
+
+      const spansMultiple = endDi !== anchorDi || endSi !== anchorSi;
+      if (spansMultiple) {
+        const cells = teacherAvailabilityCellsInRect(api.teacherSlots, anchorDi, anchorSi, endDi, endSi);
+        if (cells.length > 0) void api.applyBulk(cells, brush);
+      } else {
+        void api.toggle(anchorDi, anchorSi);
+      }
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", finish);
+    window.addEventListener("pointercancel", finish);
   };
 
   return (
@@ -274,7 +347,12 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                       </div>
                     </div>
                   </div>
-                  <div className="min-h-0 min-w-0 flex-1 overflow-auto">
+                  <div
+                    className={cn(
+                      "min-h-0 min-w-0 flex-1 overflow-auto",
+                      dragRect && "touch-none select-none"
+                    )}
+                  >
                     <table className="w-full min-w-[600px] table-fixed border-collapse text-xs">
                       <colgroup>
                         <col className="w-[120px]" />
@@ -325,16 +403,27 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                                   <td key={`${slot.id}-${DAYS[di]}`} className="border-b border-slate-100/80 px-1.5 py-2 align-middle">
                                     <button
                                       type="button"
-                                      onClick={() => void t.toggleTeacherSlotState(di, si)}
-                                      aria-label={`${teacherSlotLabelMap[slotState]} — clique para alternar`}
+                                      data-availability-cell
+                                      data-day={di}
+                                      data-slot={si}
+                                      onPointerDown={(e) => beginAvailabilityDrag(e, di, si)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                          e.preventDefault();
+                                          void t.toggleTeacherSlotState(di, si);
+                                        }
+                                      }}
+                                      aria-label={`${teacherSlotLabelMap[slotState]} — clique para alternar ou arraste para preencher uma área`}
                                       className={cn(
-                                        "box-border flex h-9 w-full items-center justify-center rounded-none text-[10px] font-semibold tracking-wide transition-colors duration-200",
+                                        "relative box-border flex h-9 w-full items-center justify-center rounded-none text-[10px] font-semibold tracking-wide transition-colors duration-200",
                                         slotState === "available" &&
                                           "bg-slate-50 text-slate-700 ring-1 ring-slate-200/80 hover:bg-slate-100",
                                         slotState === "preference" &&
                                           "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/80 hover:bg-emerald-100/90",
                                         slotState === "unavailable" &&
-                                          "bg-rose-50 text-rose-600 ring-1 ring-rose-200/80 hover:bg-rose-100"
+                                          "bg-rose-50 text-rose-600 ring-1 ring-rose-200/80 hover:bg-rose-100",
+                                        cellInDragPreview(di, si, dragRect) &&
+                                          "z-[1] ring-2 ring-indigo-500 ring-offset-1 ring-offset-white"
                                       )}
                                     >
                                       {teacherSlotLabelMap[slotState]}
@@ -366,7 +455,7 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                     </span>
                     <span className="hidden items-center gap-1.5 text-slate-400 sm:ml-2 sm:flex">
                       <span className="h-1.5 w-1.5 rounded-full bg-slate-400" aria-hidden />
-                      clique para alternar
+                      clique para alternar — arraste para preencher uma área
                     </span>
                   </div>
                 </>

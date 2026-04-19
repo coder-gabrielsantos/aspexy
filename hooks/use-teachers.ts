@@ -4,6 +4,7 @@ import {
   slotsFromProfile,
   cycleTeacherSlotMaps,
   getTeacherSlotState,
+  setTeacherSlotsBulkToState,
   type SchoolProfile,
   type SlotRow,
   type Teacher,
@@ -161,8 +162,40 @@ export function useTeachers(showToast: (msg: string, v?: "success" | "error") =>
       const { unavailability, preference } = cycleTeacherSlotMaps(selectedTeacher, dayIndex, slotIndex);
 
       setTeachers((prev) =>
-        prev.map((t) =>
-          t.id === selectedTeacher.id ? { ...t, unavailability, preference } : t
+        prev.map((te) =>
+          te.id === selectedTeacher.id ? { ...te, unavailability, preference } : te
+        )
+      );
+
+      try {
+        const r = await fetch("/api/teachers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            teacherId: selectedTeacher.id,
+            name: selectedTeacher.name,
+            unavailability,
+            preference,
+          }),
+        });
+        const d = await readJsonSafe<{ ok?: boolean; error?: string }>(r);
+        if (!r.ok || !d?.ok) throw new Error(d?.error ?? "Falha ao salvar grade do professor.");
+      } catch (e) {
+        await loadTeachers();
+        showToast(e instanceof Error ? e.message : "Falha ao salvar grade do professor.", "error");
+      }
+    },
+    [selectedTeacher, loadTeachers, showToast]
+  );
+
+  const applyTeacherSlotsBulk = useCallback(
+    async (cells: Array<{ dayIndex: number; slotIndex: number }>, target: TeacherSlotState) => {
+      if (!selectedTeacher || cells.length === 0) return;
+      const { unavailability, preference } = setTeacherSlotsBulkToState(selectedTeacher, cells, target);
+
+      setTeachers((prev) =>
+        prev.map((te) =>
+          te.id === selectedTeacher.id ? { ...te, unavailability, preference } : te
         )
       );
 
@@ -206,6 +239,7 @@ export function useTeachers(showToast: (msg: string, v?: "success" | "error") =>
     runDeleteTeacher,
     handleLoadStructureForTeacher,
     toggleTeacherSlotState,
+    applyTeacherSlotsBulk,
     saveTeacherMaxLessonsPerDay,
   };
 }

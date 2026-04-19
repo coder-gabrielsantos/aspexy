@@ -152,6 +152,70 @@ export function cycleTeacherSlotMaps(
   return { unavailability: un, preference: pref };
 }
 
+/** Define o mesmo status para várias células (dia × slot) de uma vez. */
+export function setTeacherSlotsBulkToState(
+  teacher: Teacher,
+  cells: Array<{ dayIndex: number; slotIndex: number }>,
+  target: TeacherSlotState
+): { unavailability: Record<string, number[]>; preference: Record<string, number[]> } {
+  const unique = new Map<string, { dayIndex: number; slotIndex: number }>();
+  for (const c of cells) {
+    unique.set(`${c.dayIndex}-${c.slotIndex}`, c);
+  }
+  const list = [...unique.values()];
+
+  const un: Record<string, number[]> = {};
+  const pref: Record<string, number[]> = {};
+  for (const [k, arr] of Object.entries(teacher.unavailability)) {
+    un[k] = [...arr];
+  }
+  for (const [k, arr] of Object.entries(teacher.preference)) {
+    pref[k] = [...arr];
+  }
+
+  for (const { dayIndex, slotIndex } of list) {
+    const key = String(dayIndex);
+    un[key] = (un[key] ?? []).filter((s) => s !== slotIndex);
+    pref[key] = (pref[key] ?? []).filter((s) => s !== slotIndex);
+    if ((un[key]?.length ?? 0) === 0) delete un[key];
+    if ((pref[key]?.length ?? 0) === 0) delete pref[key];
+  }
+
+  for (const { dayIndex, slotIndex } of list) {
+    const key = String(dayIndex);
+    if (target === "unavailable") {
+      un[key] = [...(un[key] ?? []), slotIndex].sort((a, b) => a - b);
+    } else if (target === "preference") {
+      pref[key] = [...(pref[key] ?? []), slotIndex].sort((a, b) => a - b);
+    }
+  }
+
+  return { unavailability: un, preference: pref };
+}
+
+/** Células editáveis no retângulo (ignora linhas que são só intervalo). */
+export function teacherAvailabilityCellsInRect(
+  teacherSlots: SlotRow[],
+  day0: number,
+  slot0: number,
+  day1: number,
+  slot1: number
+): Array<{ dayIndex: number; slotIndex: number }> {
+  const dMin = Math.min(day0, day1);
+  const dMax = Math.max(day0, day1);
+  const sMin = Math.min(slot0, slot1);
+  const sMax = Math.max(slot0, slot1);
+  const out: Array<{ dayIndex: number; slotIndex: number }> = [];
+  for (let si = sMin; si <= sMax; si++) {
+    const row = teacherSlots[si];
+    if (!row || row.cells.every((c) => c === "break")) continue;
+    for (let di = dMin; di <= dMax; di++) {
+      out.push({ dayIndex: di, slotIndex: si });
+    }
+  }
+  return out;
+}
+
 export function createInitialSlot(index = 0): SlotRow {
   return { id: `slot-${index + 1}`, start: DEFAULT_START, end: DEFAULT_END, cells: DAYS.map(() => "lesson" as SlotState) };
 }
