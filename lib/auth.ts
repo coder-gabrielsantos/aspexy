@@ -189,6 +189,12 @@ export const authOptions: NextAuthOptions = {
           token.loginProvider = "credentials";
         }
       }
+
+      // NextAuth coloca `picture` (URL de avatar, muito longa no Google) no JWT. Isso estoura o tamanho
+      // dos headers com cookies fragmentados (Vercel: 494 REQUEST_HEADER_TOO_LARGE). A foto vem do
+      // Mongo em `session` via `loadCredentialsUserProfile`.
+      delete (token as { picture?: unknown }).picture;
+
       return token;
     },
     async session({ session, token }) {
