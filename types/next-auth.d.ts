@@ -4,6 +4,7 @@ declare module "next-auth" {
   interface Session {
     user?: DefaultSession["user"] & {
       id: string;
+      loginProvider?: "google" | "credentials";
     };
   }
 }
@@ -15,5 +16,6 @@ declare module "next-auth/jwt" {
     name?: string | null;
     /** URL da foto de perfil (ex.: Google userinfo `picture`) */
     picture?: string | null;
+    loginProvider?: "google" | "credentials";
   }
 }

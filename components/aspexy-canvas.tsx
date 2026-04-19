@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { BookOpen, GraduationCap, LayoutGrid, Link2, Users, WandSparkles } from "lucide-react";
 
 import AppSidebar from "@/components/app-sidebar";
@@ -179,7 +179,6 @@ export default function AspexyCanvas() {
         userName={session?.user?.name}
         userImage={session?.user?.image}
         userInitials={userInitials}
-        onSignOut={() => void signOut({ callbackUrl: "/login" })}
         mobileOpen={sidebarOpen}
         onMobileOpenChange={setSidebarOpen}
       />

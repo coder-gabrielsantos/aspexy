@@ -1,6 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+import { ObjectId } from "mongodb";
 
 import {
   CREDENTIALS_AUTH_METHOD_EMAIL,
@@ -29,17 +30,20 @@ async function authorizeCredentials(email: string, password: string) {
     email: string;
     password_hash: string;
     name?: string;
+    image?: string | null;
   }>({ email: normalized, auth_method: CREDENTIALS_AUTH_METHOD_EMAIL });
 
   if (!doc?.password_hash) return null;
   const match = await verifyPassword(password, doc.password_hash);
   if (!match) return null;
 
+  const img = typeof doc.image === "string" && doc.image.trim() ? doc.image.trim() : null;
+
   return {
     id: doc._id.toString(),
     email: doc.email,
     name: doc.name || undefined,
-    image: null as string | null
+    image: img
   };
 }
 
@@ -47,7 +51,7 @@ async function upsertGoogleCredentialsUser(params: {
   email: string;
   name: string | null;
   image: string | null;
-}): Promise<{ id: string; name: string }> {
+}): Promise<{ id: string; name: string; image: string | null }> {
   const email = normalizeEmail(params.email);
   if (!email) throw new Error("E-mail ausente no perfil Google.");
 
@@ -58,29 +62,63 @@ async function upsertGoogleCredentialsUser(params: {
 
   const now = new Date();
   const fromGoogle = (params.name ?? "").trim();
-  const name = (fromGoogle || defaultDisplayNameFromEmail(email)).slice(0, CREDENTIALS_DISPLAY_NAME_MAX);
-  const image = (params.image ?? "").trim() || null;
+  const googleName = (fromGoogle || defaultDisplayNameFromEmail(email)).slice(0, CREDENTIALS_DISPLAY_NAME_MAX);
+  const googleImage = (params.image ?? "").trim() || null;
 
-  const doc = await coll.findOneAndUpdate(
-    { email, auth_method: CREDENTIALS_AUTH_METHOD_OAUTH },
-    {
-      $set: {
-        updated_at: now,
-        name,
-        image
-      },
-      $setOnInsert: {
-        email,
-        auth_method: CREDENTIALS_AUTH_METHOD_OAUTH,
-        created_at: now
-      }
-    },
-    { upsert: true, returnDocument: "after" }
-  );
+  const existing = await coll.findOne<{ _id: { toString(): string }; name?: string; image?: string | null }>({
+    email,
+    auth_method: CREDENTIALS_AUTH_METHOD_OAUTH
+  });
 
-  const id = doc?._id;
-  if (!id) throw new Error("Falha ao sincronizar conta Google.");
-  return { id: id.toString(), name };
+  if (!existing) {
+    await coll.insertOne({
+      email,
+      auth_method: CREDENTIALS_AUTH_METHOD_OAUTH,
+      name: googleName,
+      image: googleImage,
+      created_at: now,
+      updated_at: now
+    });
+    const inserted = await coll.findOne<{ _id: { toString(): string }; name?: string; image?: string | null }>({
+      email,
+      auth_method: CREDENTIALS_AUTH_METHOD_OAUTH
+    });
+    if (!inserted?._id) throw new Error("Falha ao sincronizar conta Google.");
+    return {
+      id: inserted._id.toString(),
+      name: typeof inserted.name === "string" ? inserted.name : googleName,
+      image: typeof inserted.image === "string" ? inserted.image : null
+    };
+  }
+
+  await coll.updateOne({ _id: existing._id }, { $set: { updated_at: now } });
+  const refreshed = await coll.findOne<{ name?: string; image?: string | null }>({ _id: existing._id });
+  return {
+    id: existing._id.toString(),
+    name: typeof refreshed?.name === "string" && refreshed.name.trim() ? refreshed.name : googleName,
+    image: typeof refreshed?.image === "string" ? refreshed.image : null
+  };
+}
+
+async function loadCredentialsUserProfile(userId: string): Promise<{ name: string; image: string | null } | null> {
+  if (!ObjectId.isValid(userId)) return null;
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB ?? "aspexy");
+    const doc = await db.collection(CREDENTIALS_USERS_COLLECTION).findOne<{ name?: string; image?: string | null }>(
+      { _id: new ObjectId(userId) },
+      { projection: { name: 1, image: 1 } }
+    );
+    if (!doc) return null;
+    const name =
+      typeof doc.name === "string" && doc.name.trim()
+        ? doc.name.trim().slice(0, CREDENTIALS_DISPLAY_NAME_MAX)
+        : "Usuário";
+    const image = typeof doc.image === "string" && doc.image.trim() ? doc.image.trim() : null;
+    return { name, image };
+  } catch {
+    return null;
+  }
 }
 
 export const authOptions: NextAuthOptions = {
@@ -136,27 +174,34 @@ export const authOptions: NextAuthOptions = {
           token.id = mongoId;
           token.email = normalizeEmail(user.email);
           token.name = storedName;
-          if (picture) token.picture = picture;
+          token.loginProvider = "google";
         } else {
           token.id = user.id;
           if (user.email) token.email = user.email;
           if (user.name) token.name = user.name;
-          if (picture) token.picture = picture;
+          token.loginProvider = "credentials";
         }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = (token.id as string) ?? (token.sub as string);
+        const id = ((token.id as string) || (token.sub as string)) ?? "";
+        session.user.id = id;
         if (typeof token.email === "string" && token.email) {
           session.user.email = token.email;
         }
-        if (typeof token.name === "string" && token.name) {
-          session.user.name = token.name;
+        if (token.loginProvider === "google" || token.loginProvider === "credentials") {
+          session.user.loginProvider = token.loginProvider;
         }
-        if (typeof token.picture === "string") {
-          session.user.image = token.picture;
+
+        const fromDb = id ? await loadCredentialsUserProfile(id) : null;
+        if (fromDb) {
+          session.user.name = fromDb.name;
+          session.user.image = fromDb.image;
+        } else if (typeof token.name === "string" && token.name) {
+          session.user.name = token.name;
+          session.user.image = null;
         }
       }
       return session;

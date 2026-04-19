@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 import Image from "next/image";
-import { LogOut, Menu, X } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, Menu, X } from "lucide-react";
 
 import platformLogo from "@/app/util/logo.png";
 import type { StepDef } from "@/lib/types";
@@ -14,12 +15,17 @@ const HEADER_ROW =
 function UserAvatar({
   imageUrl,
   initials,
-  nameLabel
+  nameLabel,
+  size = "sm"
 }: {
   imageUrl?: string | null;
   initials: string;
   nameLabel?: string | null;
+  size?: "sm" | "md";
 }) {
+  const box = size === "md" ? "h-10 w-10 text-xs" : "h-8 w-8 text-[10px]";
+  const imgPx = size === "md" ? 40 : 32;
+
   if (imageUrl) {
     return (
       // Avatar externo (Google); <img> evita depender de hostname fixo no next.config
@@ -27,15 +33,20 @@ function UserAvatar({
       <img
         src={imageUrl}
         alt={nameLabel ? `Foto de ${nameLabel}` : "Foto do perfil"}
-        width={32}
-        height={32}
+        width={imgPx}
+        height={imgPx}
         referrerPolicy="no-referrer"
-        className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-indigo-200/90"
+        className={cn("shrink-0 rounded-full object-cover ring-1 ring-indigo-200/90", box)}
       />
     );
   }
   return (
-    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-indigo-700 via-indigo-600 to-sky-600 text-[10px] font-semibold text-white shadow-sm shadow-indigo-950/20">
+    <div
+      className={cn(
+        "grid shrink-0 place-items-center rounded-full bg-gradient-to-br from-indigo-700 via-indigo-600 to-sky-600 font-semibold text-white shadow-sm shadow-indigo-950/20",
+        box
+      )}
+    >
       {initials}
     </div>
   );
@@ -48,12 +59,47 @@ type AppSidebarProps = {
   userName?: string | null;
   userImage?: string | null;
   userInitials: string;
-  onSignOut: () => void;
   mobileOpen: boolean;
   onMobileOpenChange: (open: boolean) => void;
 };
 
 const GROUP_LABEL = "mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400";
+
+function ProfileAccountLink({
+  userName,
+  userImage,
+  userInitials,
+  onNavigate
+}: {
+  userName?: string | null;
+  userImage?: string | null;
+  userInitials: string;
+  onNavigate: () => void;
+}) {
+  const displayName = userName?.trim() || "Usuário";
+
+  return (
+    <Link
+      href="/settings/profile"
+      onClick={onNavigate}
+      aria-label={`Abrir página de perfil e conta de ${displayName}`}
+      className={cn(
+        "group flex w-full min-w-0 items-center gap-3 border-t border-slate-200/80 bg-white px-3 py-2.5 outline-none transition-colors sm:px-3.5 sm:py-3",
+        "hover:bg-indigo-50/80 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500/35"
+      )}
+    >
+      <UserAvatar imageUrl={userImage} initials={userInitials} nameLabel={userName} size="md" />
+      <div className="min-w-0 flex-1 text-left">
+        <p className="truncate text-sm font-semibold text-slate-800 sm:text-[15px]">{displayName}</p>
+        <p className="mt-0.5 truncate text-xs font-medium text-indigo-700 sm:text-[13px]">Perfil e conta</p>
+      </div>
+      <ChevronRight
+        className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-600 sm:h-[18px] sm:w-[18px]"
+        aria-hidden
+      />
+    </Link>
+  );
+}
 
 export default function AppSidebar({
   steps,
@@ -62,7 +108,6 @@ export default function AppSidebar({
   userName,
   userImage,
   userInitials,
-  onSignOut,
   mobileOpen,
   onMobileOpenChange
 }: AppSidebarProps) {
@@ -225,23 +270,12 @@ export default function AppSidebar({
           {geracaoSteps.map(renderDesktopNavItem)}
         </nav>
 
-        <div className="border-t border-slate-200/80 bg-white p-3">
-          <div className="flex items-center gap-3 rounded-xl px-2 py-2">
-            <UserAvatar imageUrl={userImage} initials={userInitials} nameLabel={userName} />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-slate-800">{userName ?? "Usuário"}</p>
-              <p className="text-xs text-slate-500">Google</p>
-            </div>
-            <button
-              type="button"
-              onClick={onSignOut}
-              aria-label="Sair da conta"
-              className="shrink-0 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+        <ProfileAccountLink
+          userName={userName}
+          userImage={userImage}
+          userInitials={userInitials}
+          onNavigate={() => onMobileOpenChange(false)}
+        />
       </aside>
 
       <header className="sticky top-0 z-[60] flex h-[var(--app-header-h)] min-h-[4rem] shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.06),0_4px_12px_-2px_rgba(15,23,42,0.08)] lg:hidden">
@@ -300,23 +334,12 @@ export default function AppSidebar({
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
           {mobileNavContent}
         </div>
-        <div className="border-t border-slate-200 p-3">
-          <div className="flex items-center gap-3 px-1 py-0.5">
-            <UserAvatar imageUrl={userImage} initials={userInitials} nameLabel={userName} />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-slate-800">{userName ?? "Usuário"}</p>
-              <p className="text-xs text-slate-500">Google</p>
-            </div>
-            <button
-              type="button"
-              onClick={onSignOut}
-              aria-label="Sair da conta"
-              className="shrink-0 rounded-md p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-800"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+        <ProfileAccountLink
+          userName={userName}
+          userImage={userImage}
+          userInitials={userInitials}
+          onNavigate={() => onMobileOpenChange(false)}
+        />
       </aside>
     </>
   );
