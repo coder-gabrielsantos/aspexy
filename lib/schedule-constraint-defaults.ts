@@ -1,6 +1,6 @@
 /** Padrão quando ainda não há documento em `schedule_constraints`. */
 export const DEFAULT_MAX_LESSONS_PER_DAY_PER_TEACHER = 6;
-/** 0 no solver = desativado; valor inicial na UI quando não há doc. */
+/** 0 no solver = desativado; limite de aulas seguidas do mesmo professor com a mesma turma (nome de campo legado no Mongo). */
 export const DEFAULT_MAX_CONSECUTIVE_LESSONS_PER_CLASS = 4;
 
 export const MAX_LESSONS_PER_DAY_PER_TEACHER_MIN = 1;
@@ -20,7 +20,7 @@ export function parseMaxLessonsPerDayPerTeacher(value: unknown): number {
   return clampInt(value, MAX_LESSONS_PER_DAY_PER_TEACHER_MIN, MAX_LESSONS_PER_DAY_PER_TEACHER_MAX);
 }
 
-/** 0 = sem restrição de seguidas; ausente/null usa o padrão da UI. */
+/** 0 = sem restrição; ausente/null usa o padrão. Semântica: máx. aulas seguidas do mesmo professor na mesma turma (por dia, slots consecutivos). */
 export function parseMaxConsecutiveLessonsPerClass(value: unknown): number {
   if (value === undefined || value === null) {
     return DEFAULT_MAX_CONSECUTIVE_LESSONS_PER_CLASS;

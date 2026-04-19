@@ -184,7 +184,7 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
                     <span className="min-w-0 flex-1 py-0.5">
                       <span className="block text-sm font-semibold tracking-tight text-slate-900">Limites gerais</span>
                       <span className="mt-1 block text-xs leading-relaxed text-slate-500">
-                        Aulas por dia e seguidas por turma.
+                        Aulas por dia e seguidas do mesmo professor na turma.
                       </span>
                     </span>
                   </button>
@@ -328,7 +328,7 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
                 </div>
                 <div>
                   <label htmlFor="max-consecutive-class" className="text-xs font-medium text-slate-600">
-                    Máx. de aulas seguidas por turma
+                    Máx. seguidas por prof. na turma
                   </label>
                   <input
                     id="max-consecutive-class"

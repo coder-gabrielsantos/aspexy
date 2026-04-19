@@ -200,15 +200,22 @@ export default function AppSidebar({
     <>
       <aside className="fixed bottom-0 left-0 top-0 z-30 hidden w-[260px] flex-col border-r border-indigo-200/80 bg-white lg:flex">
         <div className={HEADER_ROW}>
-          <Image
-            src={platformLogo}
-            alt="Aspexy"
-            width={220}
-            height={64}
-            draggable={false}
-            className="h-10 w-auto object-contain"
-            priority
-          />
+          <button
+            type="button"
+            onClick={() => onStepChange("grade")}
+            aria-label="Ir para Estrutura"
+            className="rounded-lg outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-indigo-500/35"
+          >
+            <Image
+              src={platformLogo}
+              alt="Aspexy"
+              width={220}
+              height={64}
+              draggable={false}
+              className="h-10 w-auto object-contain"
+              priority
+            />
+          </button>
         </div>
 
         <nav className="flex min-h-0 flex-1 flex-col gap-0.5 px-3 py-4" aria-label="Navegação principal">
@@ -238,15 +245,25 @@ export default function AppSidebar({
       </aside>
 
       <header className="sticky top-0 z-[60] flex h-[var(--app-header-h)] min-h-[4rem] shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.06),0_4px_12px_-2px_rgba(15,23,42,0.08)] lg:hidden">
-        <Image
-          src={platformLogo}
-          alt="Aspexy"
-          width={120}
-          height={36}
-          draggable={false}
-          className="h-8 w-auto shrink-0 object-contain"
-          priority
-        />
+        <button
+          type="button"
+          onClick={() => {
+            onStepChange("grade");
+            onMobileOpenChange(false);
+          }}
+          aria-label="Ir para Estrutura"
+          className="shrink-0 rounded-lg outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-indigo-500/35"
+        >
+          <Image
+            src={platformLogo}
+            alt="Aspexy"
+            width={120}
+            height={36}
+            draggable={false}
+            className="h-8 w-auto object-contain"
+            priority
+          />
+        </button>
         <button
           type="button"
           onClick={() => onMobileOpenChange(!mobileOpen)}
