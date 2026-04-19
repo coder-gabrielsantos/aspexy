@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
+import { MoveRight } from "lucide-react";
 
 import platformLogo from "@/app/util/logo.png";
 import { Button } from "@/components/ui/button";
@@ -65,11 +65,11 @@ export default function StepPrerequisiteGuide({
             <Button
               key={`${a.tab}-${a.label}`}
               type="button"
-              className="h-9 gap-1.5"
+              className="h-9 gap-2"
               onClick={() => onNavigate(a.tab)}
             >
               {a.label}
-              <ArrowRight className="h-3.5 w-3.5 opacity-90" aria-hidden />
+              <MoveRight className="h-4 w-4 shrink-0 opacity-95" strokeWidth={2} aria-hidden />
             </Button>
           ))}
         </div>
