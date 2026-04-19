@@ -45,13 +45,21 @@ export function getTabPrerequisiteGuide(tab: TabMode, ctx: Ctx): StepPrerequisit
     if (structures.length > 0) return null;
     return {
       title: "Comece pela estrutura de horário",
-      lead: "Antes de cadastrar turmas, é preciso ter pelo menos uma estrutura salva (dias da semana e slots).",
+      lead: "Antes de cadastrar turmas, é preciso ter pelo menos uma estrutura salva.",
       bullets: ["Na aba Estrutura, defina os horários e clique em salvar."],
       actions: [{ tab: "grade", label: "Ir para Estrutura" }]
     };
   }
 
   if (tab === "teachers") {
+    if (structures.length === 0) {
+      return {
+        title: "Comece pela estrutura de horário",
+        lead: "A disponibilidade dos professores usa a mesma grade (dias e slots) da estrutura salva. Crie uma estrutura antes de cadastrar professores.",
+        bullets: ["Na aba Estrutura, defina os horários e clique em salvar."],
+        actions: [{ tab: "grade", label: "Ir para Estrutura" }]
+      };
+    }
     if (classes.length > 0) return null;
     return {
       title: "Cadastre turmas primeiro",

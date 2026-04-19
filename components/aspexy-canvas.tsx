@@ -34,7 +34,7 @@ const STEPS: StepDef[] = [
 ];
 
 const PAGE_TITLE: Record<TabMode, string> = {
-  grade: "Estruturas de horário",
+  grade: "Estrutura",
   classes: "Turmas",
   teachers: "Professores",
   subjects: "Disciplinas",
@@ -72,19 +72,6 @@ export default function AspexyCanvas() {
   const { classes } = classesHook;
   const { teachers } = teachersHook;
   const { subjects } = subjectsHook;
-
-  const completedSteps = useMemo(() => {
-    const set = new Set<string>();
-    if (structures.length > 0) set.add("grade");
-    if (classes.length > 0) set.add("classes");
-    if (teachers.length > 0) set.add("teachers");
-    if (
-      subjects.length > 0 &&
-      subjects.every((s) => s.teacher_ids.length > 0 && Boolean(s.class_id))
-    )
-      set.add("subjects");
-    return set;
-  }, [structures, classes, teachers, subjects]);
 
   const tabPrerequisiteGuide = useMemo(
     () => getTabPrerequisiteGuide(activeTab, { structures, classes, teachers, subjects }),
@@ -125,7 +112,6 @@ export default function AspexyCanvas() {
       <AppSidebar
         steps={STEPS}
         activeStep={activeTab}
-        completedSteps={completedSteps}
         onStepChange={navigateToStep}
         userName={session?.user?.name}
         userImage={session?.user?.image}

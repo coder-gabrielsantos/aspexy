@@ -27,21 +27,21 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
   return (
     <div className="animate-fade-in space-y-6">
       <section className="app-panel overflow-hidden">
-        <div className="flex flex-wrap items-end gap-3 px-5 py-4">
-          <div className="flex min-w-0 flex-1 flex-wrap items-end gap-3">
-            <div className="min-w-[180px]">
+        <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3">
+          <div className="flex min-w-0 w-full flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+            <div className="w-full min-w-0 sm:w-auto sm:min-w-[180px]">
               <p className="mb-1.5 text-xs font-medium text-slate-500">Nome</p>
               <Input
                 value={s.structureName}
                 onChange={(e) => s.setStructureName(e.target.value)}
                 placeholder="Nome da estrutura"
-                className="w-52"
+                className="w-full sm:w-52"
               />
             </div>
-            <div className="w-full max-w-[280px] shrink-0">
-              <p className="mb-1.5 text-xs font-medium text-slate-500">Carregar salva</p>
+            <div className="w-full min-w-0 sm:max-w-[280px] sm:shrink-0">
+              <p className="mb-1.5 text-xs font-medium text-slate-500">Estruturas salvas</p>
               <ScheduleSelect
-                aria-label="Carregar estrutura salva"
+                aria-label="Estruturas salvas — selecionar para carregar"
                 options={s.structureSelectOptions}
                 value={s.selectedStructureId}
                 onChange={(id) => void s.handleLoadStructureInGrade(id)}
@@ -49,13 +49,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
               />
             </div>
           </div>
-          <div className="ml-auto flex shrink-0 flex-wrap items-center gap-2">
-            <span className="rounded-md border border-slate-200/80 bg-slate-50 px-2 py-0.5 text-xs font-medium tabular-nums text-slate-600">
-              {s.slots.length} slots
-            </span>
-            <span className="rounded-md border border-slate-200/80 bg-white px-2 py-0.5 text-xs font-medium tabular-nums text-slate-700">
-              {s.activeSlotsCount} aulas
-            </span>
+          <div className="flex w-full shrink-0 flex-wrap items-center justify-end gap-2 sm:ml-auto sm:w-auto">
             {s.selectedStructureId && (
               <Button
                 type="button"

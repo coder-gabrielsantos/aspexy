@@ -44,7 +44,6 @@ function UserAvatar({
 type AppSidebarProps = {
   steps: StepDef[];
   activeStep: string;
-  completedSteps: Set<string>;
   onStepChange: (id: string) => void;
   userName?: string | null;
   userImage?: string | null;
@@ -57,7 +56,6 @@ type AppSidebarProps = {
 export default function AppSidebar({
   steps,
   activeStep,
-  completedSteps,
   onStepChange,
   userName,
   userImage,
@@ -76,7 +74,6 @@ export default function AppSidebar({
 
   const renderDesktopNavItem = (step: StepDef) => {
     const isActive = step.id === activeStep;
-    const isCompleted = completedSteps.has(step.id);
     const Icon = step.icon;
 
     return (
@@ -102,8 +99,7 @@ export default function AppSidebar({
           className={cn(
             "flex h-10 w-10 shrink-0 items-center justify-center transition-colors",
             isActive && "text-white",
-            !isActive && isCompleted && "text-indigo-600",
-            !isActive && !isCompleted && "text-slate-500 group-hover:text-indigo-600"
+            !isActive && "text-indigo-600 group-hover:text-indigo-700"
           )}
         >
           <Icon className="h-5 w-5" strokeWidth={1.65} aria-hidden />
@@ -122,7 +118,6 @@ export default function AppSidebar({
         const isActive = step.id === activeStep;
         const Icon = step.icon;
         const isGenerate = step.id === "generate";
-        const isCompleted = completedSteps.has(step.id);
 
         return (
           <Fragment key={step.id}>
@@ -152,8 +147,7 @@ export default function AppSidebar({
                 className={cn(
                   "flex h-10 w-10 shrink-0 items-center justify-center transition-colors",
                   isActive && "text-white",
-                  !isActive && isCompleted && "text-indigo-600",
-                  !isActive && !isCompleted && "text-slate-500 group-hover:text-indigo-600"
+                  !isActive && "text-indigo-600 group-hover:text-indigo-700"
                 )}
               >
                 <Icon className="h-5 w-5" strokeWidth={1.65} />
