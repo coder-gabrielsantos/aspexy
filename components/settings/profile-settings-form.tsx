@@ -242,8 +242,8 @@ export default function ProfileSettingsForm() {
         </p>
       )}
 
-      <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-6 max-[387px]:flex-col max-[387px]:items-stretch">
-        <Button type="submit" disabled={saving} className="max-[387px]:w-full">
+      <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-6 max-[410px]:flex-col max-[410px]:items-stretch">
+        <Button type="submit" disabled={saving} className="max-[410px]:w-full">
           {saving ? "Salvando…" : "Salvar alterações"}
         </Button>
         <Button
@@ -253,7 +253,7 @@ export default function ProfileSettingsForm() {
           onClick={() => setDeleteOpen(true)}
           className={cn(
             "inline-flex gap-1.5 border border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50 hover:text-red-700",
-            "max-[387px]:w-full"
+            "max-[410px]:w-full"
           )}
         >
           <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
