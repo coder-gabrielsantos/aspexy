@@ -37,13 +37,11 @@ async function authorizeCredentials(email: string, password: string) {
   const match = await verifyPassword(password, doc.password_hash);
   if (!match) return null;
 
-  const img = typeof doc.image === "string" && doc.image.trim() ? doc.image.trim() : null;
-
   return {
     id: doc._id.toString(),
     email: doc.email,
-    name: doc.name || undefined,
-    image: img
+    name: doc.name || undefined
+    // Sem `image`: o NextAuth coloca em `picture` no JWT; URLs longas estouram headers na Vercel (494).
   };
 }
 
@@ -98,6 +96,32 @@ async function upsertGoogleCredentialsUser(params: {
     name: typeof refreshed?.name === "string" && refreshed.name.trim() ? refreshed.name : googleName,
     image: typeof refreshed?.image === "string" ? refreshed.image : null
   };
+}
+
+/** Campos que podem ficar grandes no JWT (OAuth, foto, etc.) — nunca persistir no cookie. */
+const JWT_OAUTH_BLOAT_KEYS = [
+  "picture",
+  "access_token",
+  "refresh_token",
+  "id_token",
+  "oauth_token_secret",
+  "session_token",
+  "token_type",
+  "ext_expires_in"
+] as const;
+
+function stripJwtCookieBloat(token: Record<string, unknown>) {
+  for (const k of JWT_OAUTH_BLOAT_KEYS) {
+    delete token[k];
+  }
+  const allowLongStrings = new Set(["email", "sub"]);
+  for (const key of Object.keys(token)) {
+    if (allowLongStrings.has(key)) continue;
+    const v = token[key];
+    if (typeof v === "string" && v.length > 256) {
+      delete token[key];
+    }
+  }
 }
 
 async function loadCredentialsUserProfile(userId: string): Promise<{ name: string; image: string | null } | null> {
@@ -190,10 +214,9 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      // NextAuth coloca `picture` (URL de avatar, muito longa no Google) no JWT. Isso estoura o tamanho
-      // dos headers com cookies fragmentados (Vercel: 494 REQUEST_HEADER_TOO_LARGE). A foto vem do
-      // Mongo em `session` via `loadCredentialsUserProfile`.
-      delete (token as { picture?: unknown }).picture;
+      // JWT criptografado vira vários cookies; soma não pode passar do limite da Vercel (~32 KB no
+      // request). Nome e foto vêm do Mongo em `session` via `loadCredentialsUserProfile`.
+      stripJwtCookieBloat(token as Record<string, unknown>);
 
       return token;
     },
