@@ -289,26 +289,45 @@ function ByDayView({
       <div className="max-h-[min(85vh,880px)] overflow-auto">
         {DAYS.map((dayName, dayIndex) => (
           <section key={dayName} className={cn(dayIndex > 0 && "border-t border-slate-200/90")}>
-            <div className="bg-slate-50/90 px-5 py-2.5">
-              <h3 className="text-sm font-semibold tracking-tight text-slate-800">{DAY_FULL_LABEL[dayName]}</h3>
-            </div>
             <table
-              className="table-fixed border-collapse text-xs"
+              className="table-fixed border-separate border-spacing-0 text-xs"
               style={{ width: `${140 + g.classIds.length * 140}px` }}
             >
               <thead>
                 <tr>
-                  <th className="sticky left-0 top-0 z-[30] w-[140px] min-w-[140px] max-w-[140px] whitespace-nowrap border-b border-slate-200 bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[2px_2px_0_0_rgba(15,23,42,0.06)]">
-                    Horário
+                  <th className="sticky left-0 top-0 z-[40] w-[140px] min-w-[140px] max-w-[140px] p-0 align-top">
+                    <div className="box-border flex h-12 w-full items-center justify-center border-b border-indigo-950/25 bg-gradient-to-r from-indigo-800 to-indigo-700 px-3 text-center shadow-[0_2px_6px_rgba(49,46,129,0.35)]">
+                      <span
+                        className="block min-w-0 max-w-full truncate text-sm font-semibold leading-tight tracking-tight text-white drop-shadow-sm"
+                        title={DAY_FULL_LABEL[dayName]}
+                      >
+                        {DAY_FULL_LABEL[dayName]}
+                      </span>
+                    </div>
+                  </th>
+                  <th colSpan={g.classIds.length} className="sticky top-0 z-[35] p-0 align-top">
+                    <div
+                      className="box-border h-12 w-full border-b border-indigo-950/20 border-l border-white/20 bg-gradient-to-r from-indigo-700 to-indigo-600 shadow-[0_2px_6px_rgba(49,46,129,0.35)]"
+                      aria-hidden
+                    />
+                  </th>
+                </tr>
+                <tr>
+                  <th className="sticky left-0 top-12 z-[30] w-[140px] min-w-[140px] max-w-[140px] border-b border-slate-200 p-0 align-top">
+                    <div className="box-border flex min-h-[2.5rem] w-full items-center justify-center whitespace-nowrap bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[2px_2px_0_0_rgb(226_232_240)]">
+                      Horário
+                    </div>
                   </th>
                   {g.classIds.map((cid) => (
                     <th
                       key={`${dayName}-${cid}`}
-                      className="sticky top-0 z-[20] w-[140px] min-w-[140px] max-w-[140px] overflow-hidden border-b border-l border-slate-200 bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[0_2px_0_0_rgba(15,23,42,0.06)]"
+                      className="sticky top-12 z-[20] w-[140px] min-w-[140px] max-w-[140px] overflow-hidden border-b border-l border-slate-200 p-0 align-top"
                     >
-                      <span className="block truncate" title={`Turma ${cid}`}>
-                        Turma {cid}
-                      </span>
+                      <div className="box-border flex min-h-[2.5rem] w-full items-center justify-center bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[0_2px_0_0_rgb(226_232_240)]">
+                        <span className="block truncate" title={`Turma ${cid}`}>
+                          Turma {cid}
+                        </span>
+                      </div>
                     </th>
                   ))}
                 </tr>
@@ -330,7 +349,7 @@ function ByDayView({
                       <td
                         className={cn(
                           "sticky left-0 z-[10] w-[140px] min-w-[140px] max-w-[140px] whitespace-nowrap border-b border-slate-100/80 px-3 align-middle text-xs font-semibold tabular-nums shadow-[2px_0_0_0_rgba(15,23,42,0.04)]",
-                          isBreak ? "bg-slate-100/90 py-2 text-center text-slate-500" : "bg-slate-50/95 py-2 text-center text-slate-800"
+                          isBreak ? "bg-slate-100 py-2 text-center text-slate-500" : "bg-slate-50 py-2 text-center text-slate-800"
                         )}
                       >
                         {isBreak ? (
@@ -399,7 +418,7 @@ function ByClassView({
         <h3 className="text-sm font-semibold tracking-tight text-slate-800">Turma {classId}</h3>
       </div>
       <div className="max-h-[min(70vh,560px)] overflow-auto">
-        <table className="w-full min-w-[700px] table-fixed border-collapse text-xs">
+        <table className="w-full min-w-[700px] table-fixed border-separate border-spacing-0 text-xs">
           <colgroup>
             <col className="w-[140px]" />
             {DAYS.map((d) => (
@@ -408,15 +427,16 @@ function ByClassView({
           </colgroup>
           <thead>
             <tr>
-              <th className="sticky left-0 top-0 z-[30] border-b border-slate-200 bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[2px_2px_0_0_rgba(15,23,42,0.06)]">
-                Horário
+              <th className="sticky left-0 top-0 z-[30] border-b border-slate-200 p-0 align-top">
+                <div className="box-border flex min-h-[2.5rem] w-full items-center justify-center bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[2px_2px_0_0_rgb(226_232_240)]">
+                  Horário
+                </div>
               </th>
               {DAYS.map((day) => (
-                <th
-                  key={day}
-                  className="sticky top-0 z-[20] border-b border-l border-slate-200 bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[0_2px_0_0_rgba(15,23,42,0.06)]"
-                >
-                  {DAY_FULL_LABEL[day]}
+                <th key={day} className="sticky top-0 z-[20] border-b border-l border-slate-200 p-0 align-top">
+                  <div className="box-border flex min-h-[2.5rem] w-full items-center justify-center bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[0_2px_0_0_rgb(226_232_240)]">
+                    {DAY_FULL_LABEL[day]}
+                  </div>
                 </th>
               ))}
             </tr>
@@ -437,7 +457,7 @@ function ByClassView({
                   <td
                     className={cn(
                       "sticky left-0 z-[10] whitespace-nowrap border-b border-slate-100/80 px-3 align-middle text-xs font-semibold tabular-nums shadow-[2px_0_0_0_rgba(15,23,42,0.04)]",
-                      isBreak ? "bg-slate-100/90 py-2 text-center text-slate-500" : "bg-slate-50/95 py-2 text-center text-slate-800"
+                      isBreak ? "bg-slate-100 py-2 text-center text-slate-500" : "bg-slate-50 py-2 text-center text-slate-800"
                     )}
                   >
                     {isBreak ? (
