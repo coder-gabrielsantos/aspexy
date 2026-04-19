@@ -1,6 +1,10 @@
 "use client";
 
-import { BookOpen, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { BookOpen, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+
+import type { Subject } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 import ScheduleSelect from "@/components/schedule-select";
 import { Button } from "@/components/ui/button";
@@ -20,6 +24,37 @@ function teacherLabelsCsv(teacherIds: string[], teacherNameById: Record<string, 
   return teacherIds.map((id) => teacherNameById[id]).filter(Boolean);
 }
 
+function subjectGroupKey(sub: Subject): string {
+  const teachers = [...sub.teacher_ids].sort().join("\u0001");
+  return `${sub.name.trim().toLowerCase()}\u0000${sub.lessons_per_week}\u0000${teachers}`;
+}
+
+/** Agrupa por nome + aulas/sem. + mesmo conjunto de professores (só turma pode variar). */
+function groupSubjectsForDisplay(subjects: Subject[]): Subject[][] {
+  const map = new Map<string, Subject[]>();
+  const order: string[] = [];
+  for (const sub of subjects) {
+    const k = subjectGroupKey(sub);
+    if (!map.has(k)) {
+      map.set(k, []);
+      order.push(k);
+    }
+    map.get(k)!.push(sub);
+  }
+  return order.map((k) => {
+    const members = [...(map.get(k) ?? [])];
+    members.sort((a, b) => a.class_id.localeCompare(b.class_id));
+    return members;
+  });
+}
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
+
+const PAGE_SIZE_SELECT_OPTIONS = PAGE_SIZE_OPTIONS.map((n) => ({
+  value: String(n),
+  label: String(n),
+}));
+
 export default function SubjectsTab({
   subjectsHook: s,
   teacherSelectOptions,
@@ -28,10 +63,30 @@ export default function SubjectsTab({
   classNameById,
   onRequestDelete,
 }: SubjectsTabProps) {
+  const subjectGroups = useMemo(() => groupSubjectsForDisplay(s.subjects), [s.subjects]);
+  const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(10);
+  const [page, setPage] = useState(0);
+
+  const totalGroups = subjectGroups.length;
+  const pageCount = Math.max(1, Math.ceil(totalGroups / pageSize));
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(totalGroups / pageSize) - 1);
+    setPage((p) => Math.min(Math.max(0, p), maxPage));
+  }, [totalGroups, pageSize]);
+
+  const pageGroups = useMemo(() => {
+    const start = page * pageSize;
+    return subjectGroups.slice(start, start + pageSize);
+  }, [subjectGroups, page, pageSize]);
+
+  const rangeFrom = totalGroups === 0 ? 0 : page * pageSize + 1;
+  const rangeTo = totalGroups === 0 ? 0 : page * pageSize + pageGroups.length;
+
   return (
     <div className="animate-fade-in space-y-6">
       <section className="app-panel overflow-hidden">
-        <div className="space-y-3 px-5 py-4">
+        <div className="space-y-3 px-3 py-4 sm:px-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-3">
             <div className="min-w-0 flex-1 sm:min-w-[10rem]">
               <p className="mb-1.5 text-xs font-medium text-slate-500">Disciplina</p>
@@ -109,8 +164,89 @@ export default function SubjectsTab({
         </div>
       ) : (
         <section className="app-panel-flat overflow-hidden">
-          <div className="max-h-[min(32rem,60vh)] overflow-auto">
-            <table className="w-full min-w-[760px] table-fixed border-collapse text-sm">
+          {/* Mobile / tablet: cartões em largura total (evita tabela larga cortada) */}
+          <div className="divide-y divide-slate-100/90 md:hidden">
+            {pageGroups.map((members) => {
+              const sub = members[0]!;
+              const multi = members.length > 1;
+              const profLabels = teacherLabelsCsv(sub.teacher_ids, teacherNameById);
+              const profTitle = profLabels.join(", ");
+              const rowKey = members.map((m) => m.id).join("|");
+              return (
+                <div
+                  key={rowKey}
+                  className="group px-3 py-3.5 transition-colors duration-150 hover:bg-slate-50/60 sm:px-4"
+                >
+                  <div className="flex gap-3">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center border border-slate-200 bg-slate-50 text-slate-600">
+                      <BookOpen className="h-4 w-4" strokeWidth={1.75} />
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+                        <p className="text-sm font-semibold text-slate-900">{sub.name}</p>
+                        <p className="shrink-0 text-xs tabular-nums text-slate-500">
+                          <span className="font-semibold text-slate-700">{sub.lessons_per_week}</span> aulas/sem.
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Professores</p>
+                        <p className="mt-0.5 text-sm leading-snug text-slate-700" title={profTitle}>
+                          {profLabels.length > 0 ? profLabels.join(", ") : "—"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                          {multi ? "Turmas" : "Turma"}
+                        </p>
+                        {multi ? (
+                          <ul className="mt-1.5 space-y-2">
+                            {members.map((m) => {
+                              const label = classNameById[m.class_id] ?? m.class_id;
+                              return (
+                                <li
+                                  key={m.id}
+                                  className="flex items-center justify-between gap-2 rounded-md border border-slate-100/90 bg-slate-50/50 px-2.5 py-2"
+                                >
+                                  <span className="min-w-0 truncate text-sm font-medium tabular-nums text-slate-800">
+                                    {label || "—"}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    aria-label={`Excluir ${sub.name} — turma ${label}`}
+                                    onClick={() => onRequestDelete(m.id)}
+                                    className="shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        ) : (
+                          <div className="mt-1.5 flex items-center justify-between gap-2 rounded-md border border-slate-100/90 bg-slate-50/50 px-2.5 py-2">
+                            <span className="min-w-0 truncate text-sm font-medium tabular-nums text-slate-800">
+                              {classNameById[sub.class_id] || "—"}
+                            </span>
+                            <button
+                              type="button"
+                              aria-label="Excluir disciplina"
+                              onClick={() => onRequestDelete(sub.id)}
+                              className="shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full min-w-[640px] table-fixed border-collapse text-sm xl:min-w-[760px]">
               <colgroup>
                 <col className="w-[40%] min-w-[14rem]" />
                 <col className="w-12" />
@@ -136,7 +272,9 @@ export default function SubjectsTab({
                 </tr>
               </thead>
               <tbody>
-                {s.subjects.map((sub) => {
+                {pageGroups.map((members) => {
+                  const sub = members[0]!;
+                  const multi = members.length > 1;
                   const profLabels = teacherLabelsCsv(sub.teacher_ids, teacherNameById);
                   const profTitle = profLabels.join(", ");
                   const profDisplay =
@@ -147,9 +285,11 @@ export default function SubjectsTab({
                     ) : (
                       <span className="text-slate-300">—</span>
                     );
+                  const rowKey = members.map((m) => m.id).join("|");
+                  const align = multi ? "align-top" : "align-middle";
                   return (
-                    <tr key={sub.id} className="group transition-colors duration-150 hover:bg-slate-50/50">
-                      <td className="border-b border-slate-100/80 px-4 py-2.5 font-medium text-slate-800">
+                    <tr key={rowKey} className="group transition-colors duration-150 hover:bg-slate-50/50">
+                      <td className={cn("border-b border-slate-100/80 px-4 py-2.5 font-medium text-slate-800", align)}>
                         <div className="flex min-w-0 items-center gap-2.5">
                           <div className="grid h-6 w-6 shrink-0 place-items-center rounded-none border border-slate-200 bg-slate-50 text-slate-600">
                             <BookOpen className="h-3 w-3" />
@@ -159,30 +299,129 @@ export default function SubjectsTab({
                           </span>
                         </div>
                       </td>
-                      <td className="border-b border-slate-100/80 px-2 py-2.5 text-center tabular-nums text-slate-600">
+                      <td
+                        className={cn(
+                          "border-b border-slate-100/80 px-2 py-2.5 text-center tabular-nums text-slate-600",
+                          align
+                        )}
+                      >
                         {sub.lessons_per_week}
                       </td>
-                      <td className="border-b border-slate-100/80 px-4 py-2.5 text-slate-600">{profDisplay}</td>
-                      <td className="border-b border-slate-100/80 px-4 py-2.5 text-slate-600">
-                        <span className="block truncate" title={classNameById[sub.class_id] ?? ""}>
-                          {classNameById[sub.class_id] || <span className="text-slate-300">—</span>}
-                        </span>
+                      <td className={cn("border-b border-slate-100/80 px-4 py-2.5 text-slate-600", align)}>
+                        {profDisplay}
                       </td>
-                      <td className="border-b border-slate-100/80 px-1 py-2.5 text-center">
-                        <button
-                          type="button"
-                          aria-label="Excluir disciplina"
-                          onClick={() => onRequestDelete(sub.id)}
-                          className="rounded-none p-1.5 text-slate-300 opacity-100 transition-all duration-200 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-500"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                      <td className={cn("border-b border-slate-100/80 px-4 py-2.5 text-slate-600", align)}>
+                        {multi ? (
+                          <ul className="m-0 list-none space-y-1.5 p-0">
+                            {members.map((m) => {
+                              const label = classNameById[m.class_id] ?? m.class_id;
+                              return (
+                                <li key={m.id} className="flex min-w-0 items-center justify-between gap-2">
+                                  <span className="min-w-0 truncate tabular-nums" title={label}>
+                                    {label || "—"}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    aria-label={`Excluir ${sub.name} — turma ${label}`}
+                                    onClick={() => onRequestDelete(m.id)}
+                                    className="shrink-0 rounded-none p-1 text-slate-300 opacity-100 transition-all duration-200 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-500"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        ) : (
+                          <span className="block truncate" title={classNameById[sub.class_id] ?? ""}>
+                            {classNameById[sub.class_id] || <span className="text-slate-300">—</span>}
+                          </span>
+                        )}
+                      </td>
+                      <td className={cn("border-b border-slate-100/80 px-1 py-2.5 text-center", align)}>
+                        {multi ? (
+                          <span className="sr-only">Exclusão por turma na coluna anterior</span>
+                        ) : (
+                          <button
+                            type="button"
+                            aria-label="Excluir disciplina"
+                            onClick={() => onRequestDelete(sub.id)}
+                            className="rounded-none p-1.5 text-slate-300 opacity-100 transition-all duration-200 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-500"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+          </div>
+          <div className="flex flex-col gap-3 border-t border-slate-100/90 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4">
+            <p className="text-xs text-slate-500">
+              {totalGroups > 0 ? (
+                <>
+                  Mostrando{" "}
+                  <span className="font-medium text-slate-700 tabular-nums">{rangeFrom}</span>
+                  {" — "}
+                  <span className="font-medium text-slate-700 tabular-nums">{rangeTo}</span> de{" "}
+                  <span className="font-medium text-slate-700 tabular-nums">{totalGroups}</span>
+                </>
+              ) : null}
+            </p>
+            <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-2">
+              <div className="flex w-full min-w-0 items-center justify-between gap-2 sm:w-auto sm:justify-end">
+                <span className="shrink-0 text-xs font-medium text-slate-500">Por página</span>
+                <div className="w-[5rem] shrink-0 sm:w-[5.25rem]">
+                  <ScheduleSelect
+                    aria-label="Itens por página"
+                    options={PAGE_SIZE_SELECT_OPTIONS}
+                    value={String(pageSize)}
+                    onChange={(id) => {
+                      const v = Number(id);
+                      if (v === 10 || v === 25 || v === 50) {
+                        setPageSize(v);
+                        setPage(0);
+                      }
+                    }}
+                    isClearable={false}
+                    isSearchable={false}
+                    placeholder="10"
+                    maxVisibleMenuItems={5}
+                  />
+                </div>
+              </div>
+              <div className="flex w-full items-center justify-center gap-1 sm:w-auto sm:justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-9 min-w-0 flex-1 gap-1 px-2 text-xs sm:h-8 sm:flex-initial sm:px-2.5"
+                  disabled={page <= 0}
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  aria-label="Página anterior"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span className="truncate">Anterior</span>
+                </Button>
+                <span className="min-w-[3.25rem] shrink-0 px-1 text-center text-xs tabular-nums text-slate-600 sm:min-w-[4.5rem]">
+                  {page + 1} / {pageCount}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-9 min-w-0 flex-1 gap-1 px-2 text-xs sm:h-8 sm:flex-initial sm:px-2.5"
+                  disabled={page >= pageCount - 1}
+                  onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+                  aria-label="Próxima página"
+                >
+                  <span className="truncate">Próxima</span>
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                </Button>
+              </div>
+            </div>
           </div>
         </section>
       )}

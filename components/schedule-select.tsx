@@ -17,6 +17,8 @@ type CommonScheduleSelectProps = {
   options: ScheduleSelectOption[];
   placeholder?: string;
   isClearable?: boolean;
+  /** Quando false, não abre campo de busca / edição (só escolha no menu). */
+  isSearchable?: boolean;
   "aria-label"?: string;
   className?: string;
   /** Aproximação de quantas linhas do menu ficam visíveis antes do scroll (padrão: ~10). */
@@ -143,6 +145,7 @@ type InnerCommon = {
   options: ScheduleSelectOption[];
   placeholder: string;
   isClearable: boolean;
+  isSearchable: boolean;
   ariaLabel?: string;
   className?: string;
   maxVisibleMenuItems?: number;
@@ -156,6 +159,7 @@ function ScheduleSelectSingle({
   onChange,
   placeholder,
   isClearable,
+  isSearchable,
   ariaLabel,
   className,
   maxVisibleMenuItems
@@ -178,7 +182,7 @@ function ScheduleSelectSingle({
       onChange={(opt: SingleValue<ScheduleSelectOption>) => onChange(opt?.value ?? "")}
       placeholder={placeholder}
       isClearable={isClearable}
-      isSearchable
+      isSearchable={isSearchable}
       styles={styles}
       classNames={selectClassNames}
       classNamePrefix="aspexy-select"
@@ -198,6 +202,7 @@ function ScheduleSelectMulti({
   onChange,
   placeholder,
   isClearable,
+  isSearchable,
   ariaLabel,
   className,
   maxVisibleMenuItems
@@ -224,7 +229,7 @@ function ScheduleSelectMulti({
       onChange={(opts: MultiValue<ScheduleSelectOption>) => onChange(opts.map((o) => o.value))}
       placeholder={placeholder}
       isClearable={isClearable}
-      isSearchable
+      isSearchable={isSearchable}
       closeMenuOnSelect={false}
       styles={styles}
       classNames={multiSelectClassNames}
@@ -250,6 +255,7 @@ export default function ScheduleSelect(props: ScheduleSelectProps) {
     options,
     placeholder = "Selecione...",
     isClearable = true,
+    isSearchable = true,
     "aria-label": ariaLabel,
     className,
     maxVisibleMenuItems
@@ -261,6 +267,7 @@ export default function ScheduleSelect(props: ScheduleSelectProps) {
     options,
     placeholder,
     isClearable,
+    isSearchable,
     ariaLabel,
     className,
     maxVisibleMenuItems
