@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { BookOpen, GraduationCap, LayoutGrid, Users, WandSparkles } from "lucide-react";
+import { BookOpen, GraduationCap, LayoutGrid, Link2, Users, WandSparkles } from "lucide-react";
 
 import AppSidebar from "@/components/app-sidebar";
 import ConfirmDialog from "@/components/confirm-dialog";
@@ -17,6 +17,7 @@ import ClassesTab from "@/components/tabs/classes-tab";
 import TeachersTab from "@/components/tabs/teachers-tab";
 import SubjectsTab from "@/components/tabs/subjects-tab";
 import GenerateTab from "@/components/tabs/generate-tab";
+import ConstraintsTab from "@/components/tabs/constraints-tab";
 
 import { useToasts } from "@/hooks/use-toasts";
 import { useStructures } from "@/hooks/use-structures";
@@ -24,12 +25,14 @@ import { useClasses } from "@/hooks/use-classes";
 import { useTeachers } from "@/hooks/use-teachers";
 import { useSubjects } from "@/hooks/use-subjects";
 import { useScheduleGeneration } from "@/hooks/use-schedule-generation";
+import { useScheduleConstraints } from "@/hooks/use-schedule-constraints";
 
 const STEPS: StepDef[] = [
   { id: "grade", label: "Estrutura", icon: LayoutGrid },
   { id: "classes", label: "Turmas", icon: GraduationCap },
   { id: "teachers", label: "Professores", icon: Users },
   { id: "subjects", label: "Disciplinas", icon: BookOpen },
+  { id: "constraints", label: "Regras", icon: Link2 },
   { id: "generate", label: "Horários", icon: WandSparkles }
 ];
 
@@ -38,6 +41,7 @@ const PAGE_TITLE: Record<TabMode, string> = {
   classes: "Turmas",
   teachers: "Professores",
   subjects: "Disciplinas",
+  constraints: "Regras de geração",
   generate: "Horários"
 };
 
@@ -50,6 +54,7 @@ export default function AspexyCanvas() {
   const classesHook = useClasses(showToast);
   const teachersHook = useTeachers(showToast);
   const subjectsHook = useSubjects(showToast);
+  const constraintsHook = useScheduleConstraints(showToast);
   const generationHook = useScheduleGeneration(showToast, classesHook.classes);
 
   const [confirmTarget, setConfirmTarget] = useState<"structure" | "generated" | "teacher" | "class" | "subject" | null>(null);
@@ -63,10 +68,16 @@ export default function AspexyCanvas() {
     void classesHook.loadClasses();
     void teachersHook.loadTeachers();
     void subjectsHook.loadSubjects();
+    void constraintsHook.loadConstraints();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const initialLoading = structuresHook.isLoading || classesHook.isLoading || teachersHook.isLoading || subjectsHook.isLoading;
+  const initialLoading =
+    structuresHook.isLoading ||
+    classesHook.isLoading ||
+    teachersHook.isLoading ||
+    subjectsHook.isLoading ||
+    constraintsHook.isLoading;
 
   const { structures } = structuresHook;
   const { classes } = classesHook;
@@ -193,6 +204,14 @@ export default function AspexyCanvas() {
                   setConfirmTarget("subject");
                 }}
               />
+            )
+          )}
+
+          {!initialLoading && activeTab === "constraints" && (
+            tabPrerequisiteGuide ? (
+              <StepPrerequisiteGuide {...tabPrerequisiteGuide} onNavigate={navigateToStep} />
+            ) : (
+              <ConstraintsTab constraintsHook={constraintsHook} teacherSelectOptions={teachersHook.teacherSelectOptions} />
             )
           )}
 

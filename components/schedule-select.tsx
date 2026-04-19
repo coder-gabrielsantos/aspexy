@@ -77,6 +77,25 @@ const selectClassNames: ClassNamesConfig<
   loadingMessage: () => "cursor-default rounded-lg px-2.5 py-2 text-sm text-slate-500"
 };
 
+/** Mesma altura visual do controle com uma linha de tags (evita “encolher” quando vazio). */
+const multiSelectClassNames: ClassNamesConfig<
+  ScheduleSelectOption,
+  true,
+  GroupBase<ScheduleSelectOption>
+> = {
+  ...selectClassNames,
+  control: (props) =>
+    cn(
+      "flex min-h-11 w-full cursor-default items-stretch rounded-md border bg-white text-sm text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-colors duration-150",
+      props.isFocused
+        ? "border-indigo-400/95 ring-2 ring-indigo-600/18"
+        : "border-slate-200 hover:border-indigo-300/85",
+      props.isDisabled && "cursor-not-allowed opacity-50"
+    ),
+  valueContainer: () =>
+    "flex min-h-8 min-w-0 flex-1 flex-wrap items-center gap-1.5 overflow-hidden py-1.5 pl-3 pr-1"
+};
+
 function mergeSelectStyles(maxVisibleMenuItems?: number): StylesConfig<
   ScheduleSelectOption,
   boolean,
@@ -90,6 +109,31 @@ function mergeSelectStyles(maxVisibleMenuItems?: number): StylesConfig<
       const n = Math.max(1, Math.min(20, maxVisibleMenuItems));
       return { ...base, maxHeight: `${n * 2.25}rem` };
     }
+  };
+}
+
+/** Altura mínima alinhada a uma linha de tags (react-select ignora parte do Tailwind no controle). */
+function mergeMultiSelectStyles(
+  maxVisibleMenuItems?: number
+): StylesConfig<ScheduleSelectOption, true, GroupBase<ScheduleSelectOption>> {
+  return {
+    ...mergeSelectStyles(maxVisibleMenuItems),
+    control: (base) => ({
+      ...base,
+      minHeight: 44,
+      alignItems: "stretch"
+    }),
+    valueContainer: (base) => ({
+      ...base,
+      minHeight: 32,
+      alignItems: "center"
+    }),
+    indicatorsContainer: (base) => ({
+      ...base,
+      alignSelf: "stretch",
+      display: "flex",
+      alignItems: "center"
+    })
   };
 }
 
@@ -165,7 +209,7 @@ function ScheduleSelectMulti({
     () => value.map((v) => options.find((o) => o.value === v)).filter((o): o is ScheduleSelectOption => Boolean(o)),
     [options, value]
   );
-  const styles = useMemo(() => mergeSelectStyles(maxVisibleMenuItems), [maxVisibleMenuItems]);
+  const styles = useMemo(() => mergeMultiSelectStyles(maxVisibleMenuItems), [maxVisibleMenuItems]);
 
   return (
     <Select<ScheduleSelectOption, true>
@@ -183,7 +227,7 @@ function ScheduleSelectMulti({
       isSearchable
       closeMenuOnSelect={false}
       styles={styles}
-      classNames={selectClassNames}
+      classNames={multiSelectClassNames}
       classNamePrefix="aspexy-select"
       menuPosition="fixed"
       menuPortalTarget={menuPortalTarget}

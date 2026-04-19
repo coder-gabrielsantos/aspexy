@@ -79,6 +79,16 @@ export function getTabPrerequisiteGuide(tab: TabMode, ctx: Ctx): StepPrerequisit
     };
   }
 
+  if (tab === "constraints") {
+    if (teachers.length >= 1) return null;
+    return {
+      title: "Cadastre professores antes",
+      lead: "As regras de exclusão de horário envolvem professores do cadastro.",
+      bullets: ["Adicione ao menos um professor na aba Professores."],
+      actions: [{ tab: "teachers", label: "Ir para Professores" }]
+    };
+  }
+
   if (tab === "generate") {
     if (canGenerate) return null;
 

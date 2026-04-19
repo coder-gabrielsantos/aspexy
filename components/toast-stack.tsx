@@ -21,7 +21,7 @@ export default function ToastStack({ toasts, onDismiss }: ToastStackProps) {
 
   return (
     <div
-      className="pointer-events-none fixed bottom-4 right-4 z-[110] flex max-w-sm flex-col gap-3 sm:bottom-6 sm:right-6"
+      className="pointer-events-none fixed bottom-4 right-4 z-[110] flex w-max max-w-[calc(100vw-2rem)] flex-col items-end gap-3 sm:bottom-6 sm:right-6"
       aria-live="polite"
     >
       {toasts.map((t, index) => (
@@ -34,7 +34,7 @@ export default function ToastStack({ toasts, onDismiss }: ToastStackProps) {
               : { animationDelay: `${Math.min(index, 5) * 52}ms` }
           }
           className={cn(
-            "pointer-events-auto relative flex items-center justify-center gap-3 overflow-hidden rounded-lg border py-3 pl-4 pr-3 text-sm shadow-[0_2px_8px_rgba(15,23,42,0.06),0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl motion-reduce:animate-none motion-reduce:blur-none motion-reduce:opacity-100 motion-reduce:shadow-premium-lg",
+            "pointer-events-auto relative flex w-max max-w-full items-center gap-3 overflow-hidden rounded-lg border py-3 pl-4 pr-3 text-sm shadow-[0_2px_8px_rgba(15,23,42,0.06),0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl motion-reduce:animate-none motion-reduce:blur-none motion-reduce:opacity-100 motion-reduce:shadow-premium-lg",
             t.dismissing ? "animate-toast-out" : "animate-toast-in",
             t.variant === "success" &&
               "border-emerald-200/40 bg-gradient-to-br from-white/95 to-emerald-50/30 text-slate-800 ring-1 ring-emerald-500/[0.07]",
@@ -64,7 +64,7 @@ export default function ToastStack({ toasts, onDismiss }: ToastStackProps) {
               <XCircle className="h-3.5 w-3.5" strokeWidth={2.25} />
             )}
           </div>
-          <p className="max-w-[14rem] text-center leading-snug tracking-tight text-slate-700 sm:max-w-[16rem]">
+          <p className="min-w-0 shrink break-words text-left leading-snug tracking-tight text-slate-700">
             {t.message}
           </p>
           <button

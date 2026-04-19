@@ -19,7 +19,13 @@ export const DEFAULT_END = "08:20";
 export const DEFAULT_SLOT_MINUTES = 50;
 
 export type SlotState = "lesson" | "free" | "break";
-export type TabMode = "grade" | "classes" | "teachers" | "subjects" | "generate";
+export type TabMode = "grade" | "classes" | "teachers" | "subjects" | "constraints" | "generate";
+
+/** Lista de IDs de professores que não podem coincidir no mesmo dia/slot (no máximo um leciona por slot). */
+export type TeacherMutexGroupRow = {
+  id: string;
+  teacherIds: string[];
+};
 
 export type SlotRow = {
   id: string;

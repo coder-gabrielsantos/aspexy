@@ -114,10 +114,11 @@ export async function POST(request: Request) {
     const db = client.db(process.env.MONGODB_DB ?? "aspexy");
     const userId = session.user.id;
 
-    const [subjectDocs, teacherDocs, classDocs] = await Promise.all([
+    const [subjectDocs, teacherDocs, classDocs, constraintsDoc] = await Promise.all([
       db.collection("subjects").find({ user_id: userId }).toArray() as unknown as Promise<SubjectDoc[]>,
       db.collection("teachers").find({ user_id: userId }).toArray() as unknown as Promise<TeacherDoc[]>,
-      db.collection("classes").find({ user_id: userId }).toArray() as unknown as Promise<ClassDoc[]>
+      db.collection("classes").find({ user_id: userId }).toArray() as unknown as Promise<ClassDoc[]>,
+      db.collection("schedule_constraints").findOne({ user_id: userId })
     ]);
 
     if (subjectDocs.length === 0) {
@@ -143,6 +144,49 @@ export async function POST(request: Request) {
       classNameById[c._id.toString()] = c.name;
     }
 
+    type MutexStored = { teacher_id_a?: string; teacher_id_b?: string };
+    type GroupStored = { teacher_ids?: string[] };
+
+    const teacherMutexGroups: Array<{ teachers: string[] }> = [];
+    const groupSeen = new Set<string>();
+
+    const rawGroups = (constraintsDoc?.teacher_mutex_groups ?? []) as GroupStored[];
+    for (const raw of rawGroups) {
+      const ids = Array.isArray(raw.teacher_ids) ? raw.teacher_ids.filter((x): x is string => typeof x === "string") : [];
+      const names: string[] = [];
+      const nSeen = new Set<string>();
+      for (const id of ids) {
+        const tid = id.trim();
+        if (!tid) continue;
+        const nm = teacherNameById[tid];
+        if (nm && !nSeen.has(nm)) {
+          nSeen.add(nm);
+          names.push(nm);
+        }
+      }
+      if (names.length < 2) continue;
+      const key = [...names].sort().join("\0");
+      if (groupSeen.has(key)) continue;
+      groupSeen.add(key);
+      teacherMutexGroups.push({ teachers: names });
+    }
+
+    if (teacherMutexGroups.length === 0 && Array.isArray(constraintsDoc?.teacher_mutex_pairs)) {
+      for (const raw of constraintsDoc.teacher_mutex_pairs as MutexStored[]) {
+        const idA = typeof raw.teacher_id_a === "string" ? raw.teacher_id_a.trim() : "";
+        const idB = typeof raw.teacher_id_b === "string" ? raw.teacher_id_b.trim() : "";
+        if (!idA || !idB || idA === idB) continue;
+        const na = teacherNameById[idA];
+        const nb = teacherNameById[idB];
+        if (na && nb && na !== nb) {
+          const key = [na, nb].sort().join("\0");
+          if (groupSeen.has(key)) continue;
+          groupSeen.add(key);
+          teacherMutexGroups.push({ teachers: [na, nb] });
+        }
+      }
+    }
+
     const assignments = subjectDocs.flatMap((sub) => {
       const teacherIds = teacherIdsFromSubjectDoc(sub);
       if (teacherIds.length === 0) {
@@ -162,6 +206,7 @@ export async function POST(request: Request) {
       assignments,
       teacherUnavailability,
       teacherPreference,
+      teacherMutexGroups,
       maxDailySameSubject: body.maxDailySameSubject ?? 2,
       timeLimitSeconds: body.timeLimitSeconds ?? 10
     });

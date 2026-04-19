@@ -132,11 +132,6 @@ export default function GenerateTab({
 
       {hasResult ? (
         <div className="min-w-0 space-y-5">
-          {!canEditCells && (
-            <p className="text-xs text-amber-700/90">
-              Para editar células, selecione um horário salvo em &quot;Horários gerados&quot; (ou gere e salve um novo).
-            </p>
-          )}
           <div className="flex flex-wrap items-center gap-2">
             <div className="inline-flex rounded-lg border border-slate-200/90 bg-white p-0.5">
               <button
@@ -296,9 +291,9 @@ function ByDayView({
               <thead>
                 <tr>
                   <th className="sticky left-0 top-0 z-[40] w-[140px] min-w-[140px] max-w-[140px] p-0 align-top">
-                    <div className="box-border flex h-12 w-full items-center justify-center border-b border-indigo-950/25 bg-gradient-to-r from-indigo-800 to-indigo-700 px-3 text-center shadow-[0_2px_6px_rgba(49,46,129,0.35)]">
+                    <div className="box-border flex h-12 w-full items-center justify-center border-b border-slate-200 bg-slate-100 px-3 text-center">
                       <span
-                        className="block min-w-0 max-w-full truncate text-sm font-semibold leading-tight tracking-tight text-white drop-shadow-sm"
+                        className="block min-w-0 max-w-full truncate text-sm font-semibold leading-tight tracking-tight text-slate-700"
                         title={DAY_FULL_LABEL[dayName]}
                       >
                         {DAY_FULL_LABEL[dayName]}
@@ -307,7 +302,7 @@ function ByDayView({
                   </th>
                   <th colSpan={g.classIds.length} className="sticky top-0 z-[35] p-0 align-top">
                     <div
-                      className="box-border h-12 w-full border-b border-indigo-950/20 border-l border-white/20 bg-gradient-to-r from-indigo-700 to-indigo-600 shadow-[0_2px_6px_rgba(49,46,129,0.35)]"
+                      className="box-border h-12 w-full border-b border-l border-slate-200 bg-slate-100"
                       aria-hidden
                     />
                   </th>
