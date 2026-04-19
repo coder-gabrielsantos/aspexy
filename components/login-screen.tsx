@@ -55,7 +55,7 @@ function fieldClass(dark?: boolean) {
   return cn(
     "h-11 rounded-lg border px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2",
     dark
-      ? "border-slate-600/80 bg-slate-900/50 text-white placeholder:text-slate-500 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/25"
+      ? "border-slate-600/80 bg-slate-900/50 text-white shadow-none placeholder:text-slate-500 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/25"
       : "border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus-visible:border-indigo-400 focus-visible:ring-indigo-500/20"
   );
 }
