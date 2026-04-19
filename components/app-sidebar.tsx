@@ -44,8 +44,6 @@ function UserAvatar({
 type AppSidebarProps = {
   steps: StepDef[];
   activeStep: string;
-  /** Título do passo atual (header em telas pequenas). */
-  activeStepLabel: string;
   onStepChange: (id: string) => void;
   userName?: string | null;
   userImage?: string | null;
@@ -60,7 +58,6 @@ const GROUP_LABEL = "mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.1
 export default function AppSidebar({
   steps,
   activeStep,
-  activeStepLabel,
   onStepChange,
   userName,
   userImage,
@@ -240,7 +237,7 @@ export default function AppSidebar({
         </div>
       </aside>
 
-      <header className="sticky top-0 z-[60] flex h-[var(--app-header-h)] min-h-[4rem] shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.06),0_4px_12px_-2px_rgba(15,23,42,0.08)] lg:hidden">
+      <header className="sticky top-0 z-[60] flex h-[var(--app-header-h)] min-h-[4rem] shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.06),0_4px_12px_-2px_rgba(15,23,42,0.08)] lg:hidden">
         <Image
           src={platformLogo}
           alt="Aspexy"
@@ -250,9 +247,6 @@ export default function AppSidebar({
           className="h-8 w-auto shrink-0 object-contain"
           priority
         />
-        <p className="min-w-0 flex-1 truncate text-center text-sm font-semibold leading-tight text-slate-800">
-          {activeStepLabel}
-        </p>
         <button
           type="button"
           onClick={() => onMobileOpenChange(!mobileOpen)}
@@ -264,14 +258,20 @@ export default function AppSidebar({
         </button>
       </header>
 
-      {mobileOpen && (
-        <button
-          type="button"
-          aria-label="Fechar menu"
-          className="fixed inset-0 top-[var(--app-header-h)] z-50 bg-slate-950/40 backdrop-blur-[2px] lg:hidden"
-          onClick={() => onMobileOpenChange(false)}
-        />
-      )}
+      <button
+        type="button"
+        aria-label="Fechar menu"
+        aria-hidden={!mobileOpen}
+        tabIndex={mobileOpen ? 0 : -1}
+        className={cn(
+          "fixed inset-0 top-[var(--app-header-h)] z-50 bg-slate-950/40 backdrop-blur-[2px] lg:hidden",
+          "transition-opacity duration-700 ease-out motion-reduce:transition-none",
+          mobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+        )}
+        onClick={() => {
+          if (mobileOpen) onMobileOpenChange(false);
+        }}
+      />
 
       <aside
         className={cn(

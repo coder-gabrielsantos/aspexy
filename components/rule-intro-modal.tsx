@@ -89,7 +89,7 @@ export default function RuleIntroModal({ open, rule, onOpenChange, onAcknowledge
             <div className="min-w-0 pt-0.5">
               <p className="text-xs font-medium text-slate-500">Regra de geração</p>
               <h2 id="rule-intro-title" className="mt-1 text-base font-semibold leading-snug tracking-tight text-slate-900 sm:text-[17px]">
-                Professores no mesmo horário
+                Sem aula simultânea
               </h2>
             </div>
           </div>

@@ -79,7 +79,7 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
                     disabled={!canUseMutexRule}
                     onClick={() => setSelectedRule("teacher_mutex")}
                     aria-label={
-                      canUseMutexRule ? "Configurar professores no mesmo horário" : "Professores no mesmo horário, indisponível"
+                      canUseMutexRule ? "Configurar sem aula simultânea" : "Sem aula simultânea, indisponível"
                     }
                     className={cn(
                       "flex min-w-0 flex-1 items-center gap-3 px-4 py-3.5 text-left outline-none sm:px-[1.125rem] sm:py-4",
@@ -102,11 +102,11 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
                           canUseMutexRule ? "text-slate-900" : "text-slate-500"
                         )}
                       >
-                        Professores no mesmo horário
+                        Sem aula simultânea
                       </span>
                       <span className="mt-1 block text-xs leading-relaxed text-slate-500">
                         {canUseMutexRule
-                          ? "Listas de professores que não podem coincidir no mesmo horário."
+                          ? "Professores da mesma lista não podem ter aula no mesmo horário."
                           : "É preciso cadastrar pelo menos dois professores."}
                       </span>
                     </span>
@@ -117,7 +117,7 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
                       <button
                         type="button"
                         onClick={() => setIntroRule("teacher_mutex")}
-                        aria-label="Informações sobre professores no mesmo horário"
+                        aria-label="Informações sobre sem aula simultânea"
                         className="grid w-11 shrink-0 place-items-center text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus-visible:z-[1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500/25"
                       >
                         <Info className="h-4 w-4" strokeWidth={2} aria-hidden />
@@ -179,7 +179,7 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
                       <div className="min-w-0 sm:col-start-1 sm:row-start-2">
                         <ScheduleSelect
                           isMulti
-                          aria-label="Professores que não podem coincidir no mesmo horário"
+                          aria-label="Professores da lista sem aula simultânea"
                           options={teacherSelectOptions}
                           value={row.teacherIds}
                           onChange={(ids) => c.updateGroupTeacherIds(row.id, ids)}
@@ -203,18 +203,31 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
                 </ul>
               )}
 
-              <div className="flex flex-wrap items-center gap-2 border-t border-slate-100/90 pt-4">
+              <div
+                className={cn(
+                  "gap-2 border-t border-slate-100/90 pt-4",
+                  "max-[429px]:grid max-[429px]:w-full",
+                  "max-[371px]:grid-cols-1",
+                  "[@media(min-width:372px)_and_(max-width:429px)]:grid-cols-2",
+                  "min-[430px]:flex min-[430px]:w-auto min-[430px]:flex-wrap min-[430px]:items-center"
+                )}
+              >
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-9 gap-1.5"
+                  className="h-9 min-w-0 gap-1.5"
                   onClick={() => c.addGroupRow()}
                   disabled={!canUseMutexRule}
                 >
-                  <Plus className="h-3.5 w-3.5" />
+                  <Plus className="h-3.5 w-3.5 shrink-0" />
                   Adicionar lista
                 </Button>
-                <Button type="button" className="h-9 gap-1.5" onClick={() => void c.saveConstraints()} disabled={c.isSaving}>
+                <Button
+                  type="button"
+                  className="h-9 min-w-0 gap-1.5"
+                  onClick={() => void c.saveConstraints()}
+                  disabled={c.isSaving}
+                >
                   {c.isSaving ? "Salvando..." : "Salvar esta regra"}
                 </Button>
               </div>

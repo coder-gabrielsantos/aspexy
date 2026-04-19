@@ -119,7 +119,6 @@ export default function AspexyCanvas() {
 
   const breadcrumbStep = STEPS.find((s) => s.id === activeTab)?.label ?? PAGE_TITLE[activeTab];
   const breadcrumbGroup = CADASTRO_TAB_IDS.has(activeTab) ? "Cadastro" : "Geração";
-  const breadcrumbMobile = `${breadcrumbGroup} · ${breadcrumbStep}`;
   const pageTitle = PAGE_TITLE[activeTab];
 
   return (
@@ -127,7 +126,6 @@ export default function AspexyCanvas() {
       <AppSidebar
         steps={STEPS}
         activeStep={activeTab}
-        activeStepLabel={breadcrumbMobile}
         onStepChange={navigateToStep}
         userName={session?.user?.name}
         userImage={session?.user?.image}
