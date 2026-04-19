@@ -23,6 +23,7 @@ export function useScheduleGeneration(
   const [isSolving, setIsSolving] = useState(false);
   const [isSavingCellEdit, setIsSavingCellEdit] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [infeasibleModalOpen, setInfeasibleModalOpen] = useState(false);
 
   const classIds = useMemo(() => {
     if (!solverResult) return [];
@@ -55,6 +56,10 @@ export function useScheduleGeneration(
     () => generatedSchedules.map((s) => ({ value: s.id, label: s.name })),
     [generatedSchedules]
   );
+
+  const dismissInfeasibleModal = useCallback(() => {
+    setInfeasibleModalOpen(false);
+  }, []);
 
   const loadGeneratedSchedules = useCallback(async () => {
     const r = await fetch("/api/generated-schedules");
@@ -113,6 +118,14 @@ export function useScheduleGeneration(
       });
       const sd = await readJsonSafe<{ ok?: boolean; result?: SolverResult; error?: string }>(sr);
       if (!sr.ok || !sd?.ok || !sd.result) throw new Error(sd?.error ?? "Falha ao gerar horário.");
+
+      const statusUp = String(sd.result.status ?? "").trim().toUpperCase();
+      if (statusUp !== "OPTIMAL" && statusUp !== "FEASIBLE") {
+        setSolverResult(null);
+        setViewerProfile(null);
+        setInfeasibleModalOpen(true);
+        return;
+      }
 
       setSolverResult(sd.result);
       setViewerProfile(generationProfile);
@@ -226,6 +239,8 @@ export function useScheduleGeneration(
     handleLoadStructureForGeneration,
     handleLoadGeneratedSchedule,
     handleGenerateSchedule,
+    infeasibleModalOpen,
+    dismissInfeasibleModal,
     runDeleteGeneratedSchedule,
     setDefaultGenerationStructure,
     patchCellAndPersist,

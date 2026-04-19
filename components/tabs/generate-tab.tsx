@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CalendarDays, GraduationCap, Trash2, WandSparkles } from "lucide-react";
 
+import ConfirmDialog from "@/components/confirm-dialog";
 import ScheduleCellEditDialog from "@/components/schedule-cell-edit-dialog";
 import ScheduleSelect from "@/components/schedule-select";
 import { Button } from "@/components/ui/button";
@@ -221,6 +222,18 @@ export default function GenerateTab({
           await g.patchCellAndPersist(editCell.dayIndex, editCell.rowIndex, editCell.classId, payload);
           setEditCell(null);
         }}
+      />
+
+      <ConfirmDialog
+        alert
+        open={g.infeasibleModalOpen}
+        onOpenChange={(open) => {
+          if (!open) g.dismissInfeasibleModal();
+        }}
+        title="Não conseguimos montar esse horário"
+        description="Nada foi salvo. Vale dar uma olhada em regras, turmas ou disponibilidade dos professores e tentar de novo."
+        confirmText="Ok, entendi"
+        onConfirm={() => {}}
       />
     </div>
   );

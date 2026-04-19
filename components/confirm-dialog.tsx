@@ -15,6 +15,8 @@ type ConfirmDialogProps = {
   onConfirm: () => void | Promise<void>;
   variant?: "default" | "danger";
   isPending?: boolean;
+  /** Só um botão (confirmText); para avisos sem ação secundária. */
+  alert?: boolean;
 };
 
 export default function ConfirmDialog({
@@ -26,7 +28,8 @@ export default function ConfirmDialog({
   cancelText = "Cancelar",
   onConfirm,
   variant = "default",
-  isPending = false
+  isPending = false,
+  alert = false
 }: ConfirmDialogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -110,30 +113,51 @@ export default function ConfirmDialog({
       >
         <h2 id="confirm-dialog-title" className="text-sm font-semibold tracking-tight text-slate-900">{title}</h2>
         <p id="confirm-dialog-desc" className="mt-2 text-sm leading-relaxed text-slate-500">{description}</p>
-        <div className="mt-6 flex justify-end gap-2.5">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isPending}
-            onClick={close}
-            className="h-9 text-sm"
-          >
-            {cancelText}
-          </Button>
-          <Button
-            type="button"
-            disabled={isPending}
-            onClick={() => void onConfirm()}
-            className={cn(
-              "h-9 text-sm",
-              variant === "danger"
-                ? "bg-rose-600 text-white shadow-[0_1px_2px_rgba(0,0,0,0.1),0_4px_12px_rgba(225,29,72,0.25)] hover:bg-rose-700 hover:shadow-[0_1px_2px_rgba(0,0,0,0.1),0_6px_20px_rgba(225,29,72,0.3)]"
-                : ""
-            )}
-          >
-            {isPending ? "Aguarde..." : confirmText}
-          </Button>
-        </div>
+        {alert ? (
+          <div className="mt-6 flex justify-end">
+            <Button
+              type="button"
+              disabled={isPending}
+              onClick={() => {
+                void onConfirm();
+                close();
+              }}
+              className={cn(
+                "h-9 text-sm",
+                variant === "danger"
+                  ? "bg-rose-600 text-white shadow-[0_1px_2px_rgba(0,0,0,0.1),0_4px_12px_rgba(225,29,72,0.25)] hover:bg-rose-700 hover:shadow-[0_1px_2px_rgba(0,0,0,0.1),0_6px_20px_rgba(225,29,72,0.3)]"
+                  : ""
+              )}
+            >
+              {isPending ? "Aguarde..." : confirmText}
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-6 flex justify-end gap-2.5">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={close}
+              className="h-9 text-sm"
+            >
+              {cancelText}
+            </Button>
+            <Button
+              type="button"
+              disabled={isPending}
+              onClick={() => void onConfirm()}
+              className={cn(
+                "h-9 text-sm",
+                variant === "danger"
+                  ? "bg-rose-600 text-white shadow-[0_1px_2px_rgba(0,0,0,0.1),0_4px_12px_rgba(225,29,72,0.25)] hover:bg-rose-700 hover:shadow-[0_1px_2px_rgba(0,0,0,0.1),0_6px_20px_rgba(225,29,72,0.3)]"
+                  : ""
+              )}
+            >
+              {isPending ? "Aguarde..." : confirmText}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
