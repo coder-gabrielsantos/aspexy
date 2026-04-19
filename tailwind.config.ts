@@ -81,6 +81,49 @@ const config: Config = {
           from: { opacity: "0", transform: "translateX(8px)" },
           to: { opacity: "1", transform: "translateX(0)" }
         },
+        /** Toasts — entrada suave com leve deslize + escala */
+        "toast-in": {
+          from: {
+            opacity: "0",
+            filter: "blur(4px)",
+            transform: "translate3d(14px, 12px, 0) scale(0.94)"
+          },
+          to: {
+            opacity: "1",
+            filter: "blur(0)",
+            transform: "translate3d(0, 0, 0) scale(1)"
+          }
+        },
+        "toast-out": {
+          from: {
+            opacity: "1",
+            filter: "blur(0)",
+            transform: "translate3d(0, 0, 0) scale(1)"
+          },
+          to: {
+            opacity: "0",
+            filter: "blur(2px)",
+            transform: "translate3d(18px, 6px, 0) scale(0.96)"
+          }
+        },
+        "dialog-overlay-in": {
+          from: { opacity: "0" },
+          to: { opacity: "1" }
+        },
+        "dialog-in": {
+          from: {
+            opacity: "0",
+            transform: "translate3d(0, 12px, 0) scale(0.94)"
+          },
+          to: {
+            opacity: "1",
+            transform: "translate3d(0, 0, 0) scale(1)"
+          }
+        },
+        "toast-icon-in": {
+          from: { opacity: "0", transform: "scale(0.5) rotate(-12deg)" },
+          to: { opacity: "1", transform: "scale(1) rotate(0deg)" }
+        },
         shimmer: {
           from: { backgroundPosition: "200% 0" },
           to: { backgroundPosition: "-200% 0" }
@@ -97,6 +140,14 @@ const config: Config = {
         "fade-in-up": "fade-in-up 0.4s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
         "slide-in-right": "slide-in-right 0.3s ease-out",
+        "toast-in":
+          "toast-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "toast-out":
+          "toast-out 0.36s cubic-bezier(0.4, 0, 0.92, 0.4) forwards",
+        "dialog-overlay-in": "dialog-overlay-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "dialog-in": "dialog-in 0.48s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "toast-icon-in":
+          "toast-icon-in 0.45s cubic-bezier(0.34, 1.3, 0.64, 1) 0.08s both",
         shimmer: "shimmer 3s ease-in-out infinite",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
       }

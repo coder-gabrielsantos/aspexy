@@ -94,7 +94,7 @@ export default function ConfirmDialog({
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <button
         type="button"
-        className="absolute inset-0 bg-[#03050a]/35 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-[#03050a]/40 backdrop-blur-[10px] motion-reduce:animate-none motion-reduce:opacity-100 animate-dialog-overlay-in"
         aria-label="Fechar diálogo"
         onClick={close}
       />
@@ -105,7 +105,7 @@ export default function ConfirmDialog({
         aria-labelledby="confirm-dialog-title"
         aria-describedby="confirm-dialog-desc"
         tabIndex={-1}
-        className="relative z-10 w-full max-w-sm animate-scale-in rounded-xl border border-slate-200/90 bg-white p-6 shadow-premium-lg outline-none"
+        className="relative z-10 w-full max-w-sm motion-reduce:animate-none motion-reduce:opacity-100 motion-reduce:scale-100 animate-dialog-in rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-[0_2px_8px_rgba(15,23,42,0.04),0_24px_64px_rgba(15,23,42,0.12)] backdrop-blur-xl outline-none ring-1 ring-slate-900/[0.04]"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id="confirm-dialog-title" className="text-sm font-semibold tracking-tight text-slate-900">{title}</h2>

@@ -79,7 +79,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
         </div>
       </section>
 
-      <section className="app-panel overflow-hidden">
+      <section className="app-panel-flat overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[984px] table-fixed border-collapse">
             <colgroup>
@@ -110,14 +110,14 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                 >
                   <td className="border-b border-slate-100 px-2.5 py-2">
                     <div className="flex items-center justify-center gap-1.5">
-                      <Input inputMode="numeric" placeholder="HH:MM" value={slot.start} maxLength={5} className="h-8 w-[4.75rem] shrink-0 px-2 text-center text-xs tabular-nums"
+                      <Input inputMode="numeric" placeholder="HH:MM" value={slot.start} maxLength={5} className="h-8 w-[4.75rem] shrink-0 rounded-none px-2 text-center text-xs tabular-nums"
                         onChange={(e) => s.updateSlotTime(si, "start", formatTimeTyping(e.target.value))}
                         onFocus={(e) => e.currentTarget.select()}
                         onKeyDown={(e) => { if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return; e.preventDefault(); s.updateSlotTime(si, "start", addMinutesToTime24(slot.start, e.key === "ArrowUp" ? 5 : -5)); }}
                         onBlur={() => s.updateSlotTime(si, "start", normalizeTime24OrFallback(slot.start, DEFAULT_START))}
                       />
                       <span className="shrink-0 text-[10px] text-slate-300">–</span>
-                      <Input inputMode="numeric" placeholder="HH:MM" value={slot.end} maxLength={5} className="h-8 w-[4.75rem] shrink-0 px-2 text-center text-xs tabular-nums"
+                      <Input inputMode="numeric" placeholder="HH:MM" value={slot.end} maxLength={5} className="h-8 w-[4.75rem] shrink-0 rounded-none px-2 text-center text-xs tabular-nums"
                         onChange={(e) => s.updateSlotTime(si, "end", formatTimeTyping(e.target.value))}
                         onFocus={(e) => e.currentTarget.select()}
                         onKeyDown={(e) => { if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return; e.preventDefault(); s.updateSlotTime(si, "end", addMinutesToTime24(slot.end, e.key === "ArrowUp" ? 5 : -5)); }}
@@ -132,7 +132,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                         onClick={() => s.toggleCellState(si, di)}
                         aria-label={`${stateLabelMap[state]} — clique para alternar`}
                         className={cn(
-                          "box-border flex h-9 w-full items-center justify-center overflow-hidden rounded-md text-[10px] font-semibold tracking-wide transition-colors duration-150",
+                          "box-border flex h-9 w-full items-center justify-center overflow-hidden rounded-none text-[10px] font-semibold tracking-wide transition-colors duration-150",
                           state === "lesson" && "bg-slate-100 text-slate-800 ring-1 ring-slate-200 hover:bg-slate-200/80",
                           state === "free" && "bg-white text-slate-400 ring-1 ring-slate-200 hover:bg-slate-50",
                           state === "break" && "break-stripes bg-amber-50/90 text-amber-800 ring-1 ring-amber-200/70 hover:bg-amber-100/80"
@@ -148,7 +148,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                       onClick={() => s.removeSlotRow(si)}
                       disabled={s.slots.length <= 1}
                       aria-label="Remover slot"
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-25"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-none text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-25"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>

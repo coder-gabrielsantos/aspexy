@@ -95,7 +95,7 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
           <p className="mt-0.5 text-xs text-slate-400">Adicione acima para começar.</p>
         </div>
       ) : (
-        <div className="app-panel overflow-hidden">
+        <div className="app-panel-flat overflow-hidden">
           <div className="grid max-h-[min(32rem,60vh)] grid-cols-1 overflow-y-auto lg:h-[min(32rem,60vh)] lg:max-h-none lg:grid-cols-[minmax(15rem,20rem)_minmax(0,1fr)] lg:overflow-hidden">
             <aside className="flex min-h-0 flex-col border-b border-slate-200/80 lg:h-full lg:border-b-0 lg:border-r">
               <div className="shrink-0 border-b border-slate-100/80 px-4 py-3">
@@ -108,7 +108,7 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                   <div
                     key={teacher.id}
                     className={cn(
-                      "group flex items-center gap-1 rounded-lg px-2 py-2 transition-colors duration-150",
+                      "group flex items-center gap-1 rounded-none px-2 py-2 transition-colors duration-150",
                       teacher.id === t.selectedTeacherId ? "bg-slate-100" : "hover:bg-slate-50/80"
                     )}
                   >
@@ -121,13 +121,13 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                             if (e.key === "Enter") void saveEdit();
                             if (e.key === "Escape") cancelEdit();
                           }}
-                          className="h-7 min-w-0 flex-1 text-sm"
+                          className="h-7 min-w-0 flex-1 rounded-none text-sm"
                           autoFocus
                         />
-                        <button type="button" onClick={() => void saveEdit()} aria-label="Confirmar" className="rounded-lg p-1 text-slate-700 hover:bg-slate-100">
+                        <button type="button" onClick={() => void saveEdit()} aria-label="Confirmar" className="rounded-none p-1 text-slate-700 hover:bg-slate-100">
                           <Check className="h-3.5 w-3.5" />
                         </button>
-                        <button type="button" onClick={cancelEdit} aria-label="Cancelar edição" className="rounded-lg p-1 text-slate-400 hover:bg-slate-100">
+                        <button type="button" onClick={cancelEdit} aria-label="Cancelar edição" className="rounded-none p-1 text-slate-400 hover:bg-slate-100">
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
@@ -142,7 +142,7 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                           )}
                         >
                               <div className={cn(
-                                "grid h-7 w-7 shrink-0 place-items-center rounded-md border transition-colors duration-150",
+                                "grid h-7 w-7 shrink-0 place-items-center rounded-none border transition-colors duration-150",
                                 teacher.id === t.selectedTeacherId
                                   ? "border-indigo-600 bg-gradient-to-br from-indigo-700 to-indigo-800 text-white shadow-sm shadow-indigo-950/10"
                                   : "border-slate-200 bg-slate-50 text-slate-500"
@@ -160,7 +160,7 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                             e.stopPropagation();
                             startEdit(teacher.id, teacher.name);
                           }}
-                          className="rounded-lg p-1.5 text-slate-300 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-slate-100 hover:text-slate-600"
+                          className="rounded-none p-1.5 text-slate-300 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-slate-100 hover:text-slate-600"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
@@ -172,7 +172,7 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                             t.setSelectedTeacherId(teacher.id);
                             onRequestDelete();
                           }}
-                          className="rounded-lg p-1.5 text-slate-300 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-500"
+                          className="rounded-none p-1.5 text-slate-300 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-500"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -190,7 +190,7 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                 </div>
               ) : !t.teacherStructureId || t.teacherSlots.length === 0 ? (
                 <div className="flex min-h-[10rem] flex-1 flex-col items-center justify-center gap-3 p-6 text-center lg:min-h-0">
-                  <div className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200/80 bg-slate-50">
+                  <div className="grid h-10 w-10 place-items-center rounded-none border border-slate-200/80 bg-slate-50">
                     <LayoutGrid className="h-5 w-5 text-slate-500" />
                   </div>
                   <div>
@@ -205,9 +205,6 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                   <div className="shrink-0 border-b border-slate-100/80 px-5 py-3">
                     <p className="text-sm font-semibold text-slate-800">
                       {t.selectedTeacher.name}
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      Clique para alternar: neutro, preferência de horário ou bloqueio.
                     </p>
                   </div>
                   <div className="min-h-0 min-w-0 flex-1 overflow-auto">
@@ -264,7 +261,7 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                                       onClick={() => void t.toggleTeacherSlotState(di, si)}
                                       aria-label={`${teacherSlotLabelMap[slotState]} — clique para alternar`}
                                       className={cn(
-                                        "box-border flex h-9 w-full items-center justify-center rounded-lg text-[10px] font-semibold tracking-wide transition-colors duration-200",
+                                        "box-border flex h-9 w-full items-center justify-center rounded-none text-[10px] font-semibold tracking-wide transition-colors duration-200",
                                         slotState === "available" &&
                                           "bg-slate-50 text-slate-700 ring-1 ring-slate-200/80 hover:bg-slate-100",
                                         slotState === "preference" &&
@@ -294,7 +291,7 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-50 ring-1 ring-emerald-200/80" />
-                      Preferência (motor tenta priorizar)
+                      Preferência
                     </span>
                     <span className="flex items-center gap-1.5">
                       <span className="inline-block h-2.5 w-2.5 rounded-sm bg-rose-50 ring-1 ring-rose-200/80" />

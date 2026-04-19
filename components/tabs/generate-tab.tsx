@@ -285,7 +285,7 @@ function ByDayView({
   g: ReturnType<typeof useScheduleGeneration>;
 } & CellHelpers) {
   return (
-    <div className="app-panel overflow-hidden">
+    <div className="app-panel-flat overflow-hidden">
       <div className="max-h-[min(85vh,880px)] overflow-auto">
         {DAYS.map((dayName, dayIndex) => (
           <section key={dayName} className={cn(dayIndex > 0 && "border-t border-slate-200/90")}>
@@ -394,7 +394,7 @@ function ByClassView({
   if (!classId) return null;
 
   return (
-    <div className="app-panel overflow-hidden">
+    <div className="app-panel-flat overflow-hidden">
       <div className="border-b border-slate-100/80 px-5 py-3">
         <h3 className="text-sm font-semibold tracking-tight text-slate-800">Turma {classId}</h3>
       </div>

@@ -104,7 +104,7 @@ export default function SubjectsTab({
           <p className="mt-0.5 text-xs text-slate-400">Adicione acima para começar.</p>
         </div>
       ) : (
-        <section className="app-panel overflow-hidden">
+        <section className="app-panel-flat overflow-hidden">
           <div className="max-h-[min(32rem,60vh)] overflow-auto">
             <table className="w-full min-w-[760px] table-fixed border-collapse text-sm">
               <colgroup>
@@ -147,7 +147,7 @@ export default function SubjectsTab({
                     <tr key={sub.id} className="group transition-colors duration-150 hover:bg-slate-50/50">
                       <td className="border-b border-slate-100/80 px-4 py-2.5 font-medium text-slate-800">
                         <div className="flex min-w-0 items-center gap-2.5">
-                          <div className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-slate-200 bg-slate-50 text-slate-600">
+                          <div className="grid h-6 w-6 shrink-0 place-items-center rounded-none border border-slate-200 bg-slate-50 text-slate-600">
                             <BookOpen className="h-3 w-3" />
                           </div>
                           <span className="min-w-0 truncate" title={sub.name}>
@@ -169,7 +169,7 @@ export default function SubjectsTab({
                           type="button"
                           aria-label="Excluir disciplina"
                           onClick={() => onRequestDelete(sub.id)}
-                          className="rounded-lg p-1.5 text-slate-300 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-500"
+                          className="rounded-none p-1.5 text-slate-300 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-500"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
