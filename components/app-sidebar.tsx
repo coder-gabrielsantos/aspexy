@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect } from "react";
+import { useEffect } from "react";
 import Image from "next/image";
 import { LogOut, Menu, X } from "lucide-react";
 
@@ -44,6 +44,8 @@ function UserAvatar({
 type AppSidebarProps = {
   steps: StepDef[];
   activeStep: string;
+  /** Título do passo atual (header em telas pequenas). */
+  activeStepLabel: string;
   onStepChange: (id: string) => void;
   userName?: string | null;
   userImage?: string | null;
@@ -53,9 +55,12 @@ type AppSidebarProps = {
   onMobileOpenChange: (open: boolean) => void;
 };
 
+const GROUP_LABEL = "mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400";
+
 export default function AppSidebar({
   steps,
   activeStep,
+  activeStepLabel,
   onStepChange,
   userName,
   userImage,
@@ -109,59 +114,90 @@ export default function AppSidebar({
     );
   };
 
+  const cadastroTabIds = new Set(["grade", "classes", "teachers", "subjects"]);
+  const cadastroSteps = steps.filter((s) => cadastroTabIds.has(s.id));
+  const geracaoSteps = steps.filter((s) => !cadastroTabIds.has(s.id));
+
   const mobileNavContent = (
     <nav className="flex flex-1 flex-col gap-1 px-3 pb-4 pt-4" aria-label="Navegação principal">
-      <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-        Etapas
-      </p>
-      {steps.map((step) => {
+      <p className={GROUP_LABEL}>Cadastro</p>
+      {cadastroSteps.map((step) => {
         const isActive = step.id === activeStep;
         const Icon = step.icon;
-        const isGenerate = step.id === "generate";
-
         return (
-          <Fragment key={step.id}>
-            {isGenerate && (
-              <div className="mx-2 my-2 border-t border-slate-200 pt-2" role="presentation" aria-hidden />
+          <button
+            key={step.id}
+            type="button"
+            onClick={() => {
+              onStepChange(step.id);
+              onMobileOpenChange(false);
+            }}
+            className={cn(
+              "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
+              isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
+              !isActive && "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
             )}
-            <button
-              type="button"
-              onClick={() => {
-                onStepChange(step.id);
-                onMobileOpenChange(false);
-              }}
+          >
+            <span
+              aria-hidden
               className={cn(
-                "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
-                isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
-                !isActive && "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                "absolute left-1 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full transition-colors",
+                isActive ? "bg-white/85" : "bg-transparent"
+              )}
+            />
+            <span
+              className={cn(
+                "flex h-10 w-10 shrink-0 items-center justify-center transition-colors",
+                isActive && "text-white",
+                !isActive && "text-indigo-600 group-hover:text-indigo-700"
               )}
             >
-              <span
-                aria-hidden
-                className={cn(
-                  "absolute left-1 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full transition-colors",
-                  isActive ? "bg-white/85" : "bg-transparent"
-                )}
-              />
-              <span
-                className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center transition-colors",
-                  isActive && "text-white",
-                  !isActive && "text-indigo-600 group-hover:text-indigo-700"
-                )}
-              >
-                <Icon className="h-5 w-5" strokeWidth={1.65} />
-              </span>
-              <span className="truncate">{step.label}</span>
-            </button>
-          </Fragment>
+              <Icon className="h-5 w-5" strokeWidth={1.65} />
+            </span>
+            <span className="truncate">{step.label}</span>
+          </button>
+        );
+      })}
+      <p className={cn(GROUP_LABEL, "mt-4")}>Geração</p>
+      {geracaoSteps.map((step) => {
+        const isActive = step.id === activeStep;
+        const Icon = step.icon;
+        return (
+          <button
+            key={step.id}
+            type="button"
+            onClick={() => {
+              onStepChange(step.id);
+              onMobileOpenChange(false);
+            }}
+            className={cn(
+              "group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors",
+              isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
+              !isActive && "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+            )}
+          >
+            <span
+              aria-hidden
+              className={cn(
+                "absolute left-1 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full transition-colors",
+                isActive ? "bg-white/85" : "bg-transparent"
+              )}
+            />
+            <span
+              className={cn(
+                "flex h-10 w-10 shrink-0 items-center justify-center transition-colors",
+                isActive && "text-white",
+                !isActive && "text-indigo-600 group-hover:text-indigo-700"
+              )}
+            >
+              <Icon className="h-5 w-5" strokeWidth={1.65} />
+            </span>
+            <span className="truncate">{step.label}</span>
+          </button>
         );
       })}
     </nav>
   );
-
-  const mainSteps = steps.filter((s) => s.id !== "generate");
-  const generateStep = steps.filter((s) => s.id === "generate");
 
   return (
     <>
@@ -179,12 +215,10 @@ export default function AppSidebar({
         </div>
 
         <nav className="flex min-h-0 flex-1 flex-col gap-0.5 px-3 py-4" aria-label="Navegação principal">
-          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-            Etapas
-          </p>
-          {mainSteps.map(renderDesktopNavItem)}
-          <div className="mx-2 my-2 border-t border-slate-200 pt-2" aria-hidden />
-          {generateStep.map(renderDesktopNavItem)}
+          <p className={GROUP_LABEL}>Cadastro</p>
+          {cadastroSteps.map(renderDesktopNavItem)}
+          <p className={cn(GROUP_LABEL, "mt-4")}>Geração</p>
+          {geracaoSteps.map(renderDesktopNavItem)}
         </nav>
 
         <div className="border-t border-slate-200/80 bg-white p-3">
@@ -206,16 +240,19 @@ export default function AppSidebar({
         </div>
       </aside>
 
-      <header className="sticky top-0 z-[60] flex h-[var(--app-header-h)] min-h-[4rem] shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-[0_1px_0_rgba(15,23,42,0.06),0_4px_12px_-2px_rgba(15,23,42,0.08)] lg:hidden">
+      <header className="sticky top-0 z-[60] flex h-[var(--app-header-h)] min-h-[4rem] shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,0.06),0_4px_12px_-2px_rgba(15,23,42,0.08)] lg:hidden">
         <Image
           src={platformLogo}
           alt="Aspexy"
-          width={140}
-          height={40}
+          width={120}
+          height={36}
           draggable={false}
-          className="h-9 w-auto object-contain"
+          className="h-8 w-auto shrink-0 object-contain"
           priority
         />
+        <p className="min-w-0 flex-1 truncate text-center text-sm font-semibold leading-tight text-slate-800">
+          {activeStepLabel}
+        </p>
         <button
           type="button"
           onClick={() => onMobileOpenChange(!mobileOpen)}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, CalendarClock, ChevronRight, Plus, Trash2, UsersRound } from "lucide-react";
+import { ArrowLeft, CalendarClock, Info, Plus, Trash2, UsersRound } from "lucide-react";
 
 import RuleIntroModal from "@/components/rule-intro-modal";
 import ScheduleSelect from "@/components/schedule-select";
@@ -23,8 +23,6 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
   const [introRule, setIntroRule] = useState<RuleKey | null>(null);
   const didApplyInitialRule = useRef(false);
 
-  const savedGroupCount = c.groupRows.filter((r) => r.teacherIds.length >= 2).length;
-  const hasSavedGroups = savedGroupCount > 0;
   const canUseMutexRule = teacherSelectOptions.length >= 2;
 
   useEffect(() => {
@@ -61,61 +59,86 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
       <section className="app-panel overflow-hidden">
         <div className="border-b border-slate-100/90 px-5 py-4">
           <h2 className="text-sm font-semibold text-slate-900">O que restringir na geração</h2>
-          <p className="mt-1 text-xs text-slate-500">Escolha um tipo de regra para configurar.</p>
+          <p className="mt-1 text-xs text-slate-500">Restrições aplicadas ao gerar horários.</p>
         </div>
 
         <div className="px-5 py-5">
           {selectedRule === null ? (
-            <div className="space-y-4">
-              <p className="text-xs font-medium uppercase tracking-wider text-slate-400">Tipo de regra</p>
-              <ul className="grid gap-3 sm:grid-cols-2">
-                <li>
+            <ul className="grid w-full grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3">
+              <li>
+                <div
+                  className={cn(
+                    "flex min-h-[4.5rem] items-stretch overflow-hidden rounded-xl transition-[background-color,box-shadow,border-color] duration-200",
+                    canUseMutexRule
+                      ? "border border-transparent bg-slate-50/60 hover:border-slate-200/85 hover:bg-white hover:shadow-[0_1px_2px_rgba(67,56,202,0.09),0_1px_2px_rgba(15,23,42,0.04)]"
+                      : "border border-slate-100 bg-slate-50/40"
+                  )}
+                >
                   <button
                     type="button"
                     disabled={!canUseMutexRule}
-                    onClick={() => setIntroRule("teacher_mutex")}
+                    onClick={() => setSelectedRule("teacher_mutex")}
+                    aria-label={
+                      canUseMutexRule ? "Configurar professores no mesmo horário" : "Professores no mesmo horário, indisponível"
+                    }
                     className={cn(
-                      "group flex w-full flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all duration-200",
-                      canUseMutexRule
-                        ? "border-slate-200/90 bg-white shadow-sm hover:border-indigo-300/90 hover:shadow-md hover:shadow-indigo-950/[0.06]"
-                        : "cursor-not-allowed border-slate-100 bg-slate-50/80 text-slate-400"
+                      "flex min-w-0 flex-1 items-center gap-3 px-4 py-3.5 text-left outline-none sm:px-[1.125rem] sm:py-4",
+                      "focus-visible:z-[1] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500/25",
+                      canUseMutexRule ? "cursor-pointer" : "cursor-not-allowed"
                     )}
                   >
-                    <div className="flex w-full items-start justify-between gap-2">
-                      <span className="grid h-10 w-10 place-items-center rounded-xl border border-indigo-200/80 bg-indigo-50 text-indigo-700 transition-colors group-hover:border-indigo-300 group-hover:bg-indigo-100/80">
-                        <UsersRound className="h-5 w-5" aria-hidden />
+                    <UsersRound
+                      className={cn(
+                        "h-[18px] w-[18px] shrink-0",
+                        canUseMutexRule ? "text-slate-400" : "text-slate-300"
+                      )}
+                      strokeWidth={1.5}
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1 py-0.5">
+                      <span
+                        className={cn(
+                          "block text-sm font-semibold tracking-tight",
+                          canUseMutexRule ? "text-slate-900" : "text-slate-500"
+                        )}
+                      >
+                        Professores no mesmo horário
                       </span>
-                      {canUseMutexRule ? (
-                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-400 transition-colors group-hover:bg-indigo-100 group-hover:text-indigo-700">
-                          <ChevronRight className="h-4 w-4" aria-hidden />
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-sm font-semibold text-slate-900">Professores no mesmo horário</span>
-                      <p className="mt-1 text-xs text-slate-500">Vários professores por lista · toque para saber mais</p>
-                    </div>
-                    {!canUseMutexRule ? (
-                      <span className="text-xs text-amber-800/90">Cadastre pelo menos dois professores.</span>
-                    ) : hasSavedGroups ? (
-                      <span className="text-xs font-medium text-indigo-700">{savedGroupCount} lista(s) salva(s)</span>
-                    ) : null}
-                  </button>
-                </li>
-                <li>
-                  <div
-                    className="flex h-full flex-col gap-2 rounded-xl border border-dashed border-slate-200/90 bg-slate-50/50 p-4 text-left text-slate-400"
-                    aria-disabled
-                  >
-                    <span className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-400">
-                      <CalendarClock className="h-5 w-5" aria-hidden />
+                      <span className="mt-1 block text-xs leading-relaxed text-slate-500">
+                        {canUseMutexRule
+                          ? "Listas de professores que não podem coincidir no mesmo horário."
+                          : "É preciso cadastrar pelo menos dois professores."}
+                      </span>
                     </span>
-                    <span className="text-sm font-semibold text-slate-500">Outras regras</span>
-                    <span className="text-xs">Em breve.</span>
+                  </button>
+                  {canUseMutexRule ? (
+                    <>
+                      <div className="w-px shrink-0 self-stretch bg-slate-200/70" aria-hidden />
+                      <button
+                        type="button"
+                        onClick={() => setIntroRule("teacher_mutex")}
+                        aria-label="Informações sobre professores no mesmo horário"
+                        className="grid w-11 shrink-0 place-items-center text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus-visible:z-[1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500/25"
+                      >
+                        <Info className="h-4 w-4" strokeWidth={2} aria-hidden />
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              </li>
+              <li>
+                <div
+                  className="flex min-h-[4.5rem] items-center gap-3 rounded-xl border border-dashed border-slate-200/80 bg-slate-50/30 px-4 py-3.5 sm:px-[1.125rem] sm:py-4"
+                  aria-disabled
+                >
+                  <CalendarClock className="h-[18px] w-[18px] shrink-0 text-slate-300" strokeWidth={1.5} aria-hidden />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold tracking-tight text-slate-500">Outras regras</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-400">Em breve nesta etapa.</p>
                   </div>
-                </li>
-              </ul>
-            </div>
+                </div>
+              </li>
+            </ul>
           ) : selectedRule === "teacher_mutex" ? (
             <div className="space-y-5">
               <div className="flex flex-wrap items-center gap-2">

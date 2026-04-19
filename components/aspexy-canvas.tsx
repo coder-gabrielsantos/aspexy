@@ -45,6 +45,8 @@ const PAGE_TITLE: Record<TabMode, string> = {
   generate: "Horários"
 };
 
+const CADASTRO_TAB_IDS = new Set<TabMode>(["grade", "classes", "teachers", "subjects"]);
+
 export default function AspexyCanvas() {
   const [activeTab, setActiveTab] = useState<TabMode>("grade");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -115,7 +117,9 @@ export default function AspexyCanvas() {
   const { data: session } = useSession();
   const userInitials = (session?.user?.name ?? "U").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
-  const breadcrumbCurrent = STEPS.find((s) => s.id === activeTab)?.label ?? PAGE_TITLE[activeTab];
+  const breadcrumbStep = STEPS.find((s) => s.id === activeTab)?.label ?? PAGE_TITLE[activeTab];
+  const breadcrumbGroup = CADASTRO_TAB_IDS.has(activeTab) ? "Cadastro" : "Geração";
+  const breadcrumbMobile = `${breadcrumbGroup} · ${breadcrumbStep}`;
   const pageTitle = PAGE_TITLE[activeTab];
 
   return (
@@ -123,6 +127,7 @@ export default function AspexyCanvas() {
       <AppSidebar
         steps={STEPS}
         activeStep={activeTab}
+        activeStepLabel={breadcrumbMobile}
         onStepChange={navigateToStep}
         userName={session?.user?.name}
         userImage={session?.user?.image}
@@ -135,11 +140,11 @@ export default function AspexyCanvas() {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:ml-[260px]">
         <header className="sticky top-0 z-40 hidden h-[var(--app-header-h)] min-h-[4rem] items-center border-b border-slate-200 bg-white/95 px-6 shadow-[0_1px_0_rgba(15,23,42,0.06),0_4px_12px_-2px_rgba(15,23,42,0.08)] backdrop-blur-sm lg:flex">
           <nav className="flex items-center gap-2 text-sm text-slate-500" aria-label="Localização na aplicação">
-            <span className="font-semibold text-indigo-700">Etapas</span>
+            <span className="font-semibold text-indigo-700">{breadcrumbGroup}</span>
             <span className="text-indigo-300" aria-hidden>
               ·
             </span>
-            <span className="font-medium text-slate-800">{breadcrumbCurrent}</span>
+            <span className="font-medium text-slate-800">{breadcrumbStep}</span>
           </nav>
         </header>
 
