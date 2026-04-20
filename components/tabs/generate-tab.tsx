@@ -139,13 +139,13 @@ export default function GenerateTab({
                 type="button"
                 onClick={onRequestDeleteGenerated}
                 variant="outline"
-                className="h-9 gap-1.5 text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+                className="h-11 gap-1.5 text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 Excluir
               </Button>
             )}
-            <Button onClick={() => void g.handleGenerateSchedule()} disabled={g.isSolving || !g.generationProfile} className="h-9 gap-1.5">
+            <Button onClick={() => void g.handleGenerateSchedule()} disabled={g.isSolving || !g.generationProfile} className="h-11 gap-1.5">
               <WandSparkles className="h-3.5 w-3.5" />
               {g.isSolving ? "Gerando..." : "Gerar e Salvar"}
             </Button>
@@ -203,7 +203,7 @@ export default function GenerateTab({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar disciplina ou professor"
-                className="h-9"
+                className="h-11"
                 aria-label="Buscar disciplina ou professor no horário"
               />
             </div>

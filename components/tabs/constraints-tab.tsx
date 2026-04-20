@@ -206,7 +206,7 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-9 gap-1.5 text-slate-600"
+                  className="h-11 gap-1.5 text-slate-600"
                   onClick={() => requestBackToRuleList()}
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
@@ -276,7 +276,7 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-9 min-w-0 gap-1.5"
+                  className="h-11 min-w-0 gap-1.5"
                   onClick={() => c.addGroupRow()}
                   disabled={!canUseMutexRule}
                 >
@@ -285,7 +285,7 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
                 </Button>
                 <Button
                   type="button"
-                  className="h-9 min-w-0 gap-1.5"
+                  className="h-11 min-w-0 gap-1.5"
                   onClick={() => void c.saveConstraints()}
                   disabled={c.isSaving}
                 >
@@ -299,7 +299,7 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-9 gap-1.5 text-slate-600"
+                  className="h-11 gap-1.5 text-slate-600"
                   onClick={() => requestBackToRuleList()}
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
@@ -347,7 +347,7 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
               </div>
 
               <div className="border-t border-slate-100/90 pt-4">
-                <Button type="button" className="h-9" disabled={c.isSaving} onClick={() => void c.saveConstraints()}>
+                <Button type="button" className="h-11" disabled={c.isSaving} onClick={() => void c.saveConstraints()}>
                   {c.isSaving ? "Salvando..." : "Salvar regras"}
                 </Button>
               </div>

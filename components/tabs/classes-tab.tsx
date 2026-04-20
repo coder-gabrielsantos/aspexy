@@ -64,7 +64,8 @@ export default function ClassesTab({ classesHook: c, onRequestDelete }: ClassesT
               onClick={() => void c.handleAddClass()}
               disabled={!c.newClassName.trim() || c.isSavingClass}
               aria-label="Adicionar turma"
-              className="h-9 shrink-0 px-3"
+              size="icon"
+              className="shrink-0"
             >
               <Plus className="h-3.5 w-3.5" />
             </Button>

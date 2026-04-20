@@ -65,7 +65,7 @@ export default function StepPrerequisiteGuide({
             <Button
               key={`${a.tab}-${a.label}`}
               type="button"
-              className="h-9 gap-2"
+              className="h-11 gap-2"
               onClick={() => onNavigate(a.tab)}
             >
               {a.label}

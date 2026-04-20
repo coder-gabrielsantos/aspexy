@@ -104,14 +104,14 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                 >
                   <td className="border-b border-slate-100 px-2.5 py-2">
                     <div className="flex items-center justify-center gap-1.5">
-                      <Input inputMode="numeric" placeholder="HH:MM" value={slot.start} maxLength={5} className="h-8 w-[4.75rem] shrink-0 rounded-none px-2 text-center text-xs tabular-nums"
+                      <Input inputMode="numeric" placeholder="HH:MM" value={slot.start} maxLength={5} className="h-11 w-[4.75rem] shrink-0 rounded-none px-2 text-center text-xs tabular-nums"
                         onChange={(e) => s.updateSlotTime(si, "start", formatTimeTyping(e.target.value))}
                         onFocus={(e) => e.currentTarget.select()}
                         onKeyDown={(e) => { if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return; e.preventDefault(); s.updateSlotTime(si, "start", addMinutesToTime24(slot.start, e.key === "ArrowUp" ? 5 : -5)); }}
                         onBlur={() => s.updateSlotTime(si, "start", normalizeTime24OrFallback(slot.start, DEFAULT_START))}
                       />
                       <span className="shrink-0 text-[10px] text-slate-300">–</span>
-                      <Input inputMode="numeric" placeholder="HH:MM" value={slot.end} maxLength={5} className="h-8 w-[4.75rem] shrink-0 rounded-none px-2 text-center text-xs tabular-nums"
+                      <Input inputMode="numeric" placeholder="HH:MM" value={slot.end} maxLength={5} className="h-11 w-[4.75rem] shrink-0 rounded-none px-2 text-center text-xs tabular-nums"
                         onChange={(e) => s.updateSlotTime(si, "end", formatTimeTyping(e.target.value))}
                         onFocus={(e) => e.currentTarget.select()}
                         onKeyDown={(e) => { if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return; e.preventDefault(); s.updateSlotTime(si, "end", addMinutesToTime24(slot.end, e.key === "ArrowUp" ? 5 : -5)); }}

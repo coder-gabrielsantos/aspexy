@@ -247,7 +247,7 @@ export default function SubjectsTab({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Ex.: Matemática"
-                  className="h-10"
+                  className="h-11"
                   aria-label="Buscar disciplina"
                 />
               </div>
@@ -437,7 +437,7 @@ export default function SubjectsTab({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-9 min-w-0 flex-1 gap-1 px-2 text-xs sm:h-8 sm:flex-initial sm:px-2.5"
+                  className="h-11 min-w-0 flex-1 gap-1 px-2 text-xs sm:flex-initial sm:px-2.5"
                   disabled={page <= 0}
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   aria-label="Página anterior"
@@ -452,7 +452,7 @@ export default function SubjectsTab({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-9 min-w-0 flex-1 gap-1 px-2 text-xs sm:h-8 sm:flex-initial sm:px-2.5"
+                  className="h-11 min-w-0 flex-1 gap-1 px-2 text-xs sm:flex-initial sm:px-2.5"
                   disabled={page >= pageCount - 1}
                   onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
                   aria-label="Próxima página"

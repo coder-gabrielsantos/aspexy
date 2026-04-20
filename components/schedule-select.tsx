@@ -63,14 +63,14 @@ const selectClassNames: ClassNamesConfig<
   container: () => "w-full min-w-0",
   control: (props) =>
     cn(
-      "flex min-h-10 w-full cursor-default rounded-md border bg-white text-sm text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-colors duration-150",
+      "flex h-11 min-h-11 w-full cursor-default rounded-md border bg-white text-sm text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-colors duration-150",
       props.isFocused
         ? "border-indigo-400/95 ring-2 ring-indigo-600/18"
         : "border-slate-200 hover:border-indigo-300/85",
       props.isDisabled && "cursor-not-allowed opacity-50"
     ),
   valueContainer: () =>
-    "flex min-w-0 flex-1 flex-wrap items-center gap-1.5 overflow-hidden py-1.5 pl-3 pr-1",
+    "flex h-11 min-w-0 flex-1 flex-wrap items-center gap-1.5 overflow-hidden py-0 pl-3 pr-1",
   indicatorsContainer: () => "flex shrink-0 items-center",
   dropdownIndicator: () => "p-1.5 text-slate-400 hover:text-slate-600 transition-colors",
   clearIndicator: () => "p-1.5 text-slate-400 hover:text-slate-600 transition-colors",
@@ -124,6 +124,18 @@ function mergeSelectStyles(maxVisibleMenuItems?: number): StylesConfig<
   return {
     menuPortal: (base) => ({ ...base, zIndex: 100 }),
     menu: (base) => ({ ...base, zIndex: 100 }),
+    control: (base) => ({
+      ...base,
+      minHeight: 44,
+      height: 44,
+      alignItems: "stretch"
+    }),
+    valueContainer: (base) => ({
+      ...base,
+      paddingTop: 0,
+      paddingBottom: 0,
+      alignItems: "center"
+    }),
     menuList: (base) => {
       if (maxVisibleMenuItems == null) return base;
       const n = Math.max(1, Math.min(20, maxVisibleMenuItems));
