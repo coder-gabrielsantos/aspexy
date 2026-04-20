@@ -362,7 +362,7 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                       </colgroup>
                       <thead>
                         <tr>
-                          <th className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                          <th className="sticky top-0 z-10 border-b border-l border-slate-200 bg-slate-100 px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                             Horário
                           </th>
                           {DAYS.map((day, di) => (
@@ -385,7 +385,7 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                           if (allBreak) {
                             return (
                               <tr key={slot.id}>
-                                <td className="border-b border-slate-100/80 px-3 py-2 text-center text-xs text-slate-400">
+                                <td className="border-b border-l border-slate-100/80 px-3 py-2 text-center text-xs text-slate-400">
                                   {slot.start} – {slot.end}
                                 </td>
                                 {DAYS.map((day, di) => (
@@ -404,7 +404,7 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                           }
                           return (
                             <tr key={slot.id} className="transition-colors duration-150 hover:bg-slate-50/50">
-                              <td className="border-b border-slate-100/80 px-3 py-2 text-center text-xs font-medium tabular-nums text-slate-600">
+                              <td className="border-b border-l border-slate-100/80 px-3 py-2 text-center text-xs font-medium tabular-nums text-slate-600">
                                 {slot.start} – {slot.end}
                               </td>
                               {DAYS.map((_, di) => {
