@@ -46,6 +46,10 @@ function softMatch(haystack: string, needle: string): boolean {
   return tokens.every((t) => h.includes(t));
 }
 
+function dayLabelCompact(full: string): string {
+  return full.replace(/\s*-\s*feira\b/iu, "").trim();
+}
+
 function subjectOptionsForClassName(
   className: string,
   subjects: Subject[],
@@ -507,7 +511,7 @@ function ByClassView({
               {DAYS.map((day) => (
                 <th key={day} className="sticky top-0 z-[20] border-b border-l border-slate-200 p-0 align-top">
                   <div className="box-border flex min-h-[2.5rem] w-full items-center justify-center bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[0_2px_0_0_rgb(226_232_240)]">
-                    {DAY_FULL_LABEL[day]}
+                    {dayLabelCompact(DAY_FULL_LABEL[day])}
                   </div>
                 </th>
               ))}
