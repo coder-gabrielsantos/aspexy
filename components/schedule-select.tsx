@@ -303,14 +303,22 @@ function ScheduleSelectMulti({
             {commaDesktop ? <span className="mx-1 hidden text-slate-400 sm:inline">,</span> : null}
           </span>
           {asText ? null : (
-            <button
-              type="button"
-              aria-label={`Remover ${props.data.label}`}
-              {...props.removeProps}
-              className="rounded-r-md p-1.5 text-slate-400 transition-colors hover:bg-rose-100 hover:text-rose-600"
-            >
-              ×
-            </button>
+            (() => {
+              // `removeProps` inclui `ref` tipado para <div>; removemos para usar em <button>.
+              const { ref: _ref, ...safeRemoveProps } = props.removeProps;
+              void _ref;
+              return (
+                <div
+                  aria-label={`Remover ${props.data.label}`}
+                  role="button"
+                  tabIndex={0}
+                  {...safeRemoveProps}
+                  className="rounded-r-md p-1.5 text-slate-400 transition-colors hover:bg-rose-100 hover:text-rose-600"
+                >
+                  ×
+                </div>
+              );
+            })()
           )}
         </div>
       );
