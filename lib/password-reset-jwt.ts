@@ -8,9 +8,9 @@ function secretKey(): Uint8Array {
   return new TextEncoder().encode(s);
 }
 
-/** JWT de 1h; `sub` = id Mongo (string) do usuário credentials e-mail. */
-export async function signPasswordResetToken(userId: string): Promise<string> {
-  return new SignJWT({ purpose: PURPOSE })
+/** JWT de 1h; `sub` = id Mongo; `jti` = id único do pedido (uso único no banco). */
+export async function signPasswordResetToken(userId: string, jti: string): Promise<string> {
+  return new SignJWT({ purpose: PURPOSE, jti })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(userId)
     .setIssuedAt()
@@ -18,13 +18,17 @@ export async function signPasswordResetToken(userId: string): Promise<string> {
     .sign(secretKey());
 }
 
-export async function verifyPasswordResetToken(token: string): Promise<string | null> {
+export type PasswordResetClaims = { userId: string; jti: string };
+
+export async function verifyPasswordResetToken(token: string): Promise<PasswordResetClaims | null> {
   try {
     const { payload } = await jwtVerify(token, secretKey(), { algorithms: ["HS256"] });
     if (payload.purpose !== PURPOSE || typeof payload.sub !== "string" || !payload.sub) {
       return null;
     }
-    return payload.sub;
+    const jti = typeof payload.jti === "string" ? payload.jti : "";
+    if (!jti) return null;
+    return { userId: payload.sub, jti };
   } catch {
     return null;
   }

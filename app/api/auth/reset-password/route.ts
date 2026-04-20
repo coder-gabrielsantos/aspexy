@@ -10,6 +10,7 @@ import { ensureCredentialsUsersIndexes } from "@/lib/credentials-users-index";
 import clientPromise from "@/lib/mongodb";
 import { hashPassword } from "@/lib/password";
 import { verifyPasswordResetToken } from "@/lib/password-reset-jwt";
+import { PASSWORD_RESET_TOKENS_COLLECTION, ensurePasswordResetTokensIndexes } from "@/lib/password-reset-tokens";
 
 type Body = { token?: unknown; password?: unknown };
 
@@ -23,8 +24,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Link inválido ou expirado." }, { status: 400 });
     }
 
-    const userId = await verifyPasswordResetToken(token);
-    if (!userId || !ObjectId.isValid(userId)) {
+    const claims = await verifyPasswordResetToken(token);
+    if (!claims || !ObjectId.isValid(claims.userId)) {
       return NextResponse.json({ error: "Link inválido ou expirado. Solicite um novo e-mail em “Esqueci a senha”." }, { status: 401 });
     }
 
@@ -35,15 +36,31 @@ export async function POST(request: Request) {
 
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB ?? "aspexy");
+    const tokensColl = db.collection(PASSWORD_RESET_TOKENS_COLLECTION);
+    await ensurePasswordResetTokensIndexes(tokensColl);
+
+    const now = new Date();
+    const consume = await tokensColl.deleteOne({
+      jti: claims.jti,
+      user_id: claims.userId,
+      expires_at: { $gt: now }
+    });
+
+    if (consume.deletedCount === 0) {
+      return NextResponse.json(
+        { error: "Link inválido, expirado ou já utilizado. Solicite um novo e-mail em “Esqueci a senha”." },
+        { status: 401 }
+      );
+    }
+
     const coll = db.collection(CREDENTIALS_USERS_COLLECTION);
     await ensureCredentialsUsersIndexes(coll);
 
     const password_hash = await hashPassword(password);
-    const now = new Date();
 
     const result = await coll.updateOne(
       {
-        _id: new ObjectId(userId),
+        _id: new ObjectId(claims.userId),
         auth_method: CREDENTIALS_AUTH_METHOD_EMAIL,
         password_hash: { $exists: true, $type: "string", $ne: "" }
       },

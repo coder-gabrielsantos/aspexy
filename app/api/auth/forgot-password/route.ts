@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { MongoServerError } from "mongodb";
 import { NextResponse } from "next/server";
 
@@ -16,6 +17,11 @@ import {
   ensurePasswordResetRateIndexes,
   passwordResetRateHourBucket
 } from "@/lib/password-reset-rate";
+import {
+  PASSWORD_RESET_TOKEN_TTL_MS,
+  PASSWORD_RESET_TOKENS_COLLECTION,
+  ensurePasswordResetTokensIndexes
+} from "@/lib/password-reset-tokens";
 
 type Body = { email?: unknown };
 
@@ -77,10 +83,24 @@ export async function POST(request: Request) {
     }
 
     if (user?.password_hash) {
-      const token = await signPasswordResetToken(user._id.toString());
+      const tokensColl = db.collection(PASSWORD_RESET_TOKENS_COLLECTION);
+      await ensurePasswordResetTokensIndexes(tokensColl);
+      await tokensColl.deleteMany({ user_id: user._id.toString() });
+
+      const jti = randomUUID();
+      const expires_at = new Date(Date.now() + PASSWORD_RESET_TOKEN_TTL_MS);
+      await tokensColl.insertOne({
+        jti,
+        user_id: user._id.toString(),
+        expires_at,
+        created_at: now
+      });
+
+      const token = await signPasswordResetToken(user._id.toString(), jti);
       const path = `/redefinir-senha?token=${encodeURIComponent(token)}`;
       const sent = await sendPasswordResetEmail(email, path);
       if (!sent.ok) {
+        await tokensColl.deleteOne({ jti });
         await rateColl.updateOne(
           { email },
           {
