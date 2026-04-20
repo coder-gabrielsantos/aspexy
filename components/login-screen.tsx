@@ -94,8 +94,10 @@ function LoginForm({
   dark?: boolean;
 }) {
   const router = useRouter();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
   const [signupStep, setSignupStep] = useState<"email" | "code" | "password">("email");
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotCooldown, setForgotCooldown] = useState(0);
   const [email, setEmail] = useState("");
   const [signupOtp, setSignupOtp] = useState("");
   const [signupCodeDelivery, setSignupCodeDelivery] = useState<"email" | "console" | null>(null);
@@ -116,6 +118,14 @@ function LoginForm({
     }, 1000);
     return () => window.clearInterval(t);
   }, [resendCooldown]);
+
+  useEffect(() => {
+    if (forgotCooldown <= 0) return;
+    const t = window.setInterval(() => {
+      setForgotCooldown((s) => (s <= 1 ? 0 : s - 1));
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [forgotCooldown]);
 
   const bannerError = localError ?? oauthErrorMessage;
 
@@ -260,13 +270,15 @@ function LoginForm({
     }
   };
 
-  const switchMode = (next: "signin" | "signup") => {
+  const switchMode = (next: "signin" | "signup" | "forgot") => {
     setMode(next);
     setLocalError(null);
+    setForgotSent(false);
+    setForgotCooldown(0);
     if (next === "signup") {
       setEmail("");
       resetSignupWizard();
-    } else {
+    } else if (next === "signin") {
       resetSignupWizard();
       setEmail("");
     }
@@ -274,8 +286,37 @@ function LoginForm({
     setShowPassword(false);
   };
 
+  const submitForgotPassword = async () => {
+    setLocalError(null);
+    if (forgotCooldown > 0 || busy) return;
+    setBusy(true);
+    try {
+      const r = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() })
+      });
+      const d = await readJsonSafe<{ ok?: boolean; error?: string; message?: string }>(r);
+      if (!r.ok || !d?.ok) {
+        setLocalError(d?.error ?? "Não foi possível enviar o e-mail.");
+        return;
+      }
+      setForgotSent(true);
+      setForgotCooldown(60);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitForgotPassword();
+  };
+
   const headline =
-    mode === "signin"
+    mode === "forgot"
+      ? { title: "Esqueceu a senha?", subtitle: "Informe seu e-mail e enviaremos um link para criar uma nova senha" }
+      : mode === "signin"
       ? { title: "Bem-vindo", subtitle: "Entre com e-mail e senha ou use o Google" }
       : signupStep === "email"
         ? { title: "Criar conta", subtitle: "Enviaremos um código para seu e-mail" }
@@ -324,7 +365,25 @@ function LoginForm({
           </div>
         ) : null}
 
-        {!googleConfigured ? (
+        {mode === "forgot" && forgotSent ? (
+          <div
+            className={cn(
+              "rounded-xl border p-3 text-left text-sm",
+              dark
+                ? "border-sky-500/35 bg-sky-950/35 text-sky-100"
+                : "border-sky-200/90 bg-sky-50/90 text-sky-950"
+            )}
+          >
+            <div className="flex items-start gap-2.5">
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-500 dark:text-sky-400" aria-hidden />
+              <div className="leading-relaxed">
+                Se houver conta neste e-mail, você receberá um link em instantes. Expira em 1 hora.
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {!googleConfigured && mode !== "forgot" ? (
           <div
             className={cn(
               "rounded-xl border p-3 text-left text-sm",
@@ -344,7 +403,66 @@ function LoginForm({
         ) : null}
       </div>
 
-      {mode === "signin" ? (
+      {mode === "forgot" ? (
+        <form className="mt-6 space-y-3.5" onSubmit={handleForgotPasswordSubmit}>
+          <div>
+            <label
+              htmlFor={dark ? "email-m" : "email"}
+              className={cn("mb-1.5 block text-xs font-medium", dark ? "text-slate-300" : "text-slate-600")}
+            >
+              E-mail
+            </label>
+            <div className="relative">
+              <Mail
+                className={cn(
+                  "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2",
+                  dark ? "text-slate-500" : "text-slate-400"
+                )}
+                aria-hidden
+              />
+              <Input
+                id={dark ? "email-m" : "email"}
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={cn(fieldClass(dark), "pl-10")}
+                placeholder="seu@email.com"
+              />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className={cn(
+              "mb-1 flex w-full items-center justify-start gap-1.5 text-sm font-medium transition-colors",
+              dark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900"
+            )}
+            onClick={() => switchMode("signin")}
+          >
+            <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
+            Voltar ao login
+          </button>
+
+          <Button
+            type="submit"
+            disabled={busy || forgotCooldown > 0}
+            className={cn(
+              "h-11 w-full rounded-full text-sm font-semibold shadow-sm transition-transform active:scale-[0.99]",
+              dark ? "bg-indigo-500 text-white hover:bg-indigo-400" : ""
+            )}
+          >
+            {busy
+              ? "Enviando…"
+              : forgotCooldown > 0
+                ? `Aguarde ${forgotCooldown}s para reenviar`
+                : forgotSent
+                  ? "Enviar novamente"
+                  : "Enviar link por e-mail"}
+          </Button>
+        </form>
+      ) : mode === "signin" ? (
         <form className="mt-6 space-y-3.5" onSubmit={handleSignIn}>
           <div>
             <label
@@ -382,6 +500,24 @@ function LoginForm({
               autoComplete="current-password"
               placeholder="••••••••"
             />
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="button"
+              className={cn(
+                "text-sm font-medium underline-offset-2 transition-colors hover:underline",
+                dark ? "text-indigo-300 hover:text-indigo-200" : "text-indigo-700 hover:text-indigo-800"
+              )}
+              onClick={() => {
+                setMode("forgot");
+                setLocalError(null);
+                setForgotSent(false);
+                setForgotCooldown(0);
+              }}
+            >
+              Esqueceu a senha?
+            </button>
           </div>
 
           <Button
@@ -588,7 +724,18 @@ function LoginForm({
       )}
 
       <p className={cn("mt-4 text-center text-sm", dark ? "text-slate-400" : "text-slate-500")}>
-        {mode === "signin" ? (
+        {mode === "forgot" ? (
+          <>
+            Lembrou a senha?{" "}
+            <button
+              type="button"
+              className={cn("font-semibold underline-offset-2 hover:underline", dark ? "text-indigo-300" : "text-indigo-700")}
+              onClick={() => switchMode("signin")}
+            >
+              Entrar
+            </button>
+          </>
+        ) : mode === "signin" ? (
           <>
             Não tem conta?{" "}
             <button
@@ -613,7 +760,7 @@ function LoginForm({
         )}
       </p>
 
-      {googleConfigured ? (
+      {googleConfigured && mode !== "forgot" ? (
         <>
           <div className="my-6 flex items-center gap-3">
             <div className={cn("h-px flex-1", dark ? "bg-slate-700" : "bg-slate-200")} />
