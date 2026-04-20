@@ -47,6 +47,7 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
   const [editingName, setEditingName] = useState("");
   const [maxDayDraft, setMaxDayDraft] = useState("");
   const [dragRect, setDragRect] = useState<DragRect | null>(null);
+  const availabilityScrollRef = useRef<HTMLDivElement>(null);
 
   const teachersApiRef = useRef({
     toggle: t.toggleTeacherSlotState,
@@ -95,6 +96,38 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
   };
 
   const beginAvailabilityDrag = (e: React.PointerEvent, anchorDi: number, anchorSi: number) => {
+    // Touch: permite rolar a página; só alterna no "tap" (sem mover).
+    if (e.pointerType !== "mouse") {
+      const startX = e.clientX;
+      const startY = e.clientY;
+      let moved = false;
+      const scroller = availabilityScrollRef.current;
+      const startScrollTop = scroller?.scrollTop ?? 0;
+      const startScrollLeft = scroller?.scrollLeft ?? 0;
+
+      const onMove = (ev: PointerEvent) => {
+        if (moved) return;
+        const dx = Math.abs(ev.clientX - startX);
+        const dy = Math.abs(ev.clientY - startY);
+        if (dx + dy >= 10) moved = true; // virou gesto de scroll
+      };
+
+      const finish = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", finish);
+        window.removeEventListener("pointercancel", finish);
+        const endScrollTop = scroller?.scrollTop ?? 0;
+        const endScrollLeft = scroller?.scrollLeft ?? 0;
+        const scrolled = endScrollTop !== startScrollTop || endScrollLeft !== startScrollLeft;
+        if (!moved && !scrolled) void t.toggleTeacherSlotState(anchorDi, anchorSi);
+      };
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", finish);
+      window.addEventListener("pointercancel", finish);
+      return;
+    }
+
     if (e.button !== 0) return;
     e.preventDefault();
     const brush = t.teacherSlotState(anchorDi, anchorSi);
@@ -352,6 +385,7 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                       "min-h-0 min-w-0 flex-1 overflow-auto px-3 lg:px-0",
                       dragRect && "touch-none select-none"
                     )}
+                    ref={availabilityScrollRef}
                   >
                     <table className="w-full min-w-[600px] table-fixed border-collapse text-xs">
                       <colgroup>
