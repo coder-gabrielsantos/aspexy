@@ -3,6 +3,7 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import Select, {
   type ClassNamesConfig,
+  type SelectComponentsConfig,
   type GroupBase,
   type MultiValue,
   type MultiValueProps,
@@ -241,7 +242,7 @@ function ScheduleSelectMulti({
   );
   const styles = useMemo(() => mergeMultiSelectStyles(maxVisibleMenuItems), [maxVisibleMenuItems]);
 
-  const components = useMemo(() => {
+  const components = useMemo<Partial<SelectComponentsConfig<ScheduleSelectOption, true, GroupBase<ScheduleSelectOption>>>>(() => {
     const MultiValue = (props: MultiValueProps<ScheduleSelectOption, true, GroupBase<ScheduleSelectOption>>) => {
       const idx = props.index;
       const total = Array.isArray(props.selectProps.value) ? props.selectProps.value.length : selected.length;
@@ -387,7 +388,13 @@ function ScheduleSelectMulti({
     };
 
     return { MultiValue };
-  }, [maxVisibleSelectedValues, maxVisibleSelectedValuesSm, multiValueSeparator, selected.length]);
+  }, [
+    maxVisibleSelectedValues,
+    maxVisibleSelectedValuesSm,
+    multiValueSeparator,
+    multiValueDisplay,
+    selected.length
+  ]);
 
   return (
     <Select<ScheduleSelectOption, true>
@@ -407,7 +414,7 @@ function ScheduleSelectMulti({
       blurInputOnSelect={false}
       styles={styles}
       classNames={multiSelectClassNames}
-      components={components as any}
+      components={components}
       classNamePrefix="aspexy-select"
       menuPosition="fixed"
       menuPortalTarget={menuPortalTarget}
