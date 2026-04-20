@@ -95,13 +95,13 @@ function ProfileAccountLink({
     }
     e.preventDefault();
     startTransition(() => {
-      router.push("/settings/profile");
+      router.push("/configuracoes/perfil");
     });
   }
 
   return (
     <Link
-      href="/settings/profile"
+      href="/configuracoes/perfil"
       onClick={handleClick}
       aria-busy={isPending}
       aria-label={`Abrir página de perfil e conta de ${displayName}`}

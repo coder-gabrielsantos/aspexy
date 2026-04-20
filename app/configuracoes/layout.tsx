@@ -4,11 +4,12 @@ import { getServerSession } from "next-auth";
 import { SettingsShell } from "@/components/settings/settings-shell";
 import { authOptions } from "@/lib/auth";
 
-export default async function SettingsLayout({ children }: { children: React.ReactNode }) {
+export default async function ConfiguracoesLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     redirect("/login");
   }
 
-  redirect("/configuracoes/perfil");
+  return <SettingsShell>{children}</SettingsShell>;
 }
+

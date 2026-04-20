@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { BookOpen, GraduationCap, LayoutGrid, Link2, Users, WandSparkles } from "lucide-react";
 
@@ -48,8 +48,35 @@ const PAGE_TITLE: Record<TabMode, string> = {
 
 const CADASTRO_TAB_IDS = new Set<TabMode>(["grade", "classes", "teachers", "subjects"]);
 
+const TAB_HASH_PT: Record<TabMode, string> = {
+  grade: "estrutura",
+  classes: "turmas",
+  teachers: "professores",
+  subjects: "disciplinas",
+  constraints: "regras",
+  generate: "horarios"
+};
+
+const HASH_PT_TO_TAB: Record<string, TabMode> = Object.fromEntries(
+  Object.entries(TAB_HASH_PT).map(([k, v]) => [v, k as TabMode])
+) as Record<string, TabMode>;
+
+function tabFromHash(hash: string): TabMode | null {
+  const h = String(hash || "").replace(/^#/, "").trim().toLowerCase();
+  if (!h) return null;
+  return HASH_PT_TO_TAB[h] ?? null;
+}
+
+function hashFromTab(tab: TabMode): string {
+  return `#${TAB_HASH_PT[tab] ?? "estrutura"}`;
+}
+
 export default function AspexyCanvas() {
-  const [activeTab, setActiveTab] = useState<TabMode>("grade");
+  const [mounted, setMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabMode>(() => {
+    if (typeof window === "undefined") return "grade";
+    return tabFromHash(window.location.hash) ?? "grade";
+  });
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { toasts, showToast, dismissToast } = useToasts();
@@ -125,6 +152,38 @@ export default function AspexyCanvas() {
     [activeTab, isConstraintsDirty]
   );
 
+  // Evita “flash” na aba padrão: resolve hash antes do primeiro paint.
+  useLayoutEffect(() => {
+    setMounted(true);
+    const fromHash = typeof window !== "undefined" ? tabFromHash(window.location.hash) : null;
+    if (fromHash && fromHash !== activeTab) {
+      setActiveTab(fromHash);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Mantém a aba atual no hash da URL (reload -> volta na mesma).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const nextHash = hashFromTab(activeTab);
+    if (url.hash !== nextHash) {
+      url.hash = nextHash;
+      window.history.replaceState(null, "", url.toString());
+    }
+  }, [activeTab]);
+
+  // Se o usuário navegar pelo back/forward ou editar o hash, sincroniza com a UI.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onHash = () => {
+      const next = tabFromHash(window.location.hash);
+      if (next && next !== activeTab) navigateToStep(next);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [activeTab, navigateToStep]);
+
   const handleConstraintsTabLeaveSave = useCallback(async () => {
     setConstraintsLeavePending(true);
     try {
@@ -169,6 +228,10 @@ export default function AspexyCanvas() {
   const breadcrumbStep = STEPS.find((s) => s.id === activeTab)?.label ?? PAGE_TITLE[activeTab];
   const breadcrumbGroup = CADASTRO_TAB_IDS.has(activeTab) ? "Cadastro" : "Geração";
   const pageTitle = PAGE_TITLE[activeTab];
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-white" />;
+  }
 
   return (
     <div className="flex flex-col bg-white">

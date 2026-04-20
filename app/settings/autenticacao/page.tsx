@@ -1,5 +1,5 @@
-import EmailPasswordSettingsForm from "@/components/settings/email-password-settings-form";
+import { redirect } from "next/navigation";
 
 export default function AutenticacaoSettingsPage() {
-  return <EmailPasswordSettingsForm />;
+  redirect("/configuracoes/autenticacao");
 }

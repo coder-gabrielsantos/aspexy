@@ -1,5 +1,5 @@
-import ProfileSettingsForm from "@/components/settings/profile-settings-form";
+import { redirect } from "next/navigation";
 
 export default function ProfileSettingsPage() {
-  return <ProfileSettingsForm />;
+  redirect("/configuracoes/perfil");
 }

@@ -12,9 +12,9 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
 const NAV = [
-  { href: "/settings/profile", label: "Perfil", icon: UserRound },
-  { href: "/settings/autenticacao", label: "Autenticação", icon: KeyRound },
-  { href: "/settings/billing", label: "Faturamento", icon: CreditCard }
+  { href: "/configuracoes/perfil", label: "Perfil", icon: UserRound },
+  { href: "/configuracoes/autenticacao", label: "Autenticação", icon: KeyRound },
+  { href: "/configuracoes/faturamento", label: "Faturamento", icon: CreditCard }
 ] as const;
 
 type SettingsShellProps = {
@@ -73,9 +73,12 @@ export function SettingsShell({ children }: SettingsShellProps) {
             {NAV.map(({ href, label, icon: Icon }) => {
               const active =
                 pathname === href ||
-                (href === "/settings/profile" && pathname === "/settings") ||
-                (href === "/settings/autenticacao" &&
-                  (pathname === "/settings/emails" ||
+                (href === "/configuracoes/perfil" && pathname === "/configuracoes") ||
+                (href === "/configuracoes/autenticacao" &&
+                  (pathname === "/configuracoes/emails" ||
+                    pathname === "/configuracoes/password" ||
+                    pathname === "/configuracoes/email-senha" ||
+                    pathname === "/settings/emails" ||
                     pathname === "/settings/password" ||
                     pathname === "/settings/email-senha"));
               return (
