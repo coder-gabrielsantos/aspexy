@@ -6,14 +6,25 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 import { PasswordToggleField } from "@/components/password-toggle-field";
-import { PlatformLogo } from "@/components/platform-logo";
 import { Button } from "@/components/ui/button";
 import { readJsonSafe } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
-const linkBtnClass =
-  "inline-flex h-11 w-full items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-800 shadow-sm transition-colors hover:border-indigo-300/90 hover:bg-indigo-50/50";
+function linkBtnClass(dark?: boolean) {
+  return cn(
+    "inline-flex h-11 w-full items-center justify-center rounded-full border text-sm font-semibold shadow-sm transition-colors",
+    dark
+      ? "border-slate-600/80 bg-slate-900/50 text-white hover:border-indigo-400/80 hover:bg-slate-800/60"
+      : "border-slate-200 bg-white text-slate-800 hover:border-indigo-300/90 hover:bg-indigo-50/50"
+  );
+}
 
-export default function ResetPasswordForm() {
+type ResetPasswordFormProps = {
+  /** Painel escuro (mobile), alinhado ao `LoginForm` com `dark`. */
+  dark?: boolean;
+};
+
+export default function ResetPasswordForm({ dark }: ResetPasswordFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token")?.trim() ?? "";
@@ -60,15 +71,32 @@ export default function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="mx-auto w-full max-w-md space-y-6 px-6 py-16 text-center">
-        <PlatformLogo size={120} className="mx-auto h-24 w-24" priority />
-        <div className="rounded-xl border border-amber-200/90 bg-amber-50/90 p-4 text-left text-sm text-amber-950">
+      <div className="w-full space-y-6">
+        <div className="space-y-1.5 text-center">
+          <h1
+            className={cn("text-2xl font-semibold tracking-tight", dark ? "text-white" : "text-slate-900")}
+          >
+            Link inválido
+          </h1>
+          <p className={cn("text-sm leading-relaxed", dark ? "text-slate-400" : "text-slate-500")}>
+            Este endereço não contém um token de redefinição. Use o botão no e-mail ou solicite um novo link na página
+            de login.
+          </p>
+        </div>
+        <div
+          className={cn(
+            "rounded-xl border p-4 text-left text-sm",
+            dark
+              ? "border-amber-500/30 bg-amber-950/40 text-amber-300"
+              : "border-amber-200/90 bg-amber-50/90 text-amber-950"
+          )}
+        >
           <div className="flex gap-2">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>Este link não contém um token válido. Use o botão no e-mail ou solicite um novo link na página de login.</p>
+            <p>Abra o link completo enviado para seu e-mail ou peça um novo envio em &quot;Esqueci a senha&quot;.</p>
           </div>
         </div>
-        <Link href="/login" className={linkBtnClass}>
+        <Link href="/login" className={linkBtnClass(dark)}>
           Voltar ao login
         </Link>
       </div>
@@ -77,12 +105,28 @@ export default function ResetPasswordForm() {
 
   if (done) {
     return (
-      <div className="mx-auto w-full max-w-md space-y-6 px-6 py-16 text-center">
-        <PlatformLogo size={120} className="mx-auto h-24 w-24" priority />
-        <div className="rounded-xl border border-emerald-200/90 bg-emerald-50/90 p-4 text-left text-sm text-emerald-950">
+      <div className="w-full space-y-6">
+        <div className="space-y-1.5 text-center">
+          <h1
+            className={cn("text-2xl font-semibold tracking-tight", dark ? "text-white" : "text-slate-900")}
+          >
+            Senha alterada
+          </h1>
+          <p className={cn("text-sm leading-relaxed", dark ? "text-slate-400" : "text-slate-500")}>
+            Redirecionando para o login…
+          </p>
+        </div>
+        <div
+          className={cn(
+            "rounded-xl border p-4 text-left text-sm",
+            dark
+              ? "border-emerald-500/30 bg-emerald-950/40 text-emerald-300"
+              : "border-emerald-200/90 bg-emerald-50/90 text-emerald-950"
+          )}
+        >
           <div className="flex gap-2">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>Senha alterada com sucesso. Redirecionando para o login…</p>
+            <p>Sua nova senha foi salva. Você já pode entrar com ela.</p>
           </div>
         </div>
       </div>
@@ -90,15 +134,25 @@ export default function ResetPasswordForm() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-md space-y-6 px-6 py-12 sm:py-16">
-      <div className="text-center">
-        <PlatformLogo size={120} className="mx-auto h-24 w-24" priority />
-        <h1 className="mt-6 text-2xl font-semibold tracking-tight text-slate-900">Nova senha</h1>
-        <p className="mt-2 text-sm leading-relaxed text-slate-500">Escolha uma senha forte para sua conta.</p>
+    <div className="w-full space-y-6">
+      <div className="space-y-1.5 text-center">
+        <h1 className={cn("text-2xl font-semibold tracking-tight", dark ? "text-white" : "text-slate-900")}>
+          Nova senha
+        </h1>
+        <p className={cn("text-sm leading-relaxed", dark ? "text-slate-400" : "text-slate-500")}>
+          Escolha uma senha forte para sua conta
+        </p>
       </div>
 
       {error ? (
-        <div className="rounded-xl border border-rose-200/80 bg-rose-50/80 p-3 text-left text-sm text-rose-800">
+        <div
+          className={cn(
+            "rounded-xl border p-3 text-left text-sm",
+            dark
+              ? "border-rose-500/30 bg-rose-950/40 text-rose-300"
+              : "border-rose-200/80 bg-rose-50/80 text-rose-800"
+          )}
+        >
           <div className="flex items-start gap-2.5">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{error}</span>
@@ -108,11 +162,15 @@ export default function ResetPasswordForm() {
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="npw" className="mb-1.5 block text-xs font-medium text-slate-600">
+          <label
+            htmlFor={dark ? "npw-m" : "npw"}
+            className={cn("mb-1.5 block text-xs font-medium", dark ? "text-slate-300" : "text-slate-600")}
+          >
             Nova senha
           </label>
           <PasswordToggleField
-            id="npw"
+            id={dark ? "npw-m" : "npw"}
+            dark={dark}
             value={password}
             onChange={setPassword}
             visible={showPassword}
@@ -123,11 +181,15 @@ export default function ResetPasswordForm() {
           />
         </div>
         <div>
-          <label htmlFor="npw2" className="mb-1.5 block text-xs font-medium text-slate-600">
+          <label
+            htmlFor={dark ? "npw2-m" : "npw2"}
+            className={cn("mb-1.5 block text-xs font-medium", dark ? "text-slate-300" : "text-slate-600")}
+          >
             Confirmar senha
           </label>
           <PasswordToggleField
-            id="npw2"
+            id={dark ? "npw2-m" : "npw2"}
+            dark={dark}
             value={confirmPassword}
             onChange={setConfirmPassword}
             visible={showConfirmPassword}
@@ -137,13 +199,23 @@ export default function ResetPasswordForm() {
             minLength={8}
           />
         </div>
-        <Button type="submit" disabled={busy} className="h-11 w-full rounded-full text-sm font-semibold">
+        <Button
+          type="submit"
+          disabled={busy}
+          className={cn(
+            "h-11 w-full rounded-full text-sm font-semibold shadow-sm transition-transform active:scale-[0.99]",
+            dark ? "bg-indigo-500 text-white hover:bg-indigo-400" : ""
+          )}
+        >
           {busy ? "Salvando…" : "Salvar nova senha"}
         </Button>
       </form>
 
-      <p className="text-center text-sm text-slate-500">
-        <Link href="/login" className="font-semibold text-indigo-700 underline-offset-2 hover:underline">
+      <p className={cn("text-center text-sm", dark ? "text-slate-400" : "text-slate-500")}>
+        <Link
+          href="/login"
+          className={cn("font-semibold underline-offset-2 hover:underline", dark ? "text-indigo-300" : "text-indigo-700")}
+        >
           Voltar ao login
         </Link>
       </p>
