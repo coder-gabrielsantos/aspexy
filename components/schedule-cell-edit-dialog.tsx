@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 
 import ScheduleSelect from "@/components/schedule-select";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,13 @@ type ScheduleCellEditDialogProps = {
   onSave: (payload: { teacher: string; subject: string } | null) => void | Promise<void>;
 };
 
+function parseTeacherCsv(value: string): string[] {
+  return value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 export default function ScheduleCellEditDialog({
   open,
   onOpenChange,
@@ -30,37 +39,64 @@ export default function ScheduleCellEditDialog({
   isPending = false,
   onSave
 }: ScheduleCellEditDialogProps) {
-  const [teacherId, setTeacherId] = useState("");
+  const [mounted, setMounted] = useState(false);
+  const [teacherIds, setTeacherIds] = useState<string[]>([]);
   const [subjectValue, setSubjectValue] = useState("");
+
+  useLayoutEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
-    const t = teacherOptions.find((o) => o.label === initialTeacher);
-    setTeacherId(t?.value ?? "");
+    const labels = parseTeacherCsv(initialTeacher);
+    const nextIds = labels
+      .map((label) => teacherOptions.find((o) => o.label === label)?.value)
+      .filter((v): v is string => Boolean(v));
+    setTeacherIds(nextIds);
     const s = subjectOptions.find((o) => o.label === initialSubject);
     setSubjectValue(s?.value ?? "");
   }, [open, initialTeacher, initialSubject, teacherOptions, subjectOptions]);
+
+  useEffect(() => {
+    if (!open) return;
+    const body = document.body;
+    const prevOverflow = body.style.overflow;
+    const prevPaddingRight = body.style.paddingRight;
+
+    const scrollbarW = window.innerWidth - document.documentElement.clientWidth;
+    body.style.overflow = "hidden";
+    if (scrollbarW > 0) body.style.paddingRight = `${scrollbarW}px`;
+
+    return () => {
+      body.style.overflow = prevOverflow;
+      body.style.paddingRight = prevPaddingRight;
+    };
+  }, [open]);
 
   const close = () => {
     if (!isPending) onOpenChange(false);
   };
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  const teacherName = teacherOptions.find((o) => o.value === teacherId)?.label ?? "";
+  const teacherNames = teacherIds
+    .map((id) => teacherOptions.find((o) => o.value === id)?.label)
+    .filter((t): t is string => Boolean(t && t.trim()))
+    .map((t) => t.trim());
   const subjectName = subjectOptions.find((o) => o.value === subjectValue)?.label ?? "";
 
   const handleSave = () => {
-    if (!teacherName.trim() || !subjectName.trim()) return;
-    void onSave({ teacher: teacherName.trim(), subject: subjectName.trim() });
+    if (teacherNames.length === 0 || !subjectName.trim()) return;
+    void onSave({ teacher: teacherNames.join(", "), subject: subjectName.trim() });
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-[2px]">
       <button
         type="button"
         aria-label="Fechar"
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]"
+        className="absolute inset-0"
         onClick={close}
         disabled={isPending}
       />
@@ -73,12 +109,21 @@ export default function ScheduleCellEditDialog({
           isPending && "pointer-events-none opacity-90"
         )}
       >
-        <h2 id="cell-edit-title" className="text-sm font-semibold text-slate-900">
-          {title}
-        </h2>
-        <p className="mt-1 text-xs text-slate-500">
-          Ajuste disciplina e professor (um professor por horário).
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <h2 id="cell-edit-title" className="min-w-0 flex-1 text-sm font-semibold text-slate-900">
+            {title}
+          </h2>
+          <button
+            type="button"
+            aria-label="Fechar"
+            onClick={close}
+            disabled={isPending}
+            className="shrink-0 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          >
+            <X className="h-4 w-4" strokeWidth={2} aria-hidden />
+          </button>
+        </div>
+        <p className="mt-1 text-xs text-slate-500">Ajuste disciplina e professores.</p>
 
         <div className="mt-4 space-y-3">
           <div>
@@ -93,19 +138,24 @@ export default function ScheduleCellEditDialog({
             />
           </div>
           <div>
-            <p className="mb-1.5 text-xs font-medium text-slate-500">Professor</p>
+            <p className="mb-1.5 text-xs font-medium text-slate-500">Professores</p>
             <ScheduleSelect
               aria-label="Professor"
               options={teacherOptions}
-              value={teacherId}
-              onChange={setTeacherId}
-              placeholder="Selecione o professor"
+              isMulti
+              value={teacherIds}
+              onChange={setTeacherIds}
+              placeholder="Selecione um ou mais professores"
               maxVisibleMenuItems={4}
+              maxVisibleSelectedValues={2}
+              maxVisibleSelectedValuesSm={4}
+              multiValueSeparator="comma"
+              multiValueDisplay="text"
             />
           </div>
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
+        <div className="mt-5 flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-4">
           <Button
             type="button"
             variant="outline"
@@ -115,20 +165,12 @@ export default function ScheduleCellEditDialog({
           >
             Remover aula
           </Button>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={close} disabled={isPending}>
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              disabled={isPending || !teacherId || !subjectValue}
-              onClick={handleSave}
-            >
-              {isPending ? "Salvando…" : "Salvar"}
-            </Button>
-          </div>
+          <Button type="button" disabled={isPending || teacherIds.length === 0 || !subjectValue} onClick={handleSave}>
+            {isPending ? "Salvando…" : "Salvar"}
+          </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

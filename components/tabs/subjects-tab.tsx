@@ -175,6 +175,9 @@ export default function SubjectsTab({
                 value={s.newSubjectClassIds}
                 onChange={s.setNewSubjectClassIds}
                 placeholder="Selecione uma ou mais turmas"
+                maxVisibleSelectedValues={4}
+                multiValueSeparator="comma"
+                multiValueDisplay="text"
               />
             </div>
           </div>
@@ -188,6 +191,9 @@ export default function SubjectsTab({
                 value={s.newSubjectTeacherIds}
                 onChange={s.setNewSubjectTeacherIds}
                 placeholder="Selecione os professores"
+                maxVisibleSelectedValues={4}
+                multiValueSeparator="comma"
+                multiValueDisplay="text"
               />
             </div>
             <div className="w-full shrink-0 sm:w-[4.5rem]">

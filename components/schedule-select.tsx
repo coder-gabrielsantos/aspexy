@@ -5,6 +5,7 @@ import Select, {
   type ClassNamesConfig,
   type GroupBase,
   type MultiValue,
+  type MultiValueProps,
   type SingleValue,
   type StylesConfig
 } from "react-select";
@@ -23,6 +24,22 @@ type CommonScheduleSelectProps = {
   className?: string;
   /** Aproximação de quantas linhas do menu ficam visíveis antes do scroll (padrão: ~10). */
   maxVisibleMenuItems?: number;
+  /**
+   * Quantos valores selecionados renderizar no controle antes de mostrar um "+N".
+   * - Quando omitido, usa um padrão responsivo (mobile: 1; sm+: 2).
+   * - Quando definido, aplica o mesmo valor em todos os tamanhos de tela.
+   */
+  maxVisibleSelectedValues?: number;
+  /**
+   * Quando definido junto com `maxVisibleSelectedValues`, usa:
+   * - mobile: `maxVisibleSelectedValues`
+   * - sm+: `maxVisibleSelectedValuesSm`
+   */
+  maxVisibleSelectedValuesSm?: number;
+  /** Separa os valores renderizados por vírgula (útil quando parecem “texto corrido”). */
+  multiValueSeparator?: "none" | "comma";
+  /** Como mostrar os valores selecionados no multi-select. */
+  multiValueDisplay?: "chips" | "text";
 };
 
 export type ScheduleSelectProps =
@@ -149,6 +166,10 @@ type InnerCommon = {
   ariaLabel?: string;
   className?: string;
   maxVisibleMenuItems?: number;
+  maxVisibleSelectedValues?: number;
+  maxVisibleSelectedValuesSm?: number;
+  multiValueSeparator?: "none" | "comma";
+  multiValueDisplay?: "chips" | "text";
 };
 
 function ScheduleSelectSingle({
@@ -205,7 +226,11 @@ function ScheduleSelectMulti({
   isSearchable,
   ariaLabel,
   className,
-  maxVisibleMenuItems
+  maxVisibleMenuItems,
+  maxVisibleSelectedValues,
+  maxVisibleSelectedValuesSm,
+  multiValueSeparator,
+  multiValueDisplay
 }: InnerCommon & {
   value: string[];
   onChange: (value: string[]) => void;
@@ -215,6 +240,154 @@ function ScheduleSelectMulti({
     [options, value]
   );
   const styles = useMemo(() => mergeMultiSelectStyles(maxVisibleMenuItems), [maxVisibleMenuItems]);
+
+  const components = useMemo(() => {
+    const MultiValue = (props: MultiValueProps<ScheduleSelectOption, true, GroupBase<ScheduleSelectOption>>) => {
+      const idx = props.index;
+      const total = Array.isArray(props.selectProps.value) ? props.selectProps.value.length : selected.length;
+      const usesDefault = maxVisibleSelectedValues == null && maxVisibleSelectedValuesSm == null;
+      const responsiveCustom = maxVisibleSelectedValues != null && maxVisibleSelectedValuesSm != null;
+
+      const mobileLimit = usesDefault
+        ? 1
+        : Math.max(0, maxVisibleSelectedValues ?? 1);
+      const smLimit = usesDefault
+        ? 2
+        : responsiveCustom
+          ? Math.max(0, maxVisibleSelectedValuesSm ?? mobileLimit)
+          : mobileLimit;
+
+      // Sem limite (0) => sempre só "+N".
+      if (mobileLimit === 0 && smLimit === 0) {
+        if (idx !== 0 || total === 0) return null;
+        return (
+          <div
+            className={cn(
+              props.className,
+              "pointer-events-none select-none border-slate-200/70 bg-slate-100/80 text-slate-600"
+            )}
+            title={`${total} selecionado(s)`}
+          >
+            <span className="py-1 pl-3 pr-3">+{total}</span>
+          </div>
+        );
+      }
+
+      const isPlusMobile = idx === mobileLimit;
+      const isPlusDesktop = idx === smLimit;
+      const isVisibleMobile = idx < mobileLimit;
+      const isVisibleDesktop = idx < smLimit;
+
+      const sepComma = multiValueSeparator === "comma";
+      const mobileShownCount = Math.min(total, mobileLimit);
+      const desktopShownCount = Math.min(total, smLimit);
+      const commaMobile = sepComma && isVisibleMobile && idx + 1 < mobileShownCount;
+      const commaDesktop = sepComma && isVisibleDesktop && idx + 1 < desktopShownCount;
+
+      const asText = multiValueDisplay === "text";
+
+      const renderFull = (hideOnMobile: boolean) => (
+        <div
+          {...props.innerProps}
+          className={cn(
+            props.className,
+            hideOnMobile && "hidden sm:inline-flex",
+            asText && "border-0 bg-transparent text-sm text-slate-800"
+          )}
+          title={props.data.label}
+        >
+          <span className={cn("max-w-[14rem] truncate", asText ? "py-0 pl-0 pr-0" : "py-1 pl-3 pr-1")}>
+            {props.data.label}
+            {commaMobile ? <span className="mx-1 text-slate-400 sm:hidden">,</span> : null}
+            {commaDesktop ? <span className="mx-1 hidden text-slate-400 sm:inline">,</span> : null}
+          </span>
+          {asText ? null : (
+            <button
+              type="button"
+              aria-label={`Remover ${props.data.label}`}
+              {...props.removeProps}
+              className="rounded-r-md p-1.5 text-slate-400 transition-colors hover:bg-rose-100 hover:text-rose-600"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      );
+
+      // Caso comum no app: mobile mostra menos que desktop.
+      // O item no índice `mobileLimit` vira "+N" no mobile, mas continua sendo um nome visível no desktop.
+      if (mobileLimit < smLimit && idx === mobileLimit) {
+        const nMobile = Math.max(0, total - mobileLimit);
+        return (
+          <>
+            {nMobile > 0 ? (
+              <div
+                className={cn(
+                  props.className,
+                  asText
+                    ? "pointer-events-none select-none border-0 bg-transparent text-sm text-slate-500 sm:hidden"
+                    : "pointer-events-none select-none border-slate-200/70 bg-slate-100/80 text-slate-600 sm:hidden"
+                )}
+                title={`${nMobile} selecionado(s)`}
+              >
+                <span className={cn(asText ? "py-0 pl-0 pr-0" : "py-1 pl-3 pr-3")}>+{nMobile}</span>
+              </div>
+            ) : null}
+            {renderFull(true)}
+          </>
+        );
+      }
+
+      if (isVisibleMobile || isVisibleDesktop) {
+        // Se o item entra só no desktop (idx >= mobileLimit), esconder no mobile.
+        const hideOnMobile = !isVisibleMobile && isVisibleDesktop;
+        return renderFull(hideOnMobile);
+      }
+
+      // +N (mobile)
+      if (isPlusMobile && mobileLimit !== smLimit) {
+        const n = Math.max(0, total - mobileLimit);
+        if (n <= 0) return null;
+        return (
+          <div
+            className={cn(
+              props.className,
+              multiValueDisplay === "text"
+                ? "pointer-events-none select-none border-0 bg-transparent text-sm text-slate-500 sm:hidden"
+                : "pointer-events-none select-none border-slate-200/70 bg-slate-100/80 text-slate-600 sm:hidden"
+            )}
+            title={`${n} selecionado(s)`}
+          >
+            <span className={cn(multiValueDisplay === "text" ? "py-0 pl-0 pr-0" : "py-1 pl-3 pr-3")}>+{n}</span>
+          </div>
+        );
+      }
+
+      // +N (desktop)
+      if (isPlusDesktop) {
+        const n = Math.max(0, total - smLimit);
+        if (n <= 0) return null;
+        return (
+          <div
+            className={cn(
+              props.className,
+              multiValueDisplay === "text"
+                ? "pointer-events-none select-none border-0 bg-transparent text-sm text-slate-500"
+                : "pointer-events-none select-none border-slate-200/70 bg-slate-100/80 text-slate-600",
+              mobileLimit !== smLimit && "hidden sm:inline-flex"
+            )}
+            title={`${n} selecionado(s)`}
+          >
+            <span className={cn(multiValueDisplay === "text" ? "py-0 pl-0 pr-0" : "py-1 pl-3 pr-3")}>+{n}</span>
+          </div>
+        );
+      }
+
+      return null;
+    };
+
+    return { MultiValue };
+  }, [maxVisibleSelectedValues, maxVisibleSelectedValuesSm, multiValueSeparator, selected.length]);
 
   return (
     <Select<ScheduleSelectOption, true>
@@ -231,8 +404,10 @@ function ScheduleSelectMulti({
       isClearable={isClearable}
       isSearchable={isSearchable}
       closeMenuOnSelect={false}
+      blurInputOnSelect={false}
       styles={styles}
       classNames={multiSelectClassNames}
+      components={components as any}
       classNamePrefix="aspexy-select"
       menuPosition="fixed"
       menuPortalTarget={menuPortalTarget}
@@ -258,7 +433,10 @@ export default function ScheduleSelect(props: ScheduleSelectProps) {
     isSearchable = true,
     "aria-label": ariaLabel,
     className,
-    maxVisibleMenuItems
+    maxVisibleMenuItems,
+    maxVisibleSelectedValues,
+    maxVisibleSelectedValuesSm,
+    multiValueSeparator = "none"
   } = props;
 
   const innerCommon: InnerCommon = {
@@ -270,7 +448,11 @@ export default function ScheduleSelect(props: ScheduleSelectProps) {
     isSearchable,
     ariaLabel,
     className,
-    maxVisibleMenuItems
+    maxVisibleMenuItems,
+    maxVisibleSelectedValues,
+    maxVisibleSelectedValuesSm,
+    multiValueSeparator,
+    multiValueDisplay: "multiValueDisplay" in props ? props.multiValueDisplay : "chips"
   };
 
   if ("isMulti" in props && props.isMulti) {

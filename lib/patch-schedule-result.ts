@@ -12,6 +12,21 @@ function dayNameForIndex(dayIndex: number): string {
   return short ? DAY_FULL_LABEL[short] : String(dayIndex);
 }
 
+function teacherList(value: string): string[] {
+  return String(value ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function sharesTeacher(a: string, b: string): boolean {
+  const aList = teacherList(a);
+  const bList = teacherList(b);
+  if (aList.length === 0 || bList.length === 0) return false;
+  const set = new Set(aList);
+  return bList.some((t) => set.has(t));
+}
+
 /** Reconstrói a lista plana `allocations` a partir de `days` (alinhado ao motor OR). */
 function rebuildAllocations(result: SolverResult): void {
   const flat: SolverAllocation[] = [];
@@ -51,7 +66,7 @@ export function patchSolverResultCell(
     return out;
   }
 
-  const withoutTeacherConflict = filtered.filter((a) => a.teacher !== next.teacher);
+  const withoutTeacherConflict = filtered.filter((a) => !sharesTeacher(a.teacher, next.teacher));
   const dayName = dayNameForIndex(dayIndex);
   const newAlloc: SolverAllocation = {
     teacher: next.teacher.trim(),

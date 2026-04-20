@@ -102,7 +102,7 @@ export default function GenerateTab({
   };
 
   const editTitle = editCell
-    ? `Editar · ${DAY_FULL_LABEL[(DAYS[editCell.dayIndex] ?? "SEG")]} · Turma ${editCell.classId}`
+    ? `${DAY_FULL_LABEL[(DAYS[editCell.dayIndex] ?? "SEG")]} · Turma ${editCell.classId}`
     : "";
 
   const currentAlloc = editCell ? allocationAt(editCell.dayIndex, editCell.rowIndex, editCell.classId) : undefined;
