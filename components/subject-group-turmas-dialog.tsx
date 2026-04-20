@@ -124,7 +124,7 @@ export default function SubjectGroupTurmasDialog({
             <X className="h-4 w-4" strokeWidth={2} aria-hidden />
           </button>
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Disciplina</p>
-          <h2 id="subject-turmas-title" className="mt-1 text-lg font-semibold leading-snug tracking-tight text-slate-900">
+          <h2 id="subject-turmas-title" className="mt-1 text-lg font-medium leading-snug tracking-tight text-slate-900">
             {subjectName}
           </h2>
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">

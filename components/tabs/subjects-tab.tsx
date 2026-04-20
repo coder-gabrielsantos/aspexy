@@ -30,6 +30,22 @@ function subjectGroupKey(sub: Subject): string {
   return `${sub.name.trim().toLowerCase()}\u0000${sub.lessons_per_week}\u0000${teachers}`;
 }
 
+function normalizeForSearch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
+}
+
+function softMatch(haystack: string, needle: string): boolean {
+  const h = normalizeForSearch(haystack);
+  const q = normalizeForSearch(needle);
+  if (!q) return true;
+  const tokens = q.split(/\s+/).filter(Boolean);
+  return tokens.every((t) => h.includes(t));
+}
+
 /** Agrupa por nome + aulas/sem. + mesmo conjunto de professores (só turma pode variar). */
 function groupSubjectsForDisplay(subjects: Subject[]): Subject[][] {
   const map = new Map<string, Subject[]>();
@@ -71,10 +87,20 @@ function TurmasDetailTrigger({
       aria-label={ariaLabel}
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-0.5 font-medium text-indigo-700 underline-offset-2 transition-colors",
-        "hover:text-indigo-900 hover:underline",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 focus-visible:ring-offset-0",
-        "px-0.5 py-0.5 text-sm"
+        compact
+          ? [
+              "inline-flex items-center gap-0.5 font-medium text-indigo-700 underline-offset-2 transition-colors",
+              "hover:text-indigo-900 hover:underline",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 focus-visible:ring-offset-0",
+              "px-0.5 py-0.5 text-sm"
+            ]
+          : [
+              "inline-flex items-center gap-0.5 font-semibold text-indigo-700 underline-offset-2 transition-colors",
+              "hover:text-indigo-900 hover:underline",
+              "active:text-indigo-950",
+              "min-h-11 px-2 py-2 text-sm touch-manipulation",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 focus-visible:ring-offset-0"
+            ]
       )}
     >
       Ver detalhes
@@ -92,11 +118,17 @@ export default function SubjectsTab({
   onRequestDelete,
 }: SubjectsTabProps) {
   const subjectGroups = useMemo(() => groupSubjectsForDisplay(s.subjects), [s.subjects]);
+  const [search, setSearch] = useState("");
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(10);
   const [page, setPage] = useState(0);
   const [turmasDetailMembers, setTurmasDetailMembers] = useState<Subject[] | null>(null);
 
-  const totalGroups = subjectGroups.length;
+  const filteredGroups = useMemo(() => {
+    if (!search.trim()) return subjectGroups;
+    return subjectGroups.filter((members) => softMatch(members[0]?.name ?? "", search));
+  }, [subjectGroups, search]);
+
+  const totalGroups = filteredGroups.length;
   const pageCount = Math.max(1, Math.ceil(totalGroups / pageSize));
 
   useEffect(() => {
@@ -104,10 +136,14 @@ export default function SubjectsTab({
     setPage((p) => Math.min(Math.max(0, p), maxPage));
   }, [totalGroups, pageSize]);
 
+  useEffect(() => {
+    setPage(0);
+  }, [search]);
+
   const pageGroups = useMemo(() => {
     const start = page * pageSize;
-    return subjectGroups.slice(start, start + pageSize);
-  }, [subjectGroups, page, pageSize]);
+    return filteredGroups.slice(start, start + pageSize);
+  }, [filteredGroups, page, pageSize]);
 
   const rangeFrom = totalGroups === 0 ? 0 : page * pageSize + 1;
   const rangeTo = totalGroups === 0 ? 0 : page * pageSize + pageGroups.length;
@@ -194,6 +230,23 @@ export default function SubjectsTab({
         </div>
       ) : (
         <section className="app-panel-flat overflow-hidden">
+          <div className="border-b border-slate-100/90 bg-white px-3 py-3 sm:px-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Buscar</p>
+                <p className="mt-0.5 text-xs text-slate-400">Filtra por nome da disciplina</p>
+              </div>
+              <div className="w-full sm:w-[18rem]">
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Ex.: Matemática"
+                  className="h-10"
+                  aria-label="Buscar disciplina"
+                />
+              </div>
+            </div>
+          </div>
           {/* Mobile / tablet: cartões em largura total (evita tabela larga cortada) */}
           <div className="divide-y divide-slate-100 md:hidden">
             {pageGroups.map((members) => {
@@ -205,32 +258,37 @@ export default function SubjectsTab({
               return (
                 <div
                   key={rowKey}
-                  className={cn("group bg-white px-3 py-3 transition-colors sm:px-4", "hover:bg-slate-50/60")}
+                  className={cn("group bg-white px-3 py-4 transition-colors sm:px-4", "hover:bg-slate-50/60")}
                 >
-                  <div className="min-w-0 space-y-1.5">
-                      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
-                        <p
-                          className="line-clamp-1 min-w-0 flex-1 break-words text-base font-semibold leading-tight tracking-tight text-slate-900"
-                          title={sub.name}
-                        >
-                          {sub.name}
-                        </p>
-                        <div className="flex shrink-0 flex-col items-end gap-0.5 sm:flex-row sm:items-center sm:gap-2">
-                          <p className="text-sm tabular-nums text-slate-500">
-                            <span className="font-semibold text-slate-700">{sub.lessons_per_week}</span> aulas/sem.
-                          </p>
-                          <TurmasDetailTrigger
-                            ariaLabel={`Ver detalhes de ${sub.name}`}
-                            onClick={() => setTurmasDetailMembers(members)}
-                          />
-                        </div>
+                  <div className="min-w-0 space-y-3">
+                    <div className="relative min-w-0 pr-28">
+                      <div className="absolute right-0 top-0">
+                        <TurmasDetailTrigger
+                          ariaLabel={`Ver detalhes de ${sub.name}`}
+                          onClick={() => setTurmasDetailMembers(members)}
+                        />
                       </div>
-                      <p className="line-clamp-2 text-sm leading-relaxed text-slate-600" title={profTitle}>
-                        <span className="font-medium text-slate-400">Prof. </span>
-                        {profLabels.length > 0 ? profLabels.join(", ") : "—"}
+                      <p
+                        className="line-clamp-2 min-w-0 break-words text-base font-medium leading-snug tracking-tight text-slate-900"
+                        title={sub.name}
+                      >
+                        {sub.name}
                       </p>
-                      <div>
-                        <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      <div className="mt-2 flex items-start justify-between gap-3">
+                        <p className="pt-0.5 text-sm tabular-nums text-slate-500">
+                          <span className="font-semibold text-slate-800">{sub.lessons_per_week}</span> aulas/sem.
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="line-clamp-2 text-sm leading-relaxed text-slate-600" title={profTitle}>
+                      <span className="font-medium text-slate-400">Prof. </span>
+                      {profLabels.length > 0 ? profLabels.join(", ") : "—"}
+                    </p>
+
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                           {multi ? "Turmas" : "Turma"}
                         </p>
                         {multi ? (
@@ -243,6 +301,7 @@ export default function SubjectsTab({
                           </span>
                         )}
                       </div>
+                    </div>
                   </div>
                 </div>
               );
@@ -301,7 +360,7 @@ export default function SubjectsTab({
                       )}
                     >
                       <td className="px-4 py-3 align-middle">
-                        <span className="line-clamp-1 min-w-0 text-sm font-semibold leading-snug tracking-tight text-slate-900" title={sub.name}>
+                        <span className="line-clamp-1 min-w-0 text-sm font-medium leading-snug tracking-tight text-slate-900" title={sub.name}>
                           {sub.name}
                         </span>
                       </td>
