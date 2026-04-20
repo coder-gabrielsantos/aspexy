@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarDays, Download, GraduationCap, Search, Trash2, WandSparkles } from "lucide-react";
+import { CalendarDays, GraduationCap, Trash2, WandSparkles } from "lucide-react";
 
 import ConfirmDialog from "@/components/confirm-dialog";
 import ScheduleCellEditDialog from "@/components/schedule-cell-edit-dialog";
@@ -133,37 +133,19 @@ export default function GenerateTab({
               />
             </div>
           </div>
-          <div className="flex w-full shrink-0 flex-col items-end gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-            <div className="flex w-fit items-center gap-2">
-              {g.selectedGeneratedScheduleId && (
-                <Button
-                  type="button"
-                  onClick={onRequestDeleteGenerated}
-                  variant="outline"
-                  className="h-11 gap-1.5 text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Excluir
-                </Button>
-              )}
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            {g.selectedGeneratedScheduleId && (
               <Button
                 type="button"
+                onClick={onRequestDeleteGenerated}
                 variant="outline"
-                disabled
-                title="Baixar Excel (em breve)"
-                aria-label="Baixar Excel (em breve)"
-                size="icon"
-                className="text-slate-500"
+                className="h-11 gap-1.5 text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
               >
-                <Download className="h-3.5 w-3.5" aria-hidden />
+                <Trash2 className="h-3.5 w-3.5" />
+                Excluir
               </Button>
-            </div>
-
-            <Button
-              onClick={() => void g.handleGenerateSchedule()}
-              disabled={g.isSolving || !g.generationProfile}
-              className="h-11 w-full gap-1.5 sm:w-auto"
-            >
+            )}
+            <Button onClick={() => void g.handleGenerateSchedule()} disabled={g.isSolving || !g.generationProfile} className="h-11 gap-1.5">
               <WandSparkles className="h-3.5 w-3.5" />
               {g.isSolving ? "Gerando..." : "Gerar e Salvar"}
             </Button>
@@ -217,16 +199,13 @@ export default function GenerateTab({
             )}
 
             <div className="w-full sm:ml-auto sm:max-w-[18rem]">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar disciplina ou professor"
-                  className="h-11 pl-10"
-                  aria-label="Buscar disciplina ou professor no horário"
-                />
-              </div>
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar disciplina ou professor"
+                className="h-11"
+                aria-label="Buscar disciplina ou professor no horário"
+              />
             </div>
           </div>
 
@@ -300,50 +279,6 @@ type CellHelpers = {
   onCellClick: (dayIndex: number, rowIndex: number, classId: string) => void;
   search: string;
 };
-
-function SlotTimeLabel({
-  ordinal,
-  start,
-  end
-}: {
-  ordinal: number;
-  start: string;
-  end: string;
-}) {
-  return (
-    <span className="grid min-h-[2.75rem] w-full grid-cols-[2.25rem_1fr] items-center px-3 py-2">
-      <span className="text-right text-[11px] font-medium tabular-nums text-slate-400">{ordinal}º</span>
-      <span className="pl-3 text-xs font-semibold tabular-nums tracking-tight text-slate-800">
-        <span className="grid w-full grid-cols-[3.25rem_0.75rem_3.25rem] items-center">
-          <span className="text-right">{start}</span>
-          <span className="text-center text-slate-300" aria-hidden>
-            –
-          </span>
-          <span className="text-left">{end}</span>
-        </span>
-      </span>
-    </span>
-  );
-}
-
-function BreakTimeLabel({ start, end }: { start: string; end: string }) {
-  return (
-    <span className="grid min-h-[2.75rem] w-full grid-cols-[2.25rem_1fr] items-center px-3 py-2">
-      <span className="text-right text-[11px] font-medium tabular-nums text-slate-300" aria-hidden>
-        &nbsp;
-      </span>
-      <span className="pl-3 text-xs font-medium tabular-nums tracking-tight text-slate-600">
-        <span className="grid w-full grid-cols-[3.25rem_0.75rem_3.25rem] items-center">
-          <span className="text-right">{start}</span>
-          <span className="text-center text-slate-300" aria-hidden>
-            –
-          </span>
-          <span className="text-left">{end}</span>
-        </span>
-      </span>
-    </span>
-  );
-}
 
 function ScheduleCellContent({
   a,
@@ -425,7 +360,7 @@ function ByDayView({
 } & CellHelpers) {
   return (
     <div className="app-panel-flat overflow-hidden">
-      <div className="max-h-[min(75vh,720px)] overflow-auto">
+      <div className="max-h-[min(72vh,680px)] overflow-auto">
         {DAYS.map((dayName, dayIndex) => (
           <section key={dayName} className={cn(dayIndex > 0 && "border-t border-slate-200/90")}>
             <table
@@ -435,34 +370,34 @@ function ByDayView({
               <thead>
                 <tr>
                   <th className="sticky left-0 top-0 z-[40] w-[140px] min-w-[140px] max-w-[140px] p-0 align-top">
-                    <div className="box-border flex h-10 w-full items-center justify-center border-b border-white/80 bg-slate-200 px-3 text-center">
+                    <div className="box-border flex h-12 w-full items-center justify-center border-b border-slate-200 bg-slate-100 px-3 text-center">
                       <span
-                        className="block min-w-0 max-w-full truncate text-sm font-semibold uppercase leading-tight tracking-[0.08em] text-slate-700"
+                        className="block min-w-0 max-w-full truncate text-sm font-semibold leading-tight tracking-tight text-slate-700"
                         title={DAY_FULL_LABEL[dayName]}
                       >
-                        {dayLabelCompact(DAY_FULL_LABEL[dayName])}
+                        {DAY_FULL_LABEL[dayName]}
                       </span>
                     </div>
                   </th>
                   <th colSpan={g.classIds.length} className="sticky top-0 z-[35] p-0 align-top">
                     <div
-                      className="box-border h-10 w-full border-b border-l border-white/80 bg-slate-200"
+                      className="box-border h-12 w-full border-b border-l border-slate-200 bg-slate-100"
                       aria-hidden
                     />
                   </th>
                 </tr>
                 <tr>
-                  <th className="sticky left-0 top-10 z-[30] w-[140px] min-w-[140px] max-w-[140px] border-b border-slate-200 p-0 align-top">
-                    <div className="box-border flex min-h-[2.5rem] w-full items-center justify-center whitespace-nowrap bg-slate-200 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800">
+                  <th className="sticky left-0 top-12 z-[30] w-[140px] min-w-[140px] max-w-[140px] border-b border-slate-200 p-0 align-top">
+                    <div className="box-border flex min-h-[2.5rem] w-full items-center justify-center whitespace-nowrap bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[2px_2px_0_0_rgb(226_232_240)]">
                       Horário
                     </div>
                   </th>
                   {g.classIds.map((cid) => (
                     <th
                       key={`${dayName}-${cid}`}
-                      className="sticky top-10 z-[20] w-[140px] min-w-[140px] max-w-[140px] overflow-hidden border-b border-l border-slate-200 p-0 align-top"
+                      className="sticky top-12 z-[20] w-[140px] min-w-[140px] max-w-[140px] overflow-hidden border-b border-l border-slate-200 p-0 align-top"
                     >
-                      <div className="box-border flex min-h-[2.5rem] w-full items-center justify-center bg-slate-200 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800">
+                      <div className="box-border flex min-h-[2.5rem] w-full items-center justify-center bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[0_2px_0_0_rgb(226_232_240)]">
                         <span className="block truncate" title={`Turma ${cid}`}>
                           Turma {cid}
                         </span>
@@ -509,12 +444,12 @@ function ByDayView({
                             className={cn(
                               "w-[140px] min-w-[140px] max-w-[140px] overflow-hidden border-b border-l border-slate-100/80 align-middle text-slate-700",
                               isBreak
-                                ? "bg-slate-50/50 px-2 py-1"
+                                ? "bg-slate-50/50 px-2 py-2"
                                 : "relative min-h-[2.75rem] bg-white p-0"
                             )}
                           >
                             {isBreak ? (
-                              <span className="flex min-h-8 w-full items-center justify-center truncate text-xs text-slate-400">
+                              <span className="flex min-h-[2.25rem] w-full items-center justify-center truncate text-xs text-slate-400">
                                 {brk}
                               </span>
                             ) : (
@@ -554,7 +489,7 @@ function ByClassView({
   if (!classId) return null;
 
   return (
-    <div className="app-panel-flat flex max-h-[min(75vh,720px)] flex-col overflow-hidden">
+    <div className="app-panel-flat flex max-h-[min(72vh,680px)] flex-col overflow-hidden">
       <div className="border-b border-slate-100/80 px-5 py-3">
         <h3 className="text-sm font-semibold tracking-tight text-slate-800">Turma {classId}</h3>
       </div>
@@ -569,13 +504,13 @@ function ByClassView({
           <thead>
             <tr>
               <th className="sticky left-0 top-0 z-[30] border-b border-slate-200 p-0 align-top">
-                <div className="box-border flex min-h-[2.5rem] w-full items-center justify-center bg-slate-200 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800">
+                <div className="box-border flex min-h-[2.5rem] w-full items-center justify-center bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[2px_2px_0_0_rgb(226_232_240)]">
                   Horário
                 </div>
               </th>
               {DAYS.map((day) => (
                 <th key={day} className="sticky top-0 z-[20] border-b border-l border-slate-200 p-0 align-top">
-                  <div className="box-border flex min-h-[2.5rem] w-full items-center justify-center bg-slate-200 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800">
+                  <div className="box-border flex min-h-[2.5rem] w-full items-center justify-center bg-slate-100 px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-slate-800 shadow-[0_2px_0_0_rgb(226_232_240)]">
                     {dayLabelCompact(DAY_FULL_LABEL[day])}
                   </div>
                 </th>
@@ -597,14 +532,18 @@ function ByClassView({
                 <tr key={slot.id} className={cn(isBreak && "break-stripes bg-slate-50/40")}>
                   <td
                     className={cn(
-                      "sticky left-0 z-[10] whitespace-nowrap border-b border-r border-slate-100/80 p-0 align-middle tabular-nums",
-                      isBreak ? "bg-slate-100 text-slate-500" : "bg-slate-50 text-slate-800"
+                      "sticky left-0 z-[10] whitespace-nowrap border-b border-slate-100/80 px-3 align-middle text-xs font-semibold tabular-nums shadow-[2px_0_0_0_rgba(15,23,42,0.04)]",
+                      isBreak ? "bg-slate-100 py-2 text-center text-slate-500" : "bg-slate-50 py-2 text-center text-slate-800"
                     )}
                   >
                     {isBreak ? (
-                      <BreakTimeLabel start={slot.start} end={slot.end} />
+                      <span className="inline-flex min-h-[2.25rem] w-full items-center justify-center">
+                        {`${slot.start} – ${slot.end}`}
+                      </span>
                     ) : (
-                      <SlotTimeLabel ordinal={slotOrdinal} start={slot.start} end={slot.end} />
+                      <span className="inline-flex min-h-[2.25rem] w-full items-center justify-center text-center leading-snug">
+                        {`${slotOrdinal}º — ${slot.start} – ${slot.end}`}
+                      </span>
                     )}
                   </td>
                   {DAYS.map((_, di) => {
@@ -617,12 +556,12 @@ function ByClassView({
                         className={cn(
                           "overflow-hidden border-b border-l border-slate-100/80 align-middle text-slate-700",
                           dayBreak
-                            ? "bg-slate-50/50 px-2 py-1"
+                            ? "bg-slate-50/50 px-2 py-2"
                             : "relative min-h-[2.75rem] bg-white p-0"
                         )}
                       >
                         {dayBreak ? (
-                          <span className="flex min-h-8 w-full items-center justify-center truncate text-xs text-slate-400">
+                          <span className="flex min-h-[2.25rem] w-full items-center justify-center truncate text-xs text-slate-400">
                             {brk}
                           </span>
                         ) : (

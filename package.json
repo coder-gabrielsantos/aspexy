@@ -10,11 +10,9 @@
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.1",
-    "@react-pdf/renderer": "^4.5.1",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "exceljs": "^4.4.0",
     "jose": "^6.2.2",
     "lucide-react": "^0.511.0",
     "mongodb": "^6.21.0",
