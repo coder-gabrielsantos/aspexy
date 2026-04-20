@@ -7,6 +7,7 @@ import ConfirmDialog from "@/components/confirm-dialog";
 import ScheduleCellEditDialog from "@/components/schedule-cell-edit-dialog";
 import ScheduleSelect from "@/components/schedule-select";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { DAYS, DAY_FULL_LABEL, parseTime24ToMinutes, type SolverAllocation, type Subject } from "@/lib/types";
 import type { useScheduleGeneration } from "@/hooks/use-schedule-generation";
@@ -28,6 +29,22 @@ type EditCellState = {
   rowIndex: number;
   classId: string;
 };
+
+function normalizeForSearch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
+}
+
+function softMatch(haystack: string, needle: string): boolean {
+  const h = normalizeForSearch(haystack);
+  const q = normalizeForSearch(needle);
+  if (!q) return true;
+  const tokens = q.split(/\s+/).filter(Boolean);
+  return tokens.every((t) => h.includes(t));
+}
 
 function subjectOptionsForClassName(
   className: string,
@@ -56,6 +73,7 @@ export default function GenerateTab({
   const [viewMode, setViewMode] = useState<ViewMode>("by-day");
   const [selectedClassId, setSelectedClassId] = useState("");
   const [editCell, setEditCell] = useState<EditCellState | null>(null);
+  const [search, setSearch] = useState("");
 
   const classOptions = g.classIds.map((cid) => ({ value: cid, label: `Turma ${cid}` }));
 
@@ -175,6 +193,16 @@ export default function GenerateTab({
                 />
               </div>
             )}
+
+            <div className="w-full sm:ml-auto sm:max-w-[18rem]">
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar disciplina ou professor"
+                className="h-9"
+                aria-label="Buscar disciplina ou professor no horário"
+              />
+            </div>
           </div>
 
           {viewMode === "by-day" ? (
@@ -183,6 +211,7 @@ export default function GenerateTab({
               allocationAt={allocationAt}
               canEditCells={canEditCells}
               onCellClick={openEdit}
+              search={search}
             />
           ) : (
             <ByClassView
@@ -191,6 +220,7 @@ export default function GenerateTab({
               allocationAt={allocationAt}
               canEditCells={canEditCells}
               onCellClick={openEdit}
+              search={search}
             />
           )}
         </div>
@@ -243,23 +273,43 @@ type CellHelpers = {
   allocationAt: (dayIndex: number, rowIndex: number, classId: string) => SolverAllocation | undefined;
   canEditCells: boolean;
   onCellClick: (dayIndex: number, rowIndex: number, classId: string) => void;
+  search: string;
 };
 
 function ScheduleCellContent({
   a,
   canEdit,
-  onClick
+  onClick,
+  search
 }: {
   a?: SolverAllocation;
   canEdit: boolean;
   onClick: () => void;
+  search: string;
 }) {
+  const hasSearch = Boolean(search.trim());
+  const subjectHit = hasSearch && a?.subject ? softMatch(a.subject, search) : false;
+  const teacherHit = hasSearch && a?.teacher ? softMatch(a.teacher, search) : false;
+  const anyHit = subjectHit || teacherHit;
+
   const body = a ? (
     <>
-      <p className="w-full truncate text-xs font-semibold leading-tight text-slate-800" title={a.subject}>
+      <p
+        className={cn(
+          "w-full truncate text-xs font-semibold leading-tight text-slate-800",
+          subjectHit && "rounded-[3px] bg-amber-200/55 px-1"
+        )}
+        title={a.subject}
+      >
         {a.subject}
       </p>
-      <p className="w-full truncate text-[10px] leading-tight text-slate-500" title={a.teacher}>
+      <p
+        className={cn(
+          "w-full truncate text-[10px] leading-tight text-slate-500",
+          teacherHit && "rounded-[3px] bg-amber-200/45 px-1 text-slate-700"
+        )}
+        title={a.teacher}
+      >
         {a.teacher}
       </p>
     </>
@@ -269,7 +319,14 @@ function ScheduleCellContent({
 
   if (!canEdit) {
     return (
-      <div className="flex min-h-[2.25rem] w-full flex-col items-center justify-center gap-0.5 px-2 py-2 text-center">{body}</div>
+      <div
+        className={cn(
+          "flex min-h-[2.25rem] w-full flex-col items-center justify-center gap-0.5 px-2 py-2 text-center",
+          anyHit && "bg-amber-50"
+        )}
+      >
+        {body}
+      </div>
     );
   }
 
@@ -277,7 +334,11 @@ function ScheduleCellContent({
     <button
       type="button"
       onClick={onClick}
-      className="absolute inset-0 box-border flex flex-col items-center justify-center gap-0.5 px-2 py-2 text-center transition-colors hover:bg-indigo-50/90 focus-visible:z-[1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-indigo-500"
+      className={cn(
+        "absolute inset-0 box-border flex flex-col items-center justify-center gap-0.5 px-2 py-2 text-center transition-colors hover:bg-indigo-50/90",
+        anyHit && "bg-amber-50 hover:bg-amber-100/60",
+        "focus-visible:z-[1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-indigo-500"
+      )}
     >
       {a ? body : <span className="text-slate-300">—</span>}
     </button>
@@ -288,13 +349,14 @@ function ByDayView({
   g,
   allocationAt,
   canEditCells,
-  onCellClick
+  onCellClick,
+  search
 }: {
   g: ReturnType<typeof useScheduleGeneration>;
 } & CellHelpers) {
   return (
     <div className="app-panel-flat overflow-hidden">
-      <div className="max-h-[min(85vh,880px)] overflow-auto">
+      <div className="max-h-[min(72vh,680px)] overflow-auto">
         {DAYS.map((dayName, dayIndex) => (
           <section key={dayName} className={cn(dayIndex > 0 && "border-t border-slate-200/90")}>
             <table
@@ -391,6 +453,7 @@ function ByDayView({
                                 a={a}
                                 canEdit={canEditCells && isLessonSlot}
                                 onClick={() => onCellClick(dayIndex, si, cid)}
+                                search={search}
                               />
                             )}
                           </td>
@@ -413,7 +476,8 @@ function ByClassView({
   classId,
   allocationAt,
   canEditCells,
-  onCellClick
+  onCellClick,
+  search
 }: {
   g: ReturnType<typeof useScheduleGeneration>;
   classId: string;
@@ -421,11 +485,11 @@ function ByClassView({
   if (!classId) return null;
 
   return (
-    <div className="app-panel-flat overflow-hidden">
+    <div className="app-panel-flat flex max-h-[min(72vh,680px)] flex-col overflow-hidden">
       <div className="border-b border-slate-100/80 px-5 py-3">
         <h3 className="text-sm font-semibold tracking-tight text-slate-800">Turma {classId}</h3>
       </div>
-      <div className="max-h-[min(70vh,560px)] overflow-auto">
+      <div className="min-h-0 flex-1 overflow-auto">
         <table className="w-full min-w-[700px] table-fixed border-separate border-spacing-0 text-xs">
           <colgroup>
             <col className="w-[140px]" />
@@ -501,6 +565,7 @@ function ByClassView({
                             a={a}
                             canEdit={canEditCells && lessonHere}
                             onClick={() => onCellClick(di, si, classId)}
+                            search={search}
                           />
                         )}
                       </td>
