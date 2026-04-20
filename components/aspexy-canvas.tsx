@@ -67,7 +67,7 @@ export default function AspexyCanvas() {
 
   const [confirmTarget, setConfirmTarget] = useState<"structure" | "generated" | "teacher" | "class" | "subject" | null>(null);
   const [confirmClassId, setConfirmClassId] = useState("");
-  const [confirmSubjectId, setConfirmSubjectId] = useState("");
+  const [confirmSubjectIds, setConfirmSubjectIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const pendingConstraintsNavRef = useRef<TabMode | null>(null);
@@ -152,10 +152,10 @@ export default function AspexyCanvas() {
       else if (confirmTarget === "generated") await generationHook.runDeleteGeneratedSchedule();
       else if (confirmTarget === "teacher") await teachersHook.runDeleteTeacher();
       else if (confirmTarget === "class") await classesHook.runDeleteClass(confirmClassId);
-      else if (confirmTarget === "subject") await subjectsHook.runDeleteSubject(confirmSubjectId);
+      else if (confirmTarget === "subject") await subjectsHook.runDeleteSubjects(confirmSubjectIds);
       setConfirmTarget(null);
       setConfirmClassId("");
-      setConfirmSubjectId("");
+      setConfirmSubjectIds([]);
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Falha ao excluir.", "error");
     } finally {
@@ -251,8 +251,8 @@ export default function AspexyCanvas() {
                 classSelectOptions={classesHook.classSelectOptions}
                 teacherNameById={teachersHook.teacherNameById}
                 classNameById={classesHook.classNameById}
-                onRequestDelete={(id) => {
-                  setConfirmSubjectId(id);
+                onRequestDelete={(ids) => {
+                  setConfirmSubjectIds(ids);
                   setConfirmTarget("subject");
                 }}
               />
@@ -317,7 +317,10 @@ export default function AspexyCanvas() {
           confirmTarget === "generated" ? "O horário será removido permanentemente do banco. Esta ação não pode ser desfeita."
             : confirmTarget === "teacher" ? "O professor será removido permanentemente. Esta ação não pode ser desfeita."
             : confirmTarget === "class" ? "A turma será removida permanentemente. Esta ação não pode ser desfeita."
-            : confirmTarget === "subject" ? "A disciplina será removida permanentemente. Esta ação não pode ser desfeita."
+            : confirmTarget === "subject"
+              ? confirmSubjectIds.length > 1
+                ? `Esta disciplina está em ${confirmSubjectIds.length} turmas; todos os cadastros serão removidos permanentemente. Esta ação não pode ser desfeita.`
+                : "A disciplina será removida permanentemente. Esta ação não pode ser desfeita."
             : "A estrutura será removida permanentemente. Esta ação não pode ser desfeita."
         }
         confirmText="Excluir"

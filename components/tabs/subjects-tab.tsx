@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 
 import type { Subject } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+import SubjectGroupTurmasDialog from "@/components/subject-group-turmas-dialog";
 import ScheduleSelect from "@/components/schedule-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,7 @@ type SubjectsTabProps = {
   classSelectOptions: Array<{ value: string; label: string }>;
   teacherNameById: Record<string, string>;
   classNameById: Record<string, string>;
-  onRequestDelete: (subjectId: string) => void;
+  onRequestDelete: (subjectIds: string[]) => void;
 };
 
 function teacherLabelsCsv(teacherIds: string[], teacherNameById: Record<string, string>) {
@@ -55,6 +56,33 @@ const PAGE_SIZE_SELECT_OPTIONS = PAGE_SIZE_OPTIONS.map((n) => ({
   label: String(n),
 }));
 
+function TurmasDetailTrigger({
+  onClick,
+  compact,
+  ariaLabel = "Ver detalhes"
+}: {
+  onClick: () => void;
+  compact?: boolean;
+  ariaLabel?: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center gap-0.5 font-medium text-indigo-700 underline-offset-2 transition-colors",
+        "hover:text-indigo-900 hover:underline",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 focus-visible:ring-offset-0",
+        "px-0.5 py-0.5 text-sm"
+      )}
+    >
+      Ver detalhes
+      <ChevronRight className={cn("shrink-0 opacity-70", compact ? "h-3.5 w-3.5" : "h-4 w-4")} aria-hidden />
+    </button>
+  );
+}
+
 export default function SubjectsTab({
   subjectsHook: s,
   teacherSelectOptions,
@@ -66,6 +94,7 @@ export default function SubjectsTab({
   const subjectGroups = useMemo(() => groupSubjectsForDisplay(s.subjects), [s.subjects]);
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(10);
   const [page, setPage] = useState(0);
+  const [turmasDetailMembers, setTurmasDetailMembers] = useState<Subject[] | null>(null);
 
   const totalGroups = subjectGroups.length;
   const pageCount = Math.max(1, Math.ceil(totalGroups / pageSize));
@@ -84,6 +113,7 @@ export default function SubjectsTab({
   const rangeTo = totalGroups === 0 ? 0 : page * pageSize + pageGroups.length;
 
   return (
+    <>
     <div className="animate-fade-in space-y-6">
       <section className="app-panel overflow-hidden">
         <div className="space-y-3 px-3 py-4 sm:px-5">
@@ -165,7 +195,7 @@ export default function SubjectsTab({
       ) : (
         <section className="app-panel-flat overflow-hidden">
           {/* Mobile / tablet: cartões em largura total (evita tabela larga cortada) */}
-          <div className="divide-y divide-slate-100/90 md:hidden">
+          <div className="divide-y divide-slate-100 md:hidden">
             {pageGroups.map((members) => {
               const sub = members[0]!;
               const multi = members.length > 1;
@@ -175,70 +205,44 @@ export default function SubjectsTab({
               return (
                 <div
                   key={rowKey}
-                  className="group px-3 py-3.5 transition-colors duration-150 hover:bg-slate-50/60 sm:px-4"
+                  className={cn("group bg-white px-3 py-3 transition-colors sm:px-4", "hover:bg-slate-50/60")}
                 >
-                  <div className="flex gap-3">
-                    <div className="grid h-9 w-9 shrink-0 place-items-center border border-slate-200 bg-slate-50 text-slate-600">
-                      <BookOpen className="h-4 w-4" strokeWidth={1.75} />
-                    </div>
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
-                        <p className="text-sm font-semibold text-slate-900">{sub.name}</p>
-                        <p className="shrink-0 text-xs tabular-nums text-slate-500">
-                          <span className="font-semibold text-slate-700">{sub.lessons_per_week}</span> aulas/sem.
+                  <div className="min-w-0 space-y-1.5">
+                      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
+                        <p
+                          className="line-clamp-1 min-w-0 flex-1 break-words text-base font-semibold leading-tight tracking-tight text-slate-900"
+                          title={sub.name}
+                        >
+                          {sub.name}
                         </p>
+                        <div className="flex shrink-0 flex-col items-end gap-0.5 sm:flex-row sm:items-center sm:gap-2">
+                          <p className="text-sm tabular-nums text-slate-500">
+                            <span className="font-semibold text-slate-700">{sub.lessons_per_week}</span> aulas/sem.
+                          </p>
+                          <TurmasDetailTrigger
+                            ariaLabel={`Ver detalhes de ${sub.name}`}
+                            onClick={() => setTurmasDetailMembers(members)}
+                          />
+                        </div>
                       </div>
+                      <p className="line-clamp-2 text-sm leading-relaxed text-slate-600" title={profTitle}>
+                        <span className="font-medium text-slate-400">Prof. </span>
+                        {profLabels.length > 0 ? profLabels.join(", ") : "—"}
+                      </p>
                       <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Professores</p>
-                        <p className="mt-0.5 text-sm leading-snug text-slate-700" title={profTitle}>
-                          {profLabels.length > 0 ? profLabels.join(", ") : "—"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                        <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
                           {multi ? "Turmas" : "Turma"}
                         </p>
                         {multi ? (
-                          <ul className="mt-1.5 space-y-2">
-                            {members.map((m) => {
-                              const label = classNameById[m.class_id] ?? m.class_id;
-                              return (
-                                <li
-                                  key={m.id}
-                                  className="flex items-center justify-between gap-2 rounded-md border border-slate-100/90 bg-slate-50/50 px-2.5 py-2"
-                                >
-                                  <span className="min-w-0 truncate text-sm font-medium tabular-nums text-slate-800">
-                                    {label || "—"}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    aria-label={`Excluir ${sub.name} — turma ${label}`}
-                                    onClick={() => onRequestDelete(m.id)}
-                                    className="shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
-                                </li>
-                              );
-                            })}
-                          </ul>
+                          <span className="text-sm tabular-nums text-slate-600">
+                            <span className="font-semibold text-slate-800">{members.length}</span> turmas
+                          </span>
                         ) : (
-                          <div className="mt-1.5 flex items-center justify-between gap-2 rounded-md border border-slate-100/90 bg-slate-50/50 px-2.5 py-2">
-                            <span className="min-w-0 truncate text-sm font-medium tabular-nums text-slate-800">
-                              {classNameById[sub.class_id] || "—"}
-                            </span>
-                            <button
-                              type="button"
-                              aria-label="Excluir disciplina"
-                              onClick={() => onRequestDelete(sub.id)}
-                              className="shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
+                          <span className="block min-w-0 truncate text-sm font-medium tabular-nums text-slate-800">
+                            {classNameById[sub.class_id] || "—"}
+                          </span>
                         )}
                       </div>
-                    </div>
                   </div>
                 </div>
               );
@@ -246,29 +250,31 @@ export default function SubjectsTab({
           </div>
 
           <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[640px] table-fixed border-collapse text-sm xl:min-w-[760px]">
+            <table className="w-full min-w-[640px] table-fixed border-collapse text-sm leading-normal xl:min-w-[760px]">
               <colgroup>
-                <col className="w-[40%] min-w-[14rem]" />
-                <col className="w-12" />
-                <col className="w-[32%]" />
-                <col className="w-[18%]" />
-                <col className="w-10" />
+                <col className="min-w-[11rem] sm:w-[32%]" />
+                <col className="w-[4.25rem]" />
+                <col className="min-w-[8rem] sm:w-[28%]" />
+                <col className="min-w-[9rem] sm:w-[24%]" />
+                <col className="min-w-[6.75rem] w-[7.25rem] sm:w-[7.75rem]" />
               </colgroup>
               <thead>
-                <tr>
-                  <th className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <tr className="border-b border-slate-200/90 bg-white">
+                  <th className="sticky top-0 z-10 bg-white px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Disciplina
                   </th>
-                  <th className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="sticky top-0 z-10 bg-white px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Aulas
                   </th>
-                  <th className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="sticky top-0 z-10 bg-white px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Professores
                   </th>
-                  <th className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th className="sticky top-0 z-10 bg-white px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Turma
                   </th>
-                  <th className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-1 py-2.5" aria-label="Ações" />
+                  <th className="sticky top-0 z-10 bg-white px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Detalhes
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -279,78 +285,47 @@ export default function SubjectsTab({
                   const profTitle = profLabels.join(", ");
                   const profDisplay =
                     profLabels.length > 0 ? (
-                      <span className="line-clamp-2" title={profTitle}>
+                      <span className="line-clamp-1 text-slate-600" title={profTitle}>
                         {profLabels.join(", ")}
                       </span>
                     ) : (
                       <span className="text-slate-300">—</span>
                     );
                   const rowKey = members.map((m) => m.id).join("|");
-                  const align = multi ? "align-top" : "align-middle";
                   return (
-                    <tr key={rowKey} className="group transition-colors duration-150 hover:bg-slate-50/50">
-                      <td className={cn("border-b border-slate-100/80 px-4 py-2.5 font-medium text-slate-800", align)}>
-                        <div className="flex min-w-0 items-center gap-2.5">
-                          <div className="grid h-6 w-6 shrink-0 place-items-center rounded-none border border-slate-200 bg-slate-50 text-slate-600">
-                            <BookOpen className="h-3 w-3" />
-                          </div>
-                          <span className="min-w-0 truncate" title={sub.name}>
-                            {sub.name}
-                          </span>
-                        </div>
+                    <tr
+                      key={rowKey}
+                      className={cn(
+                        "group border-b border-slate-100/80 bg-white transition-colors duration-150 last:border-b-0",
+                        "hover:bg-slate-50/70"
+                      )}
+                    >
+                      <td className="px-4 py-3 align-middle">
+                        <span className="line-clamp-1 min-w-0 text-sm font-semibold leading-snug tracking-tight text-slate-900" title={sub.name}>
+                          {sub.name}
+                        </span>
                       </td>
-                      <td
-                        className={cn(
-                          "border-b border-slate-100/80 px-2 py-2.5 text-center tabular-nums text-slate-600",
-                          align
-                        )}
-                      >
+                      <td className="px-2 py-3 text-center align-middle text-sm tabular-nums text-slate-600">
                         {sub.lessons_per_week}
                       </td>
-                      <td className={cn("border-b border-slate-100/80 px-4 py-2.5 text-slate-600", align)}>
-                        {profDisplay}
-                      </td>
-                      <td className={cn("border-b border-slate-100/80 px-4 py-2.5 text-slate-600", align)}>
+                      <td className="px-3 py-3 align-middle text-sm text-slate-600">{profDisplay}</td>
+                      <td className="px-3 py-3 align-middle text-sm text-slate-700">
                         {multi ? (
-                          <ul className="m-0 list-none space-y-1.5 p-0">
-                            {members.map((m) => {
-                              const label = classNameById[m.class_id] ?? m.class_id;
-                              return (
-                                <li key={m.id} className="flex min-w-0 items-center justify-between gap-2">
-                                  <span className="min-w-0 truncate tabular-nums" title={label}>
-                                    {label || "—"}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    aria-label={`Excluir ${sub.name} — turma ${label}`}
-                                    onClick={() => onRequestDelete(m.id)}
-                                    className="shrink-0 rounded-none p-1 text-slate-300 opacity-100 transition-all duration-200 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-500"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </button>
-                                </li>
-                              );
-                            })}
-                          </ul>
+                          <span className="tabular-nums text-slate-600">
+                            <span className="font-semibold text-slate-800">{members.length}</span> turmas
+                          </span>
                         ) : (
-                          <span className="block truncate" title={classNameById[sub.class_id] ?? ""}>
-                            {classNameById[sub.class_id] || <span className="text-slate-300">—</span>}
+                          <span className="block truncate font-medium tabular-nums" title={classNameById[sub.class_id] ?? ""}>
+                            {classNameById[sub.class_id] || <span className="font-normal text-slate-300">—</span>}
                           </span>
                         )}
                       </td>
-                      <td className={cn("border-b border-slate-100/80 px-1 py-2.5 text-center", align)}>
-                        {multi ? (
-                          <span className="sr-only">Exclusão por turma na coluna anterior</span>
-                        ) : (
-                          <button
-                            type="button"
-                            aria-label="Excluir disciplina"
-                            onClick={() => onRequestDelete(sub.id)}
-                            className="rounded-none p-1.5 text-slate-300 opacity-100 transition-all duration-200 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 hover:bg-rose-50 hover:text-rose-500"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
+                      <td className="px-2 py-3 text-right align-middle">
+                        <TurmasDetailTrigger
+                          compact
+                          ariaLabel={`Ver detalhes de ${sub.name}`}
+                          onClick={() => setTurmasDetailMembers(members)}
+                        />
                       </td>
                     </tr>
                   );
@@ -363,15 +338,15 @@ export default function SubjectsTab({
               {totalGroups > 0 ? (
                 <>
                   Mostrando{" "}
-                  <span className="font-medium text-slate-700 tabular-nums">{rangeFrom}</span>
+                  <span className="font-medium tabular-nums text-slate-700">{rangeFrom}</span>
                   {" — "}
-                  <span className="font-medium text-slate-700 tabular-nums">{rangeTo}</span> de{" "}
-                  <span className="font-medium text-slate-700 tabular-nums">{totalGroups}</span>
+                  <span className="font-medium tabular-nums text-slate-700">{rangeTo}</span> de{" "}
+                  <span className="font-medium tabular-nums text-slate-700">{totalGroups}</span>
                 </>
               ) : null}
             </p>
-            <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-2">
-              <div className="flex w-full min-w-0 items-center justify-between gap-2 sm:w-auto sm:justify-end">
+            <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
+              <div className="flex w-full min-w-0 items-center justify-between gap-2 sm:w-auto sm:justify-end sm:gap-2">
                 <span className="shrink-0 text-xs font-medium text-slate-500">Por página</span>
                 <div className="w-[5rem] shrink-0 sm:w-[5.25rem]">
                   <ScheduleSelect
@@ -425,6 +400,23 @@ export default function SubjectsTab({
           </div>
         </section>
       )}
+
     </div>
+
+      {turmasDetailMembers && turmasDetailMembers[0] ? (
+        <SubjectGroupTurmasDialog
+          open
+          onOpenChange={(next) => {
+            if (!next) setTurmasDetailMembers(null);
+          }}
+          subjectName={turmasDetailMembers[0].name}
+          lessonsPerWeek={turmasDetailMembers[0].lessons_per_week}
+          professorLine={teacherLabelsCsv(turmasDetailMembers[0].teacher_ids, teacherNameById).join(", ") || "—"}
+          members={turmasDetailMembers}
+          classNameById={classNameById}
+          onRequestDelete={onRequestDelete}
+        />
+      ) : null}
+    </>
   );
 }

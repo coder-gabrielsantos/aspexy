@@ -59,13 +59,29 @@ export function useSubjects(showToast: (msg: string, v?: "success" | "error") =>
     }
   }, [newSubjectName, newSubjectLessons, newSubjectTeacherIds, newSubjectClassIds, loadSubjects, showToast]);
 
-  const runDeleteSubject = useCallback(async (subjectId: string) => {
-    const r = await fetch(`/api/subjects?id=${subjectId}`, { method: "DELETE" });
-    const d = await readJsonSafe<{ ok?: boolean; error?: string }>(r);
-    if (!r.ok || !d?.ok) throw new Error(d?.error ?? "Falha ao excluir.");
-    await loadSubjects();
-    showToast("Disciplina excluída.");
-  }, [loadSubjects, showToast]);
+  const runDeleteSubjects = useCallback(
+    async (subjectIds: string[]) => {
+      const ids = [...new Set(subjectIds.map((id) => id.trim()).filter(Boolean))];
+      if (ids.length === 0) return;
+      for (const subjectId of ids) {
+        const r = await fetch(`/api/subjects?id=${subjectId}`, { method: "DELETE" });
+        const d = await readJsonSafe<{ ok?: boolean; error?: string }>(r);
+        if (!r.ok || !d?.ok) throw new Error(d?.error ?? "Falha ao excluir.");
+      }
+      await loadSubjects();
+      showToast(
+        ids.length > 1 ? `${ids.length} cadastros da disciplina excluídos.` : "Disciplina excluída."
+      );
+    },
+    [loadSubjects, showToast]
+  );
+
+  const runDeleteSubject = useCallback(
+    async (subjectId: string) => {
+      await runDeleteSubjects([subjectId]);
+    },
+    [runDeleteSubjects]
+  );
 
   return {
     subjects,
@@ -82,5 +98,6 @@ export function useSubjects(showToast: (msg: string, v?: "success" | "error") =>
     loadSubjects,
     handleAddSubject,
     runDeleteSubject,
+    runDeleteSubjects,
   };
 }
