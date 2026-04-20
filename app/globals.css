@@ -36,6 +36,8 @@
 
   * {
     @apply border-border;
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgba(100, 116, 139, 0.55) rgba(2, 6, 23, 0); /* thumb / track */
   }
 
   body {
@@ -45,6 +47,27 @@
 
   ::selection {
     @apply bg-indigo-300/55 text-foreground;
+  }
+
+  /* Scrollbar global (Chrome/Edge/Safari) */
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: rgba(100, 116, 139, 0.45);
+    border-radius: 999px;
+    border: 3px solid transparent; /* cria “thumb” mais fino */
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(100, 116, 139, 0.65);
   }
 }
 

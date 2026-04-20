@@ -365,10 +365,13 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                           <th className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                             Horário
                           </th>
-                          {DAYS.map((day) => (
+                          {DAYS.map((day, di) => (
                             <th
                               key={day}
-                              className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 px-2 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500"
+                              className={cn(
+                                "sticky top-0 z-10 border-b border-slate-200 bg-slate-100 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500",
+                                di === 0 ? "pl-0 pr-2" : di === DAYS.length - 1 ? "pl-2 pr-0" : "px-2"
+                              )}
                             >
                               {day}
                             </th>
@@ -384,8 +387,14 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                                 <td className="border-b border-slate-100/80 px-3 py-2 text-center text-xs text-slate-400">
                                   {slot.start} – {slot.end}
                                 </td>
-                                {DAYS.map((day) => (
-                                  <td key={`${slot.id}-${day}`} className="break-stripes border-b border-slate-100/80 px-2 py-2 text-center text-slate-300">
+                                {DAYS.map((day, di) => (
+                                  <td
+                                    key={`${slot.id}-${day}`}
+                                    className={cn(
+                                      "break-stripes border-b border-slate-100/80 py-2 text-center text-slate-300",
+                                      di === 0 ? "pl-0 pr-2" : di === DAYS.length - 1 ? "pl-2 pr-0" : "px-2"
+                                    )}
+                                  >
                                     —
                                   </td>
                                 ))}
@@ -400,7 +409,13 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                               {DAYS.map((_, di) => {
                                 const slotState: TeacherSlotState = t.teacherSlotState(di, si);
                                 return (
-                                  <td key={`${slot.id}-${DAYS[di]}`} className="border-b border-slate-100/80 px-1.5 py-2 align-middle">
+                                  <td
+                                    key={`${slot.id}-${DAYS[di]}`}
+                                    className={cn(
+                                      "border-b border-slate-100/80 py-2 align-middle",
+                                      di === 0 ? "pl-0 pr-1.5" : di === DAYS.length - 1 ? "pl-1.5 pr-0" : "px-1.5"
+                                    )}
+                                  >
                                     <button
                                       type="button"
                                       data-availability-cell
@@ -417,11 +432,11 @@ export default function TeachersTab({ teachersHook: t, structureSelectOptions, o
                                       className={cn(
                                         "relative box-border flex h-9 w-full items-center justify-center rounded-none text-[10px] font-semibold tracking-wide transition-colors duration-200",
                                         slotState === "available" &&
-                                          "bg-slate-50 text-slate-700 ring-1 ring-slate-200/80 hover:bg-slate-100",
+                                          "bg-slate-50 text-slate-700 border border-slate-200/90 hover:bg-slate-100",
                                         slotState === "preference" &&
-                                          "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/80 hover:bg-emerald-100/90",
+                                          "bg-emerald-50 text-emerald-800 border border-emerald-200/90 hover:bg-emerald-100/90",
                                         slotState === "unavailable" &&
-                                          "bg-rose-50 text-rose-600 ring-1 ring-rose-200/80 hover:bg-rose-100",
+                                          "bg-rose-50 text-rose-600 border border-rose-200/90 hover:bg-rose-100",
                                         cellInDragPreview(di, si, dragRect) &&
                                           "z-[1] ring-2 ring-indigo-500 ring-offset-1 ring-offset-white"
                                       )}
