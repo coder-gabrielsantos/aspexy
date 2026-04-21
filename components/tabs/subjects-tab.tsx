@@ -175,6 +175,8 @@ export default function SubjectsTab({
                 value={s.newSubjectClassIds}
                 onChange={s.setNewSubjectClassIds}
                 placeholder="Selecione uma ou mais turmas"
+                isSearchable={false}
+                maxVisibleMenuItems={5}
                 maxVisibleSelectedValues={4}
                 multiValueSeparator="comma"
                 multiValueDisplay="text"
@@ -191,6 +193,8 @@ export default function SubjectsTab({
                 value={s.newSubjectTeacherIds}
                 onChange={s.setNewSubjectTeacherIds}
                 placeholder="Selecione os professores"
+                isSearchable={false}
+                maxVisibleMenuItems={5}
                 maxVisibleSelectedValues={4}
                 multiValueSeparator="comma"
                 multiValueDisplay="text"

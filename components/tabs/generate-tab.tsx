@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarDays, GraduationCap, Trash2, WandSparkles } from "lucide-react";
+import { CalendarDays, GraduationCap, Search, Trash2, WandSparkles } from "lucide-react";
 
 import ConfirmDialog from "@/components/confirm-dialog";
 import ScheduleCellEditDialog from "@/components/schedule-cell-edit-dialog";
@@ -160,19 +160,34 @@ export default function GenerateTab({
         <div className="min-w-0 space-y-4">
           {/* ── Toolbar: view toggle + class picker + search ── */}
           <div className="flex flex-wrap items-center gap-2">
-            {/* View mode toggle */}
-            <div className="inline-flex rounded-lg border border-slate-200/90 bg-white p-0.5 shadow-sm">
+            {/* View mode: segmented control com indicador deslizante */}
+            <div
+              className="relative inline-grid h-8 w-max max-w-full grid-cols-2 items-stretch rounded-full bg-slate-100/95 p-0.5 sm:h-9"
+              role="group"
+              aria-label="Modo de visualização do horário"
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "pointer-events-none absolute bottom-0.5 left-0.5 top-0.5 w-[calc(50%-2px)] rounded-full bg-white shadow-sm transition-transform duration-300 ease-out motion-reduce:transition-none",
+                  viewMode === "by-class" ? "translate-x-full" : "translate-x-0"
+                )}
+              />
               <button
                 type="button"
                 onClick={() => setViewMode("by-day")}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all",
-                  viewMode === "by-day"
-                    ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow shadow-indigo-900/15"
-                    : "text-slate-500 hover:text-indigo-700"
+                  "relative z-10 flex min-w-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-xs font-semibold transition-colors duration-200 sm:px-3.5",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/35 focus-visible:ring-offset-2",
+                  viewMode === "by-day" ? "text-indigo-600" : "text-slate-500 hover:text-slate-800"
                 )}
               >
-                <CalendarDays className="h-3.5 w-3.5" />
+                <CalendarDays
+                  className={cn(
+                    "h-3.5 w-3.5 shrink-0",
+                    viewMode === "by-day" ? "text-indigo-500" : "text-slate-400"
+                  )}
+                />
                 <span className="hidden xs:inline">Por dia</span>
                 <span className="xs:hidden">Dia</span>
               </button>
@@ -180,52 +195,76 @@ export default function GenerateTab({
                 type="button"
                 onClick={() => setViewMode("by-class")}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all",
-                  viewMode === "by-class"
-                    ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow shadow-indigo-900/15"
-                    : "text-slate-500 hover:text-indigo-700"
+                  "relative z-10 flex min-w-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-xs font-semibold transition-colors duration-200 sm:px-3.5",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/35 focus-visible:ring-offset-2",
+                  viewMode === "by-class" ? "text-indigo-600" : "text-slate-500 hover:text-slate-800"
                 )}
               >
-                <GraduationCap className="h-3.5 w-3.5" />
+                <GraduationCap
+                  className={cn(
+                    "h-3.5 w-3.5 shrink-0",
+                    viewMode === "by-class" ? "text-indigo-500" : "text-slate-400"
+                  )}
+                />
                 <span className="hidden xs:inline">Por turma</span>
                 <span className="xs:hidden">Turma</span>
               </button>
             </div>
 
-            {viewMode === "by-class" && (
-              <div className="w-full max-w-[13rem]">
-                <ScheduleSelect
-                  aria-label="Selecionar turma para visualização"
-                  options={classOptions}
-                  value={selectedClassId || g.classIds[0] || ""}
-                  onChange={setSelectedClassId}
-                  placeholder="Selecione a turma"
-                  isClearable={false}
-                />
-              </div>
-            )}
+            {/* Espaço fixo (h-11 = altura do ScheduleSelect) para não empurrar o conteúdo ao trocar modo */}
+            <div className="w-full max-w-[13rem] shrink-0">
+              {viewMode === "by-class" ? (
+                <div className="animate-fade-in motion-reduce:animate-none">
+                  <ScheduleSelect
+                    aria-label="Selecionar turma para visualização"
+                    options={classOptions}
+                    value={selectedClassId || g.classIds[0] || ""}
+                    onChange={setSelectedClassId}
+                    placeholder="Selecione a turma"
+                    isClearable={false}
+                    isSearchable={false}
+                    maxVisibleMenuItems={5}
+                  />
+                </div>
+              ) : (
+                <div className="h-11 w-full max-w-[13rem]" aria-hidden />
+              )}
+            </div>
 
-            <div className="w-full sm:ml-auto sm:max-w-[17rem]">
+            <div className="relative w-full sm:ml-auto sm:max-w-[17rem]">
+              <Search
+                className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 sm:left-3 sm:h-4 sm:w-4"
+                aria-hidden
+              />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar disciplina ou professor"
-                className="h-9 text-sm sm:h-10"
+                className="h-9 pl-8 text-sm sm:h-10 sm:pl-9"
                 aria-label="Buscar disciplina ou professor no horário"
               />
             </div>
           </div>
 
-          {/* ── Table views ── */}
+          {/* ── Table views (key + animação na troca dia/turma) ── */}
           {viewMode === "by-day" ? (
-            <ByDayView
-              g={g}
-              allocationAt={allocationAt}
-              canEditCells={canEditCells}
-              onCellClick={openEdit}
-              search={search}
-            />
+            <div
+              key="by-day"
+              className="min-w-0 motion-reduce:animate-none animate-fade-in"
+            >
+              <ByDayView
+                g={g}
+                allocationAt={allocationAt}
+                canEditCells={canEditCells}
+                onCellClick={openEdit}
+                search={search}
+              />
+            </div>
           ) : (
+            <div
+              key="by-class"
+              className="min-w-0 motion-reduce:animate-none animate-fade-in"
+            >
             <ByClassView
               g={g}
               classId={selectedClassId || g.classIds[0] || ""}
@@ -234,6 +273,7 @@ export default function GenerateTab({
               onCellClick={openEdit}
               search={search}
             />
+            </div>
           )}
         </div>
       ) : (

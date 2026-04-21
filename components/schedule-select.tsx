@@ -139,7 +139,10 @@ function mergeSelectStyles(maxVisibleMenuItems?: number): StylesConfig<
     menuList: (base) => {
       if (maxVisibleMenuItems == null) return base;
       const n = Math.max(1, Math.min(20, maxVisibleMenuItems));
-      return { ...base, maxHeight: `${n * 2.25}rem` };
+      // Cada opção: ~2.25rem (py-2 + text-sm) + 0,5rem do `p-1` do menuList (não entra no scroll).
+      const perItemRem = 2.25;
+      const menuListVerticalPadRem = 0.5;
+      return { ...base, maxHeight: `${n * perItemRem + menuListVerticalPadRem}rem` };
     }
   };
 }
