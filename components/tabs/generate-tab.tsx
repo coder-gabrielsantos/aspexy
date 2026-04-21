@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarDays, GraduationCap, Search, Trash2, WandSparkles } from "lucide-react";
+import { CalendarDays, CalendarPlus, GraduationCap, Search, Trash2 } from "lucide-react";
 
 import ConfirmDialog from "@/components/confirm-dialog";
 import ScheduleCellEditDialog from "@/components/schedule-cell-edit-dialog";
@@ -78,6 +78,7 @@ export default function GenerateTab({
   const [selectedClassId, setSelectedClassId] = useState("");
   const [editCell, setEditCell] = useState<EditCellState | null>(null);
   const [search, setSearch] = useState("");
+  const [newScheduleName, setNewScheduleName] = useState("");
 
   const classOptions = g.classIds.map((cid) => ({ value: cid, label: `Turma ${cid}` }));
 
@@ -109,10 +110,17 @@ export default function GenerateTab({
     <div className="min-w-0 animate-fade-in space-y-6">
       {/* ── Controls panel ── */}
       <section className="app-panel overflow-hidden">
-        <div className="flex flex-col gap-3 px-4 py-4 sm:px-5 lg:flex-row lg:items-end lg:justify-between lg:gap-4">
-          <div className="grid min-w-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:max-w-[min(100%,580px)]">
-            <div className="min-w-0">
-              <p className="mb-1.5 text-xs font-medium text-slate-500">Estrutura base</p>
+        <div className="px-4 py-3 sm:px-5 sm:py-3.5">
+          {/* ── Criar novo horário ── */}
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+            Criar novo horário
+          </p>
+          <div className="grid w-full min-w-0 grid-cols-1 gap-2.5 sm:grid-cols-12 sm:gap-3">
+            {/* Estrutura base */}
+            <div className="min-w-0 sm:col-span-5">
+              <label className="mb-1 block text-xs font-medium text-slate-600">
+                Estrutura base <span className="text-rose-400">*</span>
+              </label>
               <ScheduleSelect
                 aria-label="Estrutura base para geração"
                 options={structureSelectOptions}
@@ -121,37 +129,82 @@ export default function GenerateTab({
                 placeholder="Selecione a estrutura"
               />
             </div>
-            <div className="min-w-0">
-              <p className="mb-1.5 text-xs font-medium text-slate-500">Horários gerados</p>
-              <ScheduleSelect
-                aria-label="Horário salvo para visualizar ou editar"
-                options={g.generatedSelectOptions}
-                value={g.selectedGeneratedScheduleId}
-                onChange={(id) => void g.handleLoadGeneratedSchedule(id)}
-                placeholder="Visualizar horário salvo"
+
+            {/* Nome do horário */}
+            <div className="min-w-0 sm:col-span-5">
+              <label htmlFor="new-schedule-name" className="mb-1 block text-xs font-medium text-slate-600">
+                Nome do horário <span className="text-rose-400">*</span>
+              </label>
+              <Input
+                id="new-schedule-name"
+                value={newScheduleName}
+                onChange={(e) => setNewScheduleName(e.target.value)}
+                onKeyDown={async (e) => {
+                  if (e.key === "Enter" && g.generationProfile && newScheduleName.trim() && !g.isSolving) {
+                    e.preventDefault();
+                    const ok = await g.handleGenerateSchedule(newScheduleName);
+                    if (ok) setNewScheduleName("");
+                  }
+                }}
+                placeholder="Ex.: Integral 2025, manhã"
+                className="w-full"
+                maxLength={120}
+                autoComplete="off"
               />
             </div>
-          </div>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-            {g.selectedGeneratedScheduleId && (
+
+            {/* Ação: coluna mais estreita (2/12) que os campos (5+5) */}
+            <div className="min-w-0 sm:col-span-2">
+              <div className="mb-1" aria-hidden>
+                <span className="invisible block text-xs font-medium">Nome do horário *</span>
+              </div>
               <Button
-                type="button"
-                onClick={onRequestDeleteGenerated}
-                variant="outline"
-                className="h-10 gap-1.5 text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 sm:h-11"
+                onClick={async () => {
+                  const ok = await g.handleGenerateSchedule(newScheduleName);
+                  if (ok) setNewScheduleName("");
+                }}
+                disabled={g.isSolving || !g.generationProfile || !newScheduleName.trim()}
+                className="h-11 w-full gap-1.5 whitespace-nowrap px-2 text-sm sm:px-2.5"
               >
-                <Trash2 className="h-3.5 w-3.5" />
-                <span className="hidden xs:inline">Excluir</span>
+                <CalendarPlus className="h-4 w-4 shrink-0" aria-hidden />
+                {g.isSolving ? "Montando horário…" : "Montar horário"}
               </Button>
-            )}
-            <Button
-              onClick={() => void g.handleGenerateSchedule()}
-              disabled={g.isSolving || !g.generationProfile}
-              className="h-10 gap-1.5 sm:h-11"
-            >
-              <WandSparkles className="h-3.5 w-3.5" />
-              {g.isSolving ? "Gerando…" : "Gerar e Salvar"}
-            </Button>
+            </div>
+          </div>
+
+          {/* ── Horários salvos ── */}
+          <div className="mt-3 border-t border-slate-100/90 pt-3">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              Horários salvos
+            </p>
+            {/* Largura da coluna «Estrutura base» (5/12); excluir colado ao select */}
+            <div className="grid w-full min-w-0 sm:grid-cols-12 sm:gap-3">
+              <div className="min-w-0 sm:col-span-5">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <ScheduleSelect
+                      aria-label="Abrir horário salvo"
+                      options={g.generatedSelectOptions}
+                      value={g.selectedGeneratedScheduleId}
+                      onChange={(id) => void g.handleLoadGeneratedSchedule(id)}
+                      placeholder="Selecione um horário"
+                    />
+                  </div>
+                  {g.selectedGeneratedScheduleId ? (
+                    <Button
+                      type="button"
+                      onClick={onRequestDeleteGenerated}
+                      variant="outline"
+                      size="icon"
+                      className="h-11 w-11 shrink-0 text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+                      aria-label="Excluir horário selecionado"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden />
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -283,10 +336,10 @@ export default function GenerateTab({
             <CalendarDays className="h-5 w-5 text-slate-400" />
           </div>
           <p className="mt-3 text-sm font-medium text-slate-600">
-            Selecione uma estrutura e clique em Gerar e Salvar
+            Escolha a estrutura, dê um nome ao horário e clique em Montar horário
           </p>
           <p className="mt-1 text-xs text-slate-400">
-            A grade será exibida aqui. Você pode editar células clicando nelas.
+            A grade aparece aqui após a geração. Para editar, use um horário salvo e clique nas células.
           </p>
         </div>
       )}

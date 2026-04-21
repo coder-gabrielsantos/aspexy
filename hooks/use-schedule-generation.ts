@@ -104,53 +104,68 @@ export function useScheduleGeneration(
     setViewerProfile(d.generatedSchedule.school_profile);
   }, [showToast]);
 
-  const handleGenerateSchedule = useCallback(async () => {
-    if (!generationProfile) {
-      showToast("Selecione uma estrutura salva.", "error");
-      return;
-    }
-    setIsSolving(true);
-    try {
-      const sr = await fetch("/api/schedule/solve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ schoolProfile: generationProfile })
-      });
-      const sd = await readJsonSafe<{ ok?: boolean; result?: SolverResult; error?: string }>(sr);
-      if (!sr.ok || !sd?.ok || !sd.result) throw new Error(sd?.error ?? "Falha ao gerar horário.");
-
-      const statusUp = String(sd.result.status ?? "").trim().toUpperCase();
-      if (statusUp !== "OPTIMAL" && statusUp !== "FEASIBLE") {
-        setSolverResult(null);
-        setViewerProfile(null);
-        setInfeasibleModalOpen(true);
-        return;
+  const handleGenerateSchedule = useCallback(
+    async (scheduleName: string): Promise<boolean> => {
+      if (!generationProfile) {
+        showToast("Selecione uma estrutura salva.", "error");
+        return false;
       }
+      const name = scheduleName.trim();
+      if (!name) {
+        showToast("Dê um nome ao horário antes de gerar.", "error");
+        return false;
+      }
+      setIsSolving(true);
+      try {
+        const sr = await fetch("/api/schedule/solve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ schoolProfile: generationProfile })
+        });
+        const sd = await readJsonSafe<{ ok?: boolean; result?: SolverResult; error?: string }>(sr);
+        if (!sr.ok || !sd?.ok || !sd.result) throw new Error(sd?.error ?? "Falha ao gerar horário.");
 
-      setSolverResult(sd.result);
-      setViewerProfile(generationProfile);
+        const statusUp = String(sd.result.status ?? "").trim().toUpperCase();
+        if (statusUp !== "OPTIMAL" && statusUp !== "FEASIBLE") {
+          setSolverResult(null);
+          setViewerProfile(null);
+          setInfeasibleModalOpen(true);
+          return false;
+        }
 
-      const saveR = await fetch("/api/generated-schedules", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ structureId: generationStructureId || undefined, schoolProfile: generationProfile, resultJson: sd.result })
-      });
-      const saveD = await readJsonSafe<{ ok?: boolean; generatedSchedule?: { id: string }; error?: string }>(saveR);
-      if (!saveR.ok || !saveD?.ok || !saveD.generatedSchedule) {
-        showToast(`Horário gerado (${sd.result.status}), mas não foi salvo.`, "error");
-      } else {
+        setSolverResult(sd.result);
+        setViewerProfile(generationProfile);
+
+        const saveR = await fetch("/api/generated-schedules", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            structureId: generationStructureId || undefined,
+            schoolProfile: generationProfile,
+            resultJson: sd.result
+          })
+        });
+        const saveD = await readJsonSafe<{ ok?: boolean; generatedSchedule?: { id: string }; error?: string }>(saveR);
+        if (!saveR.ok || !saveD?.ok || !saveD.generatedSchedule) {
+          showToast(`Horário gerado (${sd.result.status}), mas não foi salvo.`, "error");
+          return false;
+        }
         await loadGeneratedSchedules();
         setSelectedGeneratedScheduleId(saveD.generatedSchedule.id);
-        showToast(`Horário gerado e salvo (${sd.result.status}).`);
+        showToast(`Horário “${name}” gerado e salvo (${sd.result.status}).`);
+        return true;
+      } catch (e) {
+        setSolverResult(null);
+        setViewerProfile(null);
+        showToast(e instanceof Error ? e.message : "Falha ao gerar horário.", "error");
+        return false;
+      } finally {
+        setIsSolving(false);
       }
-    } catch (e) {
-      setSolverResult(null);
-      setViewerProfile(null);
-      showToast(e instanceof Error ? e.message : "Falha ao gerar horário.", "error");
-    } finally {
-      setIsSolving(false);
-    }
-  }, [generationProfile, generationStructureId, loadGeneratedSchedules, showToast]);
+    },
+    [generationProfile, generationStructureId, loadGeneratedSchedules, showToast]
+  );
 
   const runDeleteGeneratedSchedule = useCallback(async () => {
     if (!selectedGeneratedScheduleId) return;
