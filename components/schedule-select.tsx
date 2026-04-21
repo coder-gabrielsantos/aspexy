@@ -116,11 +116,10 @@ const multiSelectClassNames: ClassNamesConfig<
     "flex min-h-8 min-w-0 flex-1 flex-wrap items-center gap-1.5 overflow-hidden py-1.5 pl-3 pr-1"
 };
 
-function mergeSelectStyles(maxVisibleMenuItems?: number): StylesConfig<
-  ScheduleSelectOption,
-  boolean,
-  GroupBase<ScheduleSelectOption>
-> {
+/** Controle a 44px, alinhado a `h-11` do Tailwind. */
+function mergeSelectStyles(
+  maxVisibleMenuItems?: number
+): StylesConfig<ScheduleSelectOption, boolean, GroupBase<ScheduleSelectOption>> {
   return {
     menuPortal: (base) => ({ ...base, zIndex: 100 }),
     menu: (base) => ({ ...base, zIndex: 100 }),

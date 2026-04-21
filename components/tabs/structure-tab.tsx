@@ -28,17 +28,17 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
     <div className="animate-fade-in space-y-6">
       <section className="app-panel overflow-hidden">
         <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3">
-          <div className="flex min-w-0 w-full flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-            <div className="w-full min-w-0 sm:w-auto sm:min-w-[180px]">
+          <div className="grid min-w-0 w-full max-w-xl flex-1 grid-cols-1 gap-3 sm:grid-cols-2 sm:items-end">
+            <div className="min-w-0">
               <p className="mb-1.5 text-xs font-medium text-slate-500">Nome</p>
               <Input
                 value={s.structureName}
                 onChange={(e) => s.setStructureName(e.target.value)}
                 placeholder="Nome da estrutura"
-                className="w-full sm:w-52"
+                className="h-11 min-h-11 w-full"
               />
             </div>
-            <div className="w-full min-w-0 sm:max-w-[280px] sm:shrink-0">
+            <div className="min-w-0">
               <p className="mb-1.5 text-xs font-medium text-slate-500">Estruturas salvas</p>
               <ScheduleSelect
                 aria-label="Estruturas salvas — selecionar para carregar"
@@ -55,7 +55,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                 type="button"
                 onClick={onRequestDelete}
                 variant="outline"
-                className="gap-1.5 text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+                className="h-11 min-h-11 gap-1.5 text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 Excluir
@@ -64,7 +64,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
             <Button
               onClick={() => void s.handleSaveStructure(onStructureSaved)}
               disabled={s.isSavingStructure || (Boolean(s.selectedStructureId) && !s.isStructureDirty)}
-              className="gap-1.5"
+              className="h-11 min-h-11 gap-1.5"
             >
               <Save className="h-3.5 w-3.5" />
               {s.saveButtonLabel}
@@ -75,13 +75,13 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
 
       <section className="app-panel-flat overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[984px] table-fixed border-collapse">
+          <table className="w-full min-w-[1000px] table-fixed border-collapse">
             <colgroup>
               <col className="w-[200px]" />
               {DAYS.map((day) => (
                 <col key={day} />
               ))}
-              <col className="w-10" />
+              <col className="w-14 min-w-14" />
             </colgroup>
             <thead>
               <tr>
@@ -93,7 +93,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                     {day}
                   </th>
                 ))}
-                <th className="border-b border-slate-200 bg-slate-100 px-1 py-2.5" />
+                <th className="w-14 min-w-14 border-b border-slate-200 bg-slate-100 px-1.5 py-2.5" aria-hidden />
               </tr>
             </thead>
             <tbody>
@@ -136,15 +136,15 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                       </button>
                     </td>
                   ))}
-                  <td className="border-b border-slate-100 px-1 py-2 text-center">
+                  <td className="w-14 min-w-14 border-b border-slate-100 px-1.5 py-2 text-center align-middle">
                     <button
                       type="button"
                       onClick={() => s.removeSlotRow(si)}
                       disabled={s.slots.length <= 1}
                       aria-label="Remover slot"
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-none text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-25"
+                      className="inline-flex h-11 min-h-11 w-11 min-w-11 shrink-0 items-center justify-center rounded-none text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-25"
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <X className="h-4 w-4" />
                     </button>
                   </td>
                 </tr>
@@ -158,10 +158,10 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
             type="button"
             onClick={s.addSlotRow}
             variant="outline"
-            aria-label="Adicionar slot"
-            className="gap-1.5 border-dashed px-3 text-xs text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
+            className="h-10 min-h-10 w-[calc(2*4.75rem+2*0.375rem+0.4rem)] shrink-0 justify-center gap-1.5 rounded-none border-dashed px-2 text-[11px] font-medium text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 sm:text-xs"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            Adicionar slot
           </Button>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500" aria-label="Legenda">

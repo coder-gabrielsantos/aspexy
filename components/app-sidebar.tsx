@@ -113,8 +113,8 @@ function ProfileAccountLink({
     >
       <UserAvatar imageUrl={userImage} initials={userInitials} nameLabel={userName} size="md" />
       <div className="min-w-0 flex-1 text-left">
-        <p className="truncate text-sm font-semibold text-slate-800 sm:text-[15px]">{displayName}</p>
-        <p className="mt-0.5 truncate text-xs font-medium text-indigo-700 sm:text-[13px]">Perfil e conta</p>
+        <p className="truncate text-[13px] font-semibold leading-snug text-slate-800 sm:text-sm">{displayName}</p>
+        <p className="mt-0.5 truncate text-[11px] font-medium leading-snug text-indigo-700 sm:text-xs">Perfil e conta</p>
       </div>
       {isPending ? (
         <Loader2

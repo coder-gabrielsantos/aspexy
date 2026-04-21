@@ -66,7 +66,7 @@ export function useStructures(showToast: (msg: string, v?: "success" | "error") 
 
   const saveButtonLabel = useMemo(() => {
     if (isSavingStructure) return "Salvando…";
-    if (!selectedStructureId) return "Salvar";
+    if (!selectedStructureId) return "Salvar estrutura";
     if (!isStructureDirty) return "Sem alterações";
     if (saveCreatesNewStructure) return "Salvar como nova estrutura";
     return "Salvar modificações";
