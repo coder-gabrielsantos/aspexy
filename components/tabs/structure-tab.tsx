@@ -55,7 +55,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                 type="button"
                 onClick={onRequestDelete}
                 variant="outline"
-                className="h-9 gap-1.5 text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+                className="gap-1.5 text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 Excluir
@@ -64,7 +64,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
             <Button
               onClick={() => void s.handleSaveStructure(onStructureSaved)}
               disabled={s.isSavingStructure || (Boolean(s.selectedStructureId) && !s.isStructureDirty)}
-              className="h-9 gap-1.5"
+              className="gap-1.5"
             >
               <Save className="h-3.5 w-3.5" />
               {s.saveButtonLabel}
@@ -126,7 +126,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                         onClick={() => s.toggleCellState(si, di)}
                         aria-label={`${stateLabelMap[state]} — clique para alternar`}
                         className={cn(
-                          "box-border flex h-9 w-full items-center justify-center overflow-hidden rounded-none text-[10px] font-semibold tracking-wide transition-colors duration-150",
+                          "box-border flex h-11 w-full items-center justify-center overflow-hidden rounded-none text-[10px] font-semibold tracking-wide transition-colors duration-150",
                           state === "lesson" && "bg-slate-100 text-slate-800 ring-1 ring-slate-200 hover:bg-slate-200/80",
                           state === "free" && "bg-white text-slate-400 ring-1 ring-slate-200 hover:bg-slate-50",
                           state === "break" && "break-stripes bg-amber-50/90 text-amber-800 ring-1 ring-amber-200/70 hover:bg-amber-100/80"
@@ -142,7 +142,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                       onClick={() => s.removeSlotRow(si)}
                       disabled={s.slots.length <= 1}
                       aria-label="Remover slot"
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-none text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-25"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-none text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-25"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -159,7 +159,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
             onClick={s.addSlotRow}
             variant="outline"
             aria-label="Adicionar slot"
-            className="h-9 gap-1.5 border-dashed px-3 text-xs text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
+            className="gap-1.5 border-dashed px-3 text-xs text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
           >
             <Plus className="h-3.5 w-3.5" />
           </Button>

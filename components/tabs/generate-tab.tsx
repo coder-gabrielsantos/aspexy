@@ -366,7 +366,7 @@ function ByDayView({
         {DAYS.map((dayName, dayIndex) => (
           <section
             key={dayName}
-            className={cn(dayIndex > 0 && "border-t-2 border-indigo-100/70")}
+            className={cn(dayIndex > 0 && "border-t border-slate-200/90")}
           >
             <table
               className="table-fixed border-separate border-spacing-0 text-xs"
@@ -381,9 +381,9 @@ function ByDayView({
                       TIME_COL_W
                     )}
                   >
-                    <div className="box-border flex h-10 w-full items-center justify-center border-b border-indigo-200/60 bg-indigo-600 px-2 text-center sm:h-11 sm:px-3">
+                    <div className="box-border flex h-10 w-full items-center justify-center border-b border-slate-200/90 bg-slate-100 px-2 text-center sm:h-11 sm:px-3">
                       <span
-                        className="block min-w-0 max-w-full truncate text-xs font-bold leading-tight tracking-tight text-white sm:text-sm"
+                        className="block min-w-0 max-w-full truncate text-xs font-semibold leading-tight tracking-tight text-slate-600 sm:text-sm"
                         title={DAY_FULL_LABEL[dayName]}
                       >
                         {/* Show compact label on mobile, full on sm+ */}
@@ -394,7 +394,7 @@ function ByDayView({
                   </th>
                   <th colSpan={g.classIds.length} className="sticky top-0 z-[35] p-0 align-top">
                     <div
-                      className="box-border h-10 w-full border-b border-l border-indigo-200/60 bg-indigo-600 sm:h-11"
+                      className="box-border h-10 w-full border-b border-l border-slate-200/90 bg-slate-100 sm:h-11"
                       aria-hidden
                     />
                   </th>
