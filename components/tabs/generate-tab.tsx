@@ -280,7 +280,7 @@ export default function GenerateTab({
         /* ── Empty state ── */
         <div className="rounded-xl border border-dashed border-slate-200/90 bg-white/80 p-10 text-center sm:p-12">
           <div className="mx-auto grid h-11 w-11 place-items-center rounded-lg border border-slate-200/80 bg-slate-50">
-            <WandSparkles className="h-5 w-5 text-slate-400" />
+            <CalendarDays className="h-5 w-5 text-slate-400" />
           </div>
           <p className="mt-3 text-sm font-medium text-slate-600">
             Selecione uma estrutura e clique em Gerar e Salvar
@@ -337,8 +337,8 @@ type CellHelpers = {
 
 /**
  * Time column widths:
- *  - mobile  : 88px  (compact: "07:00–07:50")
- *  - desktop : 136px (full:    "1º — 07:00–07:50")
+ *  - mobile  : 88px  (compact: "07:00 — 07:50")
+ *  - desktop : 136px (full:    "1º" + "07:00 — 07:50")
  *
  * Cell widths:
  *  - mobile  : 108px
@@ -372,51 +372,29 @@ function ByDayView({
               className="table-fixed border-separate border-spacing-0 text-xs"
               style={{ width: `${88 + g.classIds.length * 108}px` }}
             >
-              {/* ── Day heading row ── */}
               <thead>
                 <tr>
                   <th
                     className={cn(
-                      "sticky left-0 top-0 z-[40] p-0 align-top",
+                      "sticky left-0 top-0 z-[40] border-b border-slate-200 p-0 align-top",
                       TIME_COL_W
                     )}
                   >
-                    <div className="box-border flex h-10 w-full items-center justify-center border-b border-slate-200/90 bg-slate-100 px-2 text-center sm:h-11 sm:px-3">
+                    <div className="box-border flex min-h-[2.25rem] w-full items-center justify-center bg-slate-100 px-2 py-1.5 text-center shadow-[2px_2px_0_0_rgb(226_232_240)] sm:min-h-[2.5rem] sm:px-3">
                       <span
-                        className="block min-w-0 max-w-full truncate text-xs font-semibold leading-tight tracking-tight text-slate-600 sm:text-sm"
+                        className="block min-w-0 max-w-full truncate text-xs font-semibold leading-tight text-slate-600 sm:text-sm"
                         title={DAY_FULL_LABEL[dayName]}
                       >
-                        {/* Show compact label on mobile, full on sm+ */}
                         <span className="sm:hidden">{dayLabelCompact(DAY_FULL_LABEL[dayName])}</span>
                         <span className="hidden sm:inline">{DAY_FULL_LABEL[dayName]}</span>
                       </span>
-                    </div>
-                  </th>
-                  <th colSpan={g.classIds.length} className="sticky top-0 z-[35] p-0 align-top">
-                    <div
-                      className="box-border h-10 w-full border-b border-l border-slate-200/90 bg-slate-100 sm:h-11"
-                      aria-hidden
-                    />
-                  </th>
-                </tr>
-
-                {/* ── Sub-header: Horário + class IDs ── */}
-                <tr>
-                  <th
-                    className={cn(
-                      "sticky left-0 top-10 z-[30] border-b border-slate-200 p-0 align-top sm:top-11",
-                      TIME_COL_W
-                    )}
-                  >
-                    <div className="box-border flex min-h-[2.25rem] w-full items-center justify-center bg-slate-100 px-2 py-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 shadow-[2px_2px_0_0_rgb(226_232_240)] sm:min-h-[2.5rem] sm:px-3 sm:text-xs">
-                      Horário
                     </div>
                   </th>
                   {g.classIds.map((cid) => (
                     <th
                       key={`${dayName}-${cid}`}
                       className={cn(
-                        "sticky top-10 z-[20] overflow-hidden border-b border-l border-slate-200 p-0 align-top sm:top-11",
+                        "sticky top-0 z-[20] overflow-hidden border-b border-l border-slate-200 p-0 align-top",
                         CELL_W
                       )}
                     >
@@ -467,16 +445,20 @@ function ByDayView({
                           <span className="inline-flex min-h-[2rem] w-full flex-col items-center justify-center gap-0.5 text-[10px] font-medium leading-tight sm:min-h-[2.25rem] sm:text-xs">
                             <span className="text-slate-400">{brk}</span>
                             <span className="text-slate-300 text-[9px] sm:text-[10px]">
-                              {slot.start}–{slot.end}
+                              {slot.start}
+                              {" \u2014 "}
+                              {slot.end}
                             </span>
                           </span>
                         ) : (
-                          <span className="inline-flex min-h-[2.75rem] w-full flex-col items-center justify-center gap-px text-center leading-snug sm:min-h-[3rem]">
+                          <span className="inline-flex min-h-[2.75rem] w-full flex-col items-center justify-center gap-1.5 text-center leading-snug sm:min-h-[3rem]">
                             <span className="text-[11px] font-bold text-indigo-600 sm:text-xs">
                               {slotOrdinal}º
                             </span>
-                            <span className="text-[9px] text-slate-500 sm:text-[10px]">
-                              {slot.start}–{slot.end}
+                            <span className="text-[9px] tabular-nums text-slate-500 sm:text-[10px]">
+                              {slot.start}
+                              {" \u2014 "}
+                              {slot.end}
                             </span>
                           </span>
                         )}
@@ -541,13 +523,8 @@ function ByClassView({
   if (!classId) return null;
 
   return (
-    <div className="app-panel-flat flex max-h-[min(72vh,680px)] flex-col overflow-hidden rounded-xl border border-slate-200/80 shadow-sm">
-      {/* Class header */}
-      <div className="border-b border-slate-100/90 bg-indigo-600 px-4 py-2.5 sm:px-5 sm:py-3">
-        <h3 className="text-sm font-bold tracking-tight text-white">Turma {classId}</h3>
-      </div>
-
-      <div className="min-h-0 flex-1 overflow-auto">
+    <div className="app-panel-flat overflow-hidden rounded-xl border border-slate-200/80 shadow-sm">
+      <div className="max-h-[min(72vh,680px)] overflow-auto">
         <table className="w-full table-fixed border-separate border-spacing-0 text-xs" style={{ minWidth: "560px" }}>
           <colgroup>
             {/* Time col */}
@@ -561,12 +538,18 @@ function ByClassView({
             <tr>
               <th
                 className={cn(
-                  "sticky left-0 top-0 z-[30] border-b border-slate-200 p-0 align-top",
+                  "sticky left-0 top-0 z-[40] border-b border-slate-200 p-0 align-top",
                   TIME_COL_W
                 )}
               >
-                <div className="box-border flex min-h-[2.25rem] w-full items-center justify-center bg-slate-100 px-1.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 shadow-[2px_2px_0_0_rgb(226_232_240)] sm:min-h-[2.5rem] sm:px-3 sm:text-xs">
-                  Horário
+                <div className="box-border flex min-h-[2.25rem] w-full items-center justify-center bg-slate-100 px-1.5 py-1.5 text-center shadow-[2px_2px_0_0_rgb(226_232_240)] sm:min-h-[2.5rem] sm:px-3">
+                  <span
+                    className="block min-w-0 max-w-full truncate text-xs font-semibold leading-tight text-slate-600 sm:text-sm"
+                    title={`Turma ${classId}`}
+                  >
+                    <span className="sm:hidden">{classId}</span>
+                    <span className="hidden sm:inline">Turma {classId}</span>
+                  </span>
                 </div>
               </th>
               {DAYS.map((day) => (
@@ -613,16 +596,20 @@ function ByClassView({
                       <span className="inline-flex min-h-[2rem] w-full flex-col items-center justify-center gap-0.5 text-[10px] font-medium leading-tight sm:min-h-[2.25rem] sm:text-xs">
                         <span className="text-slate-400">{brk}</span>
                         <span className="text-[9px] text-slate-300 sm:text-[10px]">
-                          {slot.start}–{slot.end}
+                          {slot.start}
+                          {" \u2014 "}
+                          {slot.end}
                         </span>
                       </span>
                     ) : (
-                      <span className="inline-flex min-h-[2.75rem] w-full flex-col items-center justify-center gap-px text-center leading-snug sm:min-h-[3rem]">
+                      <span className="inline-flex min-h-[2.75rem] w-full flex-col items-center justify-center gap-1.5 text-center leading-snug sm:min-h-[3rem]">
                         <span className="text-[11px] font-bold text-indigo-600 sm:text-xs">
                           {slotOrdinal}º
                         </span>
-                        <span className="text-[9px] text-slate-500 sm:text-[10px]">
-                          {slot.start}–{slot.end}
+                        <span className="text-[9px] tabular-nums text-slate-500 sm:text-[10px]">
+                          {slot.start}
+                          {" \u2014 "}
+                          {slot.end}
                         </span>
                       </span>
                     )}

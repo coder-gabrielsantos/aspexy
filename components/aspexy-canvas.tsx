@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { BookOpen, GraduationCap, LayoutGrid, Link2, Users, WandSparkles } from "lucide-react";
+import { BookOpen, CalendarDays, GraduationCap, LayoutGrid, Link2, Users } from "lucide-react";
 
 import AppSidebar from "@/components/app-sidebar";
 import ConfirmDialog from "@/components/confirm-dialog";
@@ -34,7 +34,7 @@ const STEPS: StepDef[] = [
   { id: "teachers", label: "Professores", icon: Users },
   { id: "subjects", label: "Disciplinas", icon: BookOpen },
   { id: "constraints", label: "Regras", icon: Link2 },
-  { id: "generate", label: "Horários", icon: WandSparkles }
+  { id: "generate", label: "Horários", icon: CalendarDays }
 ];
 
 const PAGE_TITLE: Record<TabMode, string> = {
