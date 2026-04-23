@@ -75,11 +75,13 @@ const PAGE_SIZE_SELECT_OPTIONS = PAGE_SIZE_OPTIONS.map((n) => ({
 function TurmasDetailTrigger({
   onClick,
   compact,
-  ariaLabel = "Ver detalhes"
+  ariaLabel = "Ver detalhes",
+  className
 }: {
   onClick: () => void;
   compact?: boolean;
   ariaLabel?: string;
+  className?: string;
 }) {
   return (
     <button
@@ -100,7 +102,8 @@ function TurmasDetailTrigger({
               "active:text-indigo-950",
               "min-h-11 px-2 py-2 text-sm touch-manipulation",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 focus-visible:ring-offset-0"
-            ]
+            ],
+        className
       )}
     >
       Ver detalhes
@@ -122,6 +125,16 @@ export default function SubjectsTab({
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(10);
   const [page, setPage] = useState(0);
   const [turmasDetailMembers, setTurmasDetailMembers] = useState<Subject[] | null>(null);
+
+  // Se o usuário confirmar a exclusão (e a lista atualizar), mantém o modal aberto
+  // apenas enquanto ainda existirem associações desse grupo; fecha quando zera.
+  useEffect(() => {
+    if (!turmasDetailMembers) return;
+    const existing = new Set(s.subjects.map((sub) => sub.id));
+    const next = turmasDetailMembers.filter((m) => existing.has(m.id));
+    if (next.length === 0) setTurmasDetailMembers(null);
+    else if (next.length !== turmasDetailMembers.length) setTurmasDetailMembers(next);
+  }, [s.subjects, turmasDetailMembers]);
 
   const filteredGroups = useMemo(() => {
     if (!search.trim()) return subjectGroups;
@@ -271,19 +284,21 @@ export default function SubjectsTab({
                   className={cn("group bg-white px-3 py-4 transition-colors sm:px-4", "hover:bg-slate-50/60")}
                 >
                   <div className="min-w-0 space-y-3">
-                    <div className="relative min-w-0 pr-28">
-                      <div className="absolute right-0 top-0">
-                        <TurmasDetailTrigger
-                          ariaLabel={`Ver detalhes de ${sub.name}`}
-                          onClick={() => setTurmasDetailMembers(members)}
-                        />
-                      </div>
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 items-baseline justify-between gap-3">
                       <p
-                        className="line-clamp-2 min-w-0 break-words text-base font-medium leading-snug tracking-tight text-slate-900"
+                        className="min-w-0 flex-1 truncate text-base font-medium leading-snug tracking-tight text-slate-900"
                         title={sub.name}
                       >
                         {sub.name}
                       </p>
+                        <TurmasDetailTrigger
+                          compact
+                          className="shrink-0 text-xs"
+                          ariaLabel={`Ver detalhes de ${sub.name}`}
+                          onClick={() => setTurmasDetailMembers(members)}
+                        />
+                      </div>
                       <div className="mt-2 flex items-start justify-between gap-3">
                         <p className="pt-0.5 text-sm tabular-nums text-slate-500">
                           <span className="font-semibold text-slate-800">{sub.lessons_per_week}</span> aulas/sem.

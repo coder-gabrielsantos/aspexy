@@ -101,7 +101,6 @@ export default function SubjectGroupTurmasDialog({
   }, [open, close]);
 
   const requestDelete = (ids: string[]) => {
-    close();
     onRequestDelete(ids);
   };
 
@@ -114,7 +113,7 @@ export default function SubjectGroupTurmasDialog({
       : "Excluir esta disciplina";
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center overscroll-contain p-4">
+    <div className="fixed inset-0 z-[90] flex items-center justify-center overscroll-contain p-4">
       <button
         type="button"
         className="absolute inset-0 bg-[#03050a]/40 backdrop-blur-[10px] motion-reduce:animate-none motion-reduce:opacity-100 animate-dialog-overlay-in"

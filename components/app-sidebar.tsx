@@ -160,7 +160,7 @@ export default function AppSidebar({
         onClick={() => onStepChange(step.id)}
         title={step.label}
         className={cn(
-          "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
+          "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors",
           isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
           !isActive && "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
         )}
@@ -174,7 +174,7 @@ export default function AppSidebar({
         />
         <span
           className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center transition-colors",
+            "flex h-9 w-9 shrink-0 items-center justify-center transition-colors",
             isActive && "text-white",
             !isActive && "text-indigo-600 group-hover:text-indigo-700"
           )}
@@ -205,7 +205,7 @@ export default function AppSidebar({
               onMobileOpenChange(false);
             }}
             className={cn(
-              "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
+              "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
               isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
               !isActive && "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
             )}
@@ -219,7 +219,7 @@ export default function AppSidebar({
             />
             <span
               className={cn(
-                "flex h-10 w-10 shrink-0 items-center justify-center transition-colors",
+                "flex h-9 w-9 shrink-0 items-center justify-center transition-colors",
                 isActive && "text-white",
                 !isActive && "text-indigo-600 group-hover:text-indigo-700"
               )}
@@ -248,7 +248,7 @@ export default function AppSidebar({
               onMobileOpenChange(false);
             }}
             className={cn(
-              "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors",
+              "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
               isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
               !isActive && "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
             )}
@@ -262,7 +262,7 @@ export default function AppSidebar({
             />
             <span
               className={cn(
-                "flex h-10 w-10 shrink-0 items-center justify-center transition-colors",
+                "flex h-9 w-9 shrink-0 items-center justify-center transition-colors",
                 isActive && "text-white",
                 !isActive && "text-indigo-600 group-hover:text-indigo-700"
               )}
