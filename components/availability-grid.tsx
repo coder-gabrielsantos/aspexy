@@ -41,6 +41,12 @@ function cellInDragPreview(di: number, si: number, rect: DragRect | null): boole
   return di >= dMin && di <= dMax && si >= sMin && si <= sMax;
 }
 
+function isLessonCell(slots: SlotRow[], dayIndex: number, slotIndex: number): boolean {
+  const row = slots[slotIndex];
+  if (!row) return false;
+  return row.cells[dayIndex] === "lesson";
+}
+
 export default function AvailabilityGrid({ slots, getState, onToggle, onApplyBulk }: AvailabilityGridProps) {
   const [dragRect, setDragRect] = useState<DragRect | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -52,6 +58,7 @@ export default function AvailabilityGrid({ slots, getState, onToggle, onApplyBul
   apiRef.current.slots = slots;
 
   const beginAvailabilityDrag = (e: React.PointerEvent, anchorDi: number, anchorSi: number) => {
+    if (!isLessonCell(apiRef.current.slots, anchorDi, anchorSi)) return;
     if (e.pointerType !== "mouse") {
       const startX = e.clientX;
       const startY = e.clientY;
@@ -90,7 +97,7 @@ export default function AvailabilityGrid({ slots, getState, onToggle, onApplyBul
 
     const onMove = (ev: PointerEvent) => {
       const hit = readAvailabilityCellFromHit(document.elementFromPoint(ev.clientX, ev.clientY));
-      if (hit) {
+      if (hit && isLessonCell(apiRef.current.slots, hit.di, hit.si)) {
         setDragRect({ di0: anchorDi, si0: anchorSi, di1: hit.di, si1: hit.si });
       }
     };
@@ -191,6 +198,7 @@ export default function AvailabilityGrid({ slots, getState, onToggle, onApplyBul
                   </td>
                   {DAYS.map((_, di) => {
                     const slotState: TeacherSlotState = getState(di, si);
+                    const editable = slot.cells[di] === "lesson";
                     return (
                       <td
                         key={`${slot.id}-${DAYS[di]}`}
@@ -205,27 +213,35 @@ export default function AvailabilityGrid({ slots, getState, onToggle, onApplyBul
                           data-availability-cell
                           data-day={di}
                           data-slot={si}
+                          disabled={!editable}
                           onPointerDown={(e) => beginAvailabilityDrag(e, di, si)}
                           onKeyDown={(e) => {
+                            if (!editable) return;
                             if (e.key === "Enter" || e.key === " ") {
                               e.preventDefault();
                               void onToggle(di, si);
                             }
                           }}
-                          aria-label={`${teacherSlotLabelMap[slotState]} — clique para alternar ou arraste para preencher uma área`}
+                          aria-label={
+                            editable
+                              ? `${teacherSlotLabelMap[slotState]} — clique para alternar ou arraste para preencher uma área`
+                              : "Fora de aula — bloqueado"
+                          }
                           className={cn(
                             "relative box-border flex h-9 w-full items-center justify-center rounded-none text-[10px] font-semibold tracking-wide transition-colors duration-200",
-                            slotState === "available" &&
+                            editable && slotState === "available" &&
                               "bg-slate-50 text-slate-700 border border-slate-200/90 hover:bg-slate-100",
-                            slotState === "preference" &&
+                            editable && slotState === "preference" &&
                               "bg-emerald-50 text-emerald-800 border border-emerald-200/90 hover:bg-emerald-100/90",
-                            slotState === "unavailable" &&
+                            editable && slotState === "unavailable" &&
                               "bg-rose-50 text-rose-600 border border-rose-200/90 hover:bg-rose-100",
+                            !editable &&
+                              "border border-slate-100/70 bg-slate-100/70 text-slate-400",
                             cellInDragPreview(di, si, dragRect) &&
                               "z-[1] ring-2 ring-indigo-500 ring-offset-1 ring-offset-white"
                           )}
                         >
-                          {teacherSlotLabelMap[slotState]}
+                          {editable ? teacherSlotLabelMap[slotState] : ""}
                         </button>
                       </td>
                     );

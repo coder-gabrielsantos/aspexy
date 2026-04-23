@@ -450,7 +450,7 @@ function LoginForm({
             disabled={busy || forgotCooldown > 0}
             className={cn(
               "h-11 w-full rounded-full text-sm font-semibold shadow-sm transition-transform active:scale-[0.99]",
-              dark ? "bg-indigo-500 text-white hover:bg-indigo-400" : ""
+              dark ? "bg-[#4F46E5] text-white hover:bg-[#4338CA]" : ""
             )}
           >
             {busy
@@ -525,7 +525,7 @@ function LoginForm({
             disabled={busy}
             className={cn(
               "h-11 w-full rounded-full text-sm font-semibold shadow-sm transition-transform active:scale-[0.99]",
-              dark ? "bg-indigo-500 text-white hover:bg-indigo-400" : ""
+              dark ? "bg-[#4F46E5] text-white hover:bg-[#4338CA]" : ""
             )}
           >
             {busy ? "Aguarde…" : "Entrar"}
@@ -566,7 +566,7 @@ function LoginForm({
             disabled={busy}
             className={cn(
               "h-11 w-full rounded-full text-sm font-semibold shadow-sm transition-transform active:scale-[0.99]",
-              dark ? "bg-indigo-500 text-white hover:bg-indigo-400" : ""
+              dark ? "bg-[#4F46E5] text-white hover:bg-[#4338CA]" : ""
             )}
           >
             {busy ? "Enviando…" : "Continuar"}
@@ -637,7 +637,7 @@ function LoginForm({
             disabled={busy || !isCompleteOtp(signupOtp)}
             className={cn(
               "h-11 w-full rounded-full text-sm font-semibold shadow-sm transition-transform active:scale-[0.99]",
-              dark ? "bg-indigo-500 text-white hover:bg-indigo-400" : ""
+              dark ? "bg-[#4F46E5] text-white hover:bg-[#4338CA]" : ""
             )}
           >
             {busy ? "Verificando…" : "Confirmar código"}
@@ -715,7 +715,7 @@ function LoginForm({
             disabled={busy}
             className={cn(
               "h-11 w-full rounded-full text-sm font-semibold shadow-sm transition-transform active:scale-[0.99]",
-              dark ? "bg-indigo-500 text-white hover:bg-indigo-400" : ""
+              dark ? "bg-[#4F46E5] text-white hover:bg-[#4338CA]" : ""
             )}
           >
             {busy ? "Aguarde…" : "Criar conta"}

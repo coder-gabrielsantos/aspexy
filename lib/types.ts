@@ -232,6 +232,7 @@ export function teacherAvailabilityCellsInRect(
     const row = teacherSlots[si];
     if (!row || row.cells.every((c) => c === "break")) continue;
     for (let di = dMin; di <= dMax; di++) {
+      if (row.cells[di] !== "lesson") continue;
       out.push({ dayIndex: di, slotIndex: si });
     }
   }

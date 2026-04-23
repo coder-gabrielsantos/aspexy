@@ -161,7 +161,7 @@ export default function AppSidebar({
         title={step.label}
         className={cn(
           "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors",
-          isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
+          isActive && "bg-[#4F46E5] text-white shadow-sm shadow-indigo-950/10 hover:bg-[#4338CA]",
           !isActive && "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
         )}
       >
@@ -206,7 +206,7 @@ export default function AppSidebar({
             }}
             className={cn(
               "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
-              isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
+              isActive && "bg-[#4F46E5] text-white shadow-sm shadow-indigo-950/10 hover:bg-[#4338CA]",
               !isActive && "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
             )}
           >
@@ -249,7 +249,7 @@ export default function AppSidebar({
             }}
             className={cn(
               "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
-              isActive && "bg-indigo-600 text-white shadow-sm shadow-indigo-950/10",
+              isActive && "bg-[#4F46E5] text-white shadow-sm shadow-indigo-950/10 hover:bg-[#4338CA]",
               !isActive && "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
             )}
           >

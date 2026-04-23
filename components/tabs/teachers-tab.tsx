@@ -271,7 +271,7 @@ export default function TeachersTab({
                               <div className={cn(
                                 "grid h-7 w-7 shrink-0 place-items-center rounded-none border transition-colors duration-150",
                                 teacher.id === t.selectedTeacherId
-                                  ? "border-indigo-600 bg-gradient-to-br from-indigo-700 to-indigo-800 text-white shadow-sm shadow-indigo-950/10"
+                                  ? "border-[#4F46E5] bg-[#4F46E5] text-white shadow-sm shadow-indigo-950/10"
                                   : "border-slate-200 bg-slate-50 text-slate-500"
                               )}>
                                 <Users className="h-3.5 w-3.5" />
@@ -539,7 +539,7 @@ export default function TeachersTab({
                           <div className={cn(
                             "grid h-7 w-7 shrink-0 place-items-center rounded-none border transition-colors duration-150",
                             group.id === g.selectedGroupId
-                              ? "border-indigo-600 bg-gradient-to-br from-indigo-700 to-indigo-800 text-white shadow-sm shadow-indigo-950/10"
+                              ? "border-[#4F46E5] bg-[#4F46E5] text-white shadow-sm shadow-indigo-950/10"
                               : "border-slate-200 bg-slate-50 text-slate-500"
                           )}>
                             <FolderTree className="h-3.5 w-3.5" />
