@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Inter, Outfit } from "next/font/google";
+import { Noto_Sans, Outfit } from "next/font/google";
 
 import { AuthSessionProvider } from "@/components/providers/session-provider";
 
 import "./globals.css";
 
-const inter = Inter({
+const inter = Noto_Sans({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap"

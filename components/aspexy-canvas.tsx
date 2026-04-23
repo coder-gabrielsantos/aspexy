@@ -273,7 +273,7 @@ export default function AspexyCanvas() {
 
         <main className="app-shell-main min-w-0 grow-0 overflow-x-hidden px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
           <header className="mb-8 animate-fade-in">
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-[2rem]">
+            <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">
               {pageTitle}
             </h1>
             <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-500 sm:text-[15px]">
