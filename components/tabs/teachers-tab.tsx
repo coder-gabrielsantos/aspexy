@@ -41,6 +41,7 @@ export default function TeachersTab({
   const [editingGroupId, setEditingGroupId] = useState("");
   const [editingGroupName, setEditingGroupName] = useState("");
   const [groupMaxDayDraft, setGroupMaxDayDraft] = useState("");
+  const [groupMembersDraft, setGroupMembersDraft] = useState<string[]>([]);
 
   useEffect(() => {
     const st = t.selectedTeacher;
@@ -58,6 +59,14 @@ export default function TeachersTab({
       return;
     }
     setGroupMaxDayDraft(sg.max_lessons_per_day != null ? String(sg.max_lessons_per_day) : "");
+  }, [g.selectedGroup]);
+
+  useEffect(() => {
+    if (!g.selectedGroup) {
+      setGroupMembersDraft([]);
+      return;
+    }
+    setGroupMembersDraft(g.selectedGroup.teacher_ids);
   }, [g.selectedGroup]);
 
   const startEdit = (id: string, name: string) => {
@@ -112,6 +121,13 @@ export default function TeachersTab({
   }, [t.teacherSelectOptions, g.groupByTeacherId, g.selectedGroup]);
 
   const selectedTeacherGroup = t.selectedTeacher ? g.groupByTeacherId[t.selectedTeacher.id] ?? null : null;
+  const hasGroupMembersChanges = useMemo(() => {
+    if (!g.selectedGroup) return false;
+    const currentIds = [...g.selectedGroup.teacher_ids].sort();
+    const draftIds = [...groupMembersDraft].sort();
+    if (currentIds.length !== draftIds.length) return true;
+    return currentIds.some((id, idx) => id !== draftIds[idx]);
+  }, [g.selectedGroup, groupMembersDraft]);
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -651,22 +667,38 @@ export default function TeachersTab({
                         <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                           Membros
                         </p>
-                        <ScheduleSelect
-                          isMulti
-                          aria-label="Membros do agrupamento"
-                          options={memberOptionsForSelectedGroup}
-                          value={g.selectedGroup.teacher_ids}
-                          onChange={(ids) => {
-                            if (!g.selectedGroup) return;
-                            void g.saveGroupMembers(g.selectedGroup.id, ids);
-                          }}
-                          placeholder={t.teachers.length === 0 ? "Cadastre professores primeiro" : "Adicionar professores"}
-                          isSearchable={false}
-                          maxVisibleMenuItems={6}
-                          maxVisibleSelectedValues={4}
-                          multiValueSeparator="comma"
-                          multiValueDisplay="text"
-                        />
+                        <div className="flex items-start gap-2">
+                          <div className="min-w-0 flex-1">
+                            <ScheduleSelect
+                              isMulti
+                              aria-label="Membros do agrupamento"
+                              options={memberOptionsForSelectedGroup}
+                              value={groupMembersDraft}
+                              onChange={(ids) => {
+                                setGroupMembersDraft(ids);
+                              }}
+                              placeholder={t.teachers.length === 0 ? "Cadastre professores primeiro" : "Adicionar professores"}
+                              isSearchable={false}
+                              maxVisibleMenuItems={6}
+                              maxVisibleSelectedValues={4}
+                              multiValueSeparator="comma"
+                              multiValueDisplay="text"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-11 min-h-11 shrink-0 px-3 text-xs font-semibold"
+                            disabled={!g.selectedGroup || g.isSavingGroup || !hasGroupMembersChanges}
+                            onClick={() => {
+                              if (!g.selectedGroup) return;
+                              void g.saveGroupMembers(g.selectedGroup.id, groupMembersDraft);
+                            }}
+                          >
+                            Salvar
+                          </Button>
+                        </div>
                       </div>
                       <div className="min-w-0">
                         <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
