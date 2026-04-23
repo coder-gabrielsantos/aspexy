@@ -245,6 +245,11 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
                           value={row.teacherIds}
                           onChange={(ids) => c.updateGroupTeacherIds(row.id, ids)}
                           placeholder="Selecione os professores"
+                          maxVisibleMenuItems={5}
+                          maxVisibleSelectedValues={2}
+                          maxVisibleSelectedValuesSm={4}
+                          multiValueSeparator="comma"
+                          multiValueDisplay="text"
                         />
                       </div>
                       <div className="flex w-full min-h-10 sm:col-start-2 sm:row-start-2 sm:h-full sm:min-h-0">

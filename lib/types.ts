@@ -18,7 +18,7 @@ export const DEFAULT_START = "07:30";
 export const DEFAULT_END = "08:20";
 export const DEFAULT_SLOT_MINUTES = 50;
 
-export type SlotState = "lesson" | "free" | "break";
+export type SlotState = "lesson" | "free" | "break" | "fixed";
 export type TabMode = "grade" | "classes" | "teachers" | "subjects" | "constraints" | "generate";
 
 /** Lista de IDs de professores que não podem coincidir no mesmo dia/slot (no máximo um leciona por slot). */
@@ -32,6 +32,8 @@ export type SlotRow = {
   start: string;
   end: string;
   cells: SlotState[];
+  /** Label por dia para células "fixed"; null quando a célula não é fixed. */
+  fixedLabels: (string | null)[];
 };
 
 export type SchoolProfile = {
@@ -46,6 +48,8 @@ export type SchoolProfile = {
       end: string;
       type: "lesson" | "break";
     }>;
+    /** Slots reservados para atividades fixas nomeadas (excluídos da geração automática). */
+    fixed_slots: Array<{ day_index: number; slot_index: number; label: string }>;
   };
   grid_matrix: Record<string, number[]>;
 };
@@ -116,12 +120,13 @@ export type Subject = {
 export type StructureSummary = { id: string; name: string; updated_at: string };
 export type GeneratedSummary = { id: string; name: string; structure_id?: string | null; updated_at: string };
 
-export const STATE_CYCLE: SlotState[] = ["lesson", "free", "break"];
+export const STATE_CYCLE: SlotState[] = ["lesson", "free", "break", "fixed"];
 
 export const stateLabelMap: Record<SlotState, string> = {
   lesson: "AULA",
   free: "LIVRE",
-  break: "INTERVALO"
+  break: "INTERVALO",
+  fixed: "FIXO",
 };
 
 /** Ciclo na grade de professores: disponível → preferência → indisponível (como na estrutura). */
@@ -233,7 +238,13 @@ export function teacherAvailabilityCellsInRect(
 }
 
 export function createInitialSlot(index = 0): SlotRow {
-  return { id: `slot-${index + 1}`, start: DEFAULT_START, end: DEFAULT_END, cells: DAYS.map(() => "lesson" as SlotState) };
+  return {
+    id: `slot-${index + 1}`,
+    start: DEFAULT_START,
+    end: DEFAULT_END,
+    cells: DAYS.map(() => "lesson" as SlotState),
+    fixedLabels: DAYS.map(() => null),
+  };
 }
 
 export function clamp(n: number, min: number, max: number) {
@@ -279,16 +290,27 @@ export function formatTimeTyping(input: string) {
 
 export function slotsFromProfile(profile: SchoolProfile): SlotRow[] {
   const sorted = [...profile.config.time_schema].sort((a, b) => a.slot_index - b.slot_index);
-  return sorted.map((schema, idx) => ({
-    id: `slot-${idx + 1}`,
-    start: schema.start ?? DEFAULT_START,
-    end: schema.end ?? DEFAULT_END,
-    cells: DAYS.map((_, dayIndex) => {
-      if (schema.type === "break") return "break" as SlotState;
+  const fixedSlots = profile.config.fixed_slots ?? [];
+  return sorted.map((schema, idx) => {
+    const cells: SlotState[] = DAYS.map((_, dayIndex) => {
+      const isFixed = fixedSlots.some((f) => f.day_index === dayIndex && f.slot_index === schema.slot_index);
+      if (isFixed) return "fixed";
+      if (schema.type === "break") return "break";
       const valid = profile.grid_matrix[String(dayIndex)] ?? [];
-      return valid.includes(schema.slot_index) ? "lesson" : ("free" as SlotState);
-    })
-  }));
+      return valid.includes(schema.slot_index) ? "lesson" : "free";
+    });
+    const fixedLabels: (string | null)[] = DAYS.map((_, dayIndex) => {
+      const entry = fixedSlots.find((f) => f.day_index === dayIndex && f.slot_index === schema.slot_index);
+      return entry?.label ?? null;
+    });
+    return {
+      id: `slot-${idx + 1}`,
+      start: schema.start ?? DEFAULT_START,
+      end: schema.end ?? DEFAULT_END,
+      cells,
+      fixedLabels,
+    };
+  });
 }
 
 export async function readJsonSafe<T>(response: Response): Promise<T | null> {

@@ -466,6 +466,7 @@ function ByDayView({
                 {g.viewSlots.map((slot, si) => {
                   const cellState = slot.cells[dayIndex];
                   const isBreak = cellState === "break";
+                  const fixedLabel = slot.fixedLabels[dayIndex] ?? "RESERVADO";
                   const isLessonSlot = cellState === "lesson";
                   const slotOrdinal = g.viewSlots
                     .slice(0, si + 1)
@@ -541,6 +542,7 @@ function ByDayView({
                                 canEdit={canEditCells && isLessonSlot}
                                 onClick={() => onCellClick(dayIndex, si, cid)}
                                 search={search}
+                                fixedLabel={cellState === "fixed" ? fixedLabel : undefined}
                               />
                             )}
                           </td>
@@ -672,7 +674,9 @@ function ByClassView({
                   {DAYS.map((_, di) => {
                     const a = allocationAt(di, si, classId);
                     const dayBreak = slot.cells[di] === "break";
+                    const dayFixed = slot.cells[di] === "fixed";
                     const lessonHere = slot.cells[di] === "lesson";
+                    const fixedLabel = slot.fixedLabels[di] ?? "RESERVADO";
                     return (
                       <td
                         key={`${slot.id}-${di}`}
@@ -693,6 +697,7 @@ function ByClassView({
                             canEdit={canEditCells && lessonHere}
                             onClick={() => onCellClick(di, si, classId)}
                             search={search}
+                            fixedLabel={dayFixed ? fixedLabel : undefined}
                           />
                         )}
                       </td>
@@ -716,19 +721,28 @@ function ScheduleCellContent({
   a,
   canEdit,
   onClick,
-  search
+  search,
+  fixedLabel
 }: {
   a?: SolverAllocation;
   canEdit: boolean;
   onClick: () => void;
   search: string;
+  fixedLabel?: string;
 }) {
   const hasSearch = Boolean(search.trim());
   const subjectHit = hasSearch && a?.subject ? softMatch(a.subject, search) : false;
   const teacherHit = hasSearch && a?.teacher ? softMatch(a.teacher, search) : false;
   const anyHit = subjectHit || teacherHit;
 
-  const body = a ? (
+  const body = fixedLabel ? (
+    <p
+      className="w-full truncate px-1 text-[11px] font-semibold leading-tight text-slate-800 sm:text-xs"
+      title={fixedLabel}
+    >
+      {fixedLabel}
+    </p>
+  ) : a ? (
     <>
       <p
         className={cn(

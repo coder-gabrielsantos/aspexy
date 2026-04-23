@@ -6,58 +6,18 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type RuleIntroRuleKey = "teacher_mutex" | "general_limits";
-
-type RuleIntroModalProps = {
+type StructureIntroModalProps = {
   open: boolean;
-  rule: RuleIntroRuleKey | null;
   onOpenChange: (open: boolean) => void;
-  onAcknowledge: () => void;
 };
 
-type RuleContent = {
-  eyebrow: string;
-  title: string;
-  description: string;
-  bullets: string[];
-};
-
-function ruleContent(rule: RuleIntroRuleKey): RuleContent {
-  if (rule === "general_limits") {
-    return {
-      eyebrow: "Regra de geração",
-      title: "Limites gerais",
-      description:
-        "Define o teto padrão de aulas por dia para cada professor na geração do horário e, se quiser, limita quantas aulas seguidas o mesmo professor pode ter com a mesma turma no mesmo dia (em períodos consecutivos da grade).",
-      bullets: [
-        "O limite diário vale para todos os professores, salvo se você definir um limite próprio na aba Professores."
-      ]
-    };
-  }
-  return {
-    eyebrow: "Regra de geração",
-    title: "Sem aula simultânea",
-    description:
-      "Use quando só um deles pode estar dando aula naquele momento — por exemplo, mesma sala ou recurso que não dá para dividir.",
-    bullets: [
-      "Cada lista reúne professores que não podem ter aula ao mesmo tempo.",
-      "Se precisar, crie mais de uma lista para situações diferentes."
-    ]
-  };
-}
-
-export default function RuleIntroModal({ open, rule, onOpenChange, onAcknowledge }: RuleIntroModalProps) {
+export default function StructureIntroModal({ open, onOpenChange }: StructureIntroModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const close = useCallback(() => {
     onOpenChange(false);
   }, [onOpenChange]);
-
-  const acknowledge = useCallback(() => {
-    onAcknowledge();
-    onOpenChange(false);
-  }, [onAcknowledge, onOpenChange]);
 
   useEffect(() => {
     if (!open) return;
@@ -81,9 +41,14 @@ export default function RuleIntroModal({ open, rule, onOpenChange, onAcknowledge
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, close]);
 
-  if (!open || rule === null) return null;
+  if (!open) return null;
 
-  const { eyebrow, title, description, bullets } = ruleContent(rule);
+  const bullets = [
+    "Defina os horários de cada slot na coluna Horário.",
+    "Em cada dia, clique na célula para alternar entre Aula, Livre, Intervalo e Fixo.",
+    "Quando marcar Fixo, adicione um nome para identificar esse horário reservado.",
+    "Use Adicionar slot para criar novas linhas e Salvar para gravar a estrutura."
+  ];
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
@@ -97,8 +62,8 @@ export default function RuleIntroModal({ open, rule, onOpenChange, onAcknowledge
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="rule-intro-title"
-        aria-describedby="rule-intro-desc"
+        aria-labelledby="structure-intro-title"
+        aria-describedby="structure-intro-desc"
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         className={cn(
@@ -109,12 +74,9 @@ export default function RuleIntroModal({ open, rule, onOpenChange, onAcknowledge
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-5 pb-4 pt-5 sm:px-6 sm:pb-5 sm:pt-6">
           <div className="min-w-0 flex-1">
             <div className="min-w-0 pt-0.5">
-              <p className="text-xs font-medium text-slate-500">{eyebrow}</p>
-              <h2
-                id="rule-intro-title"
-                className="mt-1 text-base font-semibold leading-snug tracking-tight text-slate-900 sm:text-[17px]"
-              >
-                {title}
+              <p className="text-xs font-medium text-slate-500">Estrutura da grade</p>
+              <h2 id="structure-intro-title" className="mt-1 text-base font-semibold leading-snug tracking-tight text-slate-900 sm:text-[17px]">
+                Como montar o horário
               </h2>
             </div>
           </div>
@@ -129,16 +91,14 @@ export default function RuleIntroModal({ open, rule, onOpenChange, onAcknowledge
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
-          <p id="rule-intro-desc" className="text-sm leading-relaxed text-slate-600">
-            {description}
+          <p id="structure-intro-desc" className="text-sm leading-relaxed text-slate-600">
+            Defina os slots e o estado de cada célula da semana para montar a base do horário. Essa estrutura será
+            usada como referência na geração automática.
           </p>
 
           <ul className="mt-6 space-y-0 divide-y divide-slate-100 rounded-xl border border-slate-100 bg-slate-50/50">
             {bullets.map((b) => (
-              <li
-                key={b}
-                className="flex gap-3 px-4 py-3.5 text-sm leading-relaxed text-slate-600 first:rounded-t-xl last:rounded-b-xl"
-              >
+              <li key={b} className="flex gap-3 px-4 py-3.5 text-sm leading-relaxed text-slate-600 first:rounded-t-xl last:rounded-b-xl">
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" aria-hidden />
                 <span>{b}</span>
               </li>
@@ -147,10 +107,7 @@ export default function RuleIntroModal({ open, rule, onOpenChange, onAcknowledge
         </div>
 
         <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-slate-100 bg-slate-50/40 px-5 py-4 sm:flex-row sm:justify-end sm:gap-3 sm:px-6">
-          <Button type="button" variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900" onClick={close}>
-            Agora não
-          </Button>
-          <Button type="button" size="sm" className="min-w-[7.5rem]" onClick={acknowledge}>
+          <Button type="button" size="sm" className="min-w-[7.5rem]" onClick={close}>
             Entendi
           </Button>
         </div>

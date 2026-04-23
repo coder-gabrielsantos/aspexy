@@ -15,13 +15,16 @@ import {
   type StructureSummary,
 } from "@/lib/types";
 
+type PendingFixedCell = { si: number; di: number } | null;
+
 function buildProfileFingerprint(slots: SlotRow[]): string {
   return JSON.stringify(
     slots.map((row, idx) => ({
       idx,
       start: row.start,
       end: row.end,
-      cells: [...row.cells]
+      cells: [...row.cells],
+      fixedLabels: [...row.fixedLabels],
     }))
   );
 }
@@ -39,6 +42,7 @@ export function useStructures(showToast: (msg: string, v?: "success" | "error") 
   const [committedProfileFingerprint, setCommittedProfileFingerprint] = useState("");
   const [isSavingStructure, setIsSavingStructure] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [pendingFixedCell, setPendingFixedCell] = useState<PendingFixedCell>(null);
 
   const activeSlotsCount = useMemo(
     () => slots.reduce((acc, row) => acc + row.cells.filter((c) => c === "lesson").length, 0),
@@ -77,7 +81,7 @@ export function useStructures(showToast: (msg: string, v?: "success" | "error") 
       slot_index: i,
       start: slot.start,
       end: slot.end,
-      type: slot.cells.every((c) => c === "break") ? ("break" as const) : ("lesson" as const)
+      type: slot.cells.every((c) => c === "break" || c === "fixed") ? ("break" as const) : ("lesson" as const),
     }));
     const gridMatrix = DAYS.reduce<Record<string, number[]>>((acc, _, di) => {
       acc[String(di)] = slots
@@ -86,10 +90,24 @@ export function useStructures(showToast: (msg: string, v?: "success" | "error") 
         .map((e) => e.si);
       return acc;
     }, {});
+    const fixedSlots: SchoolProfile["config"]["fixed_slots"] = [];
+    slots.forEach((slot, si) => {
+      slot.cells.forEach((state, di) => {
+        if (state === "fixed") {
+          fixedSlots.push({ day_index: di, slot_index: si, label: slot.fixedLabels[di] ?? "RESERVADO" });
+        }
+      });
+    });
     return {
       school_id: schoolId,
-      config: { total_slots: slots.length, active_slots_count: activeSlotsCount, days: [...DAYS], time_schema: timeSchema },
-      grid_matrix: gridMatrix
+      config: {
+        total_slots: slots.length,
+        active_slots_count: activeSlotsCount,
+        days: [...DAYS],
+        time_schema: timeSchema,
+        fixed_slots: fixedSlots,
+      },
+      grid_matrix: gridMatrix,
     };
   }, [slots, schoolId, activeSlotsCount]);
 
@@ -196,14 +214,53 @@ export function useStructures(showToast: (msg: string, v?: "success" | "error") 
   }, [selectedStructureId, loadStructures, showToast]);
 
   const toggleCellState = useCallback((slotIndex: number, dayIndex: number) => {
+    setSlots((prev) => {
+      const slot = prev[slotIndex];
+      if (!slot) return prev;
+      const current = slot.cells[dayIndex];
+      // Clicking a fixed cell returns it directly to "lesson"
+      if (current === "fixed") {
+        return prev.map((s, ri) => {
+          if (ri !== slotIndex) return s;
+          const nextCells = [...s.cells];
+          nextCells[dayIndex] = "lesson";
+          const nextFixedLabels = [...s.fixedLabels];
+          nextFixedLabels[dayIndex] = null;
+          return { ...s, cells: nextCells, fixedLabels: nextFixedLabels };
+        });
+      }
+      const nextState = STATE_CYCLE[(STATE_CYCLE.indexOf(current) + 1) % STATE_CYCLE.length];
+      // When the next state would be "fixed", open the label popover instead
+      if (nextState === "fixed") {
+        setPendingFixedCell({ si: slotIndex, di: dayIndex });
+        return prev;
+      }
+      return prev.map((s, ri) => {
+        if (ri !== slotIndex) return s;
+        const nextCells = [...s.cells];
+        nextCells[dayIndex] = nextState;
+        return { ...s, cells: nextCells };
+      });
+    });
+  }, []);
+
+  const setFixedLabel = useCallback((slotIndex: number, dayIndex: number, label: string) => {
+    const trimmed = label.trim() || "RESERVADO";
     setSlots((prev) =>
-      prev.map((slot, ri) => {
-        if (ri !== slotIndex) return slot;
-        const nextCells = [...slot.cells];
-        nextCells[dayIndex] = STATE_CYCLE[(STATE_CYCLE.indexOf(nextCells[dayIndex]) + 1) % STATE_CYCLE.length];
-        return { ...slot, cells: nextCells };
+      prev.map((s, ri) => {
+        if (ri !== slotIndex) return s;
+        const nextCells = [...s.cells];
+        nextCells[dayIndex] = "fixed";
+        const nextFixedLabels = [...s.fixedLabels];
+        nextFixedLabels[dayIndex] = trimmed;
+        return { ...s, cells: nextCells, fixedLabels: nextFixedLabels };
       })
     );
+    setPendingFixedCell(null);
+  }, []);
+
+  const cancelPendingFixed = useCallback(() => {
+    setPendingFixedCell(null);
   }, []);
 
   const updateSlotTime = useCallback((slotIndex: number, field: "start" | "end", value: string) => {
@@ -214,7 +271,16 @@ export function useStructures(showToast: (msg: string, v?: "success" | "error") 
     setSlots((prev) => {
       const last = prev[prev.length - 1];
       const start = last?.end && parseTime24ToMinutes(last.end) !== null ? last.end : DEFAULT_START;
-      return [...prev, { id: `slot-${Date.now()}`, start, end: addMinutesToTime24(start, DEFAULT_SLOT_MINUTES), cells: DAYS.map(() => "lesson" as const) }];
+      return [
+        ...prev,
+        {
+          id: `slot-${Date.now()}`,
+          start,
+          end: addMinutesToTime24(start, DEFAULT_SLOT_MINUTES),
+          cells: DAYS.map(() => "lesson" as const),
+          fixedLabels: DAYS.map(() => null),
+        },
+      ];
     });
   }, []);
 
@@ -245,5 +311,8 @@ export function useStructures(showToast: (msg: string, v?: "success" | "error") 
     updateSlotTime,
     addSlotRow,
     removeSlotRow,
+    pendingFixedCell,
+    setFixedLabel,
+    cancelPendingFixed,
   };
 }
