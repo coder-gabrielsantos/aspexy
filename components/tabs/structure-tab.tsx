@@ -89,11 +89,17 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                   Horário
                 </th>
                 {DAYS.map((day) => (
-                  <th key={day} className="border-b border-slate-200 bg-slate-100 px-2 py-2.5 text-center text-xs font-medium uppercase tracking-wide text-slate-500">
+                  <th
+                    key={day}
+                    className={cn(
+                      "border-b border-slate-200 bg-slate-100 py-2.5 text-center text-xs font-medium uppercase tracking-wide text-slate-500",
+                      day === DAYS[DAYS.length - 1] ? "pl-2 pr-1" : "px-2"
+                    )}
+                  >
                     {day}
                   </th>
                 ))}
-                <th className="w-14 min-w-14 border-b border-slate-200 bg-slate-100 px-1.5 py-2.5" aria-hidden />
+                <th className="w-14 min-w-14 border-b border-slate-200 bg-slate-100 pl-1 pr-2 py-2.5" aria-hidden />
               </tr>
             </thead>
             <tbody>
@@ -120,7 +126,13 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                     </div>
                   </td>
                   {slot.cells.map((state, di) => (
-                    <td key={`${slot.id}-${DAYS[di]}`} className="border-b border-slate-100 px-1.5 py-2">
+                    <td
+                      key={`${slot.id}-${DAYS[di]}`}
+                      className={cn(
+                        "border-b border-slate-100 py-2",
+                        di === DAYS.length - 1 ? "pl-1.5 pr-1" : "px-1.5"
+                      )}
+                    >
                       <button
                         type="button"
                         onClick={() => s.toggleCellState(si, di)}
@@ -136,13 +148,13 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                       </button>
                     </td>
                   ))}
-                  <td className="w-14 min-w-14 border-b border-slate-100 px-1.5 py-2 text-center align-middle">
+                  <td className="w-14 min-w-14 border-b border-slate-100 py-2 pl-1 pr-2 text-center align-middle">
                     <button
                       type="button"
                       onClick={() => s.removeSlotRow(si)}
                       disabled={s.slots.length <= 1}
                       aria-label="Remover slot"
-                      className="inline-flex h-11 min-h-11 w-11 min-w-11 shrink-0 items-center justify-center rounded-none text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-25"
+                      className="mx-auto grid h-11 min-h-11 w-11 min-w-11 shrink-0 place-items-center rounded-none text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-25"
                     >
                       <X className="h-4 w-4" />
                     </button>

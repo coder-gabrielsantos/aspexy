@@ -341,7 +341,7 @@ export default function AppSidebar({
         <button
           type="button"
           onClick={() => onMobileOpenChange(!mobileOpen)}
-          className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+          className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
           aria-expanded={mobileOpen}
           aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
         >
