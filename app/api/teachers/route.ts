@@ -250,6 +250,12 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Professor não encontrado." }, { status: 404 });
     }
 
+    const teacherIdStr = objectId.toString();
+    await db.collection("teacher_schedule_groups").updateMany(
+      { user_id: session.user.id, teacher_ids: teacherIdStr },
+      { $pull: { teacher_ids: teacherIdStr }, $set: { updated_at: new Date() } }
+    );
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof MongoServerError) {

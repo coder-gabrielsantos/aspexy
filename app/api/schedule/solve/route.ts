@@ -105,6 +105,50 @@ type ClassDoc = {
   name: string;
 };
 
+type TeacherScheduleGroupDoc = {
+  teacher_ids?: unknown;
+  unavailability?: Record<string, number[]>;
+  preference?: Record<string, number[]>;
+  max_lessons_per_day?: number | null;
+};
+
+/** União de dois mapas dia -> lista de slots, deduplicando e ordenando. */
+function mergeDayMaps(
+  ...sources: Array<Record<string, number[]> | undefined>
+): Record<string, number[]> {
+  const out: Record<string, Set<number>> = {};
+  for (const src of sources) {
+    if (!src) continue;
+    for (const [k, arr] of Object.entries(src)) {
+      if (!Array.isArray(arr)) continue;
+      if (!out[k]) out[k] = new Set<number>();
+      for (const v of arr) {
+        if (typeof v === "number" && Number.isInteger(v) && v >= 0) out[k].add(v);
+      }
+    }
+  }
+  const res: Record<string, number[]> = {};
+  for (const [k, set] of Object.entries(out)) {
+    const list = [...set].sort((a, b) => a - b);
+    if (list.length > 0) res[k] = list;
+  }
+  return res;
+}
+
+/** Remove de `preference` qualquer slot que também apareça em `unavailability` (indisponibilidade domina). */
+function subtractDayMap(
+  preference: Record<string, number[]>,
+  unavailability: Record<string, number[]>
+): Record<string, number[]> {
+  const res: Record<string, number[]> = {};
+  for (const [k, arr] of Object.entries(preference)) {
+    const blocked = new Set(unavailability[k] ?? []);
+    const kept = arr.filter((s) => !blocked.has(s));
+    if (kept.length > 0) res[k] = kept;
+  }
+  return res;
+}
+
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -121,15 +165,30 @@ export async function POST(request: Request) {
     const db = client.db(process.env.MONGODB_DB ?? "aspexy");
     const userId = session.user.id;
 
-    const [subjectDocs, teacherDocs, classDocs, constraintsDoc] = await Promise.all([
+    const [subjectDocs, teacherDocs, classDocs, constraintsDoc, scheduleGroupDocs] = await Promise.all([
       db.collection("subjects").find({ user_id: userId }).toArray() as unknown as Promise<SubjectDoc[]>,
       db.collection("teachers").find({ user_id: userId }).toArray() as unknown as Promise<TeacherDoc[]>,
       db.collection("classes").find({ user_id: userId }).toArray() as unknown as Promise<ClassDoc[]>,
-      db.collection("schedule_constraints").findOne({ user_id: userId })
+      db.collection("schedule_constraints").findOne({ user_id: userId }),
+      db
+        .collection("teacher_schedule_groups")
+        .find({ user_id: userId })
+        .toArray() as unknown as Promise<TeacherScheduleGroupDoc[]>
     ]);
 
     if (subjectDocs.length === 0) {
       return NextResponse.json({ error: "Nenhuma disciplina cadastrada. Cadastre ao menos uma na aba Disciplinas." }, { status: 400 });
+    }
+
+    const groupByTeacherId: Record<string, TeacherScheduleGroupDoc> = {};
+    for (const g of scheduleGroupDocs) {
+      if (!Array.isArray(g.teacher_ids)) continue;
+      for (const tid of g.teacher_ids) {
+        if (typeof tid !== "string") continue;
+        const key = tid.trim();
+        if (!key || groupByTeacherId[key]) continue;
+        groupByTeacherId[key] = g;
+      }
     }
 
     const teacherNameById: Record<string, string> = {};
@@ -139,20 +198,33 @@ export async function POST(request: Request) {
     for (const t of teacherDocs) {
       const id = t._id.toString();
       teacherNameById[id] = t.name;
-      if (t.unavailability && Object.keys(t.unavailability).length > 0) {
-        teacherUnavailability[t.name] = t.unavailability;
+
+      const group = groupByTeacherId[id];
+      const mergedUnavail = mergeDayMaps(t.unavailability, group?.unavailability);
+      const mergedPrefRaw = mergeDayMaps(t.preference, group?.preference);
+      const mergedPref = subtractDayMap(mergedPrefRaw, mergedUnavail);
+
+      if (Object.keys(mergedUnavail).length > 0) {
+        teacherUnavailability[t.name] = mergedUnavail;
       }
-      if (t.preference && Object.keys(t.preference).length > 0) {
-        teacherPreference[t.name] = t.preference;
+      if (Object.keys(mergedPref).length > 0) {
+        teacherPreference[t.name] = mergedPref;
       }
-      const cap = t.max_lessons_per_day;
+
+      const teacherCap = t.max_lessons_per_day;
+      const groupCap = group?.max_lessons_per_day;
+      const effectiveCap =
+        typeof teacherCap === "number" && Number.isInteger(teacherCap)
+          ? teacherCap
+          : typeof groupCap === "number" && Number.isInteger(groupCap)
+          ? groupCap
+          : null;
       if (
-        typeof cap === "number" &&
-        Number.isInteger(cap) &&
-        cap >= MAX_LESSONS_PER_DAY_PER_TEACHER_MIN &&
-        cap <= MAX_LESSONS_PER_DAY_PER_TEACHER_MAX
+        effectiveCap !== null &&
+        effectiveCap >= MAX_LESSONS_PER_DAY_PER_TEACHER_MIN &&
+        effectiveCap <= MAX_LESSONS_PER_DAY_PER_TEACHER_MAX
       ) {
-        teacherMaxLessonsPerDay[t.name] = cap;
+        teacherMaxLessonsPerDay[t.name] = effectiveCap;
       }
     }
 

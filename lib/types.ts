@@ -83,6 +83,22 @@ export type Teacher = {
   max_lessons_per_day: number | null;
 };
 
+/** Agrupamento de professores que compartilham restrições de disponibilidade; na geração, as restrições do grupo são unidas às do professor. Cada professor pode pertencer a no máximo um grupo. */
+export type TeacherScheduleGroup = {
+  id: string;
+  name: string;
+  teacher_ids: string[];
+  unavailability: Record<string, number[]>;
+  preference: Record<string, number[]>;
+  max_lessons_per_day: number | null;
+};
+
+/** Forma mínima usada pelas rotinas de edição do grid (professor e grupo compartilham). */
+export type ScheduleAvailability = {
+  unavailability: Record<string, number[]>;
+  preference: Record<string, number[]>;
+};
+
 export type SchoolClass = {
   id: string;
   name: string;
@@ -119,25 +135,25 @@ export const teacherSlotLabelMap: Record<TeacherSlotState, string> = {
   unavailable: "INDISPONÍVEL"
 };
 
-export function getTeacherSlotState(teacher: Teacher, dayIndex: number, slotIndex: number): TeacherSlotState {
+export function getTeacherSlotState(source: ScheduleAvailability, dayIndex: number, slotIndex: number): TeacherSlotState {
   const key = String(dayIndex);
-  if ((teacher.unavailability[key] ?? []).includes(slotIndex)) return "unavailable";
-  if ((teacher.preference[key] ?? []).includes(slotIndex)) return "preference";
+  if ((source.unavailability[key] ?? []).includes(slotIndex)) return "unavailable";
+  if ((source.preference[key] ?? []).includes(slotIndex)) return "preference";
   return "available";
 }
 
 /** Avança no ciclo disponível → preferência → indisponível e devolve os mapas atualizados. */
 export function cycleTeacherSlotMaps(
-  teacher: Teacher,
+  source: ScheduleAvailability,
   dayIndex: number,
   slotIndex: number
 ): { unavailability: Record<string, number[]>; preference: Record<string, number[]> } {
-  const current = getTeacherSlotState(teacher, dayIndex, slotIndex);
+  const current = getTeacherSlotState(source, dayIndex, slotIndex);
   const next = TEACHER_SLOT_CYCLE[(TEACHER_SLOT_CYCLE.indexOf(current) + 1) % TEACHER_SLOT_CYCLE.length];
   const key = String(dayIndex);
 
-  const un = { ...teacher.unavailability };
-  const pref = { ...teacher.preference };
+  const un = { ...source.unavailability };
+  const pref = { ...source.preference };
   un[key] = (un[key] ?? []).filter((s) => s !== slotIndex);
   pref[key] = (pref[key] ?? []).filter((s) => s !== slotIndex);
   if ((un[key]?.length ?? 0) === 0) delete un[key];
@@ -154,7 +170,7 @@ export function cycleTeacherSlotMaps(
 
 /** Define o mesmo status para várias células (dia × slot) de uma vez. */
 export function setTeacherSlotsBulkToState(
-  teacher: Teacher,
+  source: ScheduleAvailability,
   cells: Array<{ dayIndex: number; slotIndex: number }>,
   target: TeacherSlotState
 ): { unavailability: Record<string, number[]>; preference: Record<string, number[]> } {
@@ -166,10 +182,10 @@ export function setTeacherSlotsBulkToState(
 
   const un: Record<string, number[]> = {};
   const pref: Record<string, number[]> = {};
-  for (const [k, arr] of Object.entries(teacher.unavailability)) {
+  for (const [k, arr] of Object.entries(source.unavailability)) {
     un[k] = [...arr];
   }
-  for (const [k, arr] of Object.entries(teacher.preference)) {
+  for (const [k, arr] of Object.entries(source.preference)) {
     pref[k] = [...arr];
   }
 

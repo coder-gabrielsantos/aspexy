@@ -24,6 +24,7 @@ import { useToasts } from "@/hooks/use-toasts";
 import { useStructures } from "@/hooks/use-structures";
 import { useClasses } from "@/hooks/use-classes";
 import { useTeachers } from "@/hooks/use-teachers";
+import { useTeacherScheduleGroups } from "@/hooks/use-teacher-schedule-groups";
 import { useSubjects } from "@/hooks/use-subjects";
 import { useScheduleGeneration } from "@/hooks/use-schedule-generation";
 import { useScheduleConstraints } from "@/hooks/use-schedule-constraints";
@@ -83,6 +84,7 @@ export default function AspexyCanvas() {
   const structuresHook = useStructures(showToast);
   const classesHook = useClasses(showToast);
   const teachersHook = useTeachers(showToast);
+  const teacherGroupsHook = useTeacherScheduleGroups(showToast);
   const subjectsHook = useSubjects(showToast);
   const constraintsHook = useScheduleConstraints(showToast);
   const {
@@ -92,7 +94,7 @@ export default function AspexyCanvas() {
   } = constraintsHook;
   const generationHook = useScheduleGeneration(showToast, classesHook.classes);
 
-  const [confirmTarget, setConfirmTarget] = useState<"structure" | "generated" | "teacher" | "class" | "subject" | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<"structure" | "generated" | "teacher" | "teacher-group" | "class" | "subject" | null>(null);
   const [confirmClassId, setConfirmClassId] = useState("");
   const [confirmSubjectIds, setConfirmSubjectIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -106,6 +108,7 @@ export default function AspexyCanvas() {
     void generationHook.loadGeneratedSchedules();
     void classesHook.loadClasses();
     void teachersHook.loadTeachers();
+    void teacherGroupsHook.loadGroups();
     void subjectsHook.loadSubjects();
     void constraintsHook.loadConstraints();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -210,6 +213,7 @@ export default function AspexyCanvas() {
       if (confirmTarget === "structure") await structuresHook.runDeleteStructure();
       else if (confirmTarget === "generated") await generationHook.runDeleteGeneratedSchedule();
       else if (confirmTarget === "teacher") await teachersHook.runDeleteTeacher();
+      else if (confirmTarget === "teacher-group") await teacherGroupsHook.runDeleteGroup();
       else if (confirmTarget === "class") await classesHook.runDeleteClass(confirmClassId);
       else if (confirmTarget === "subject") await subjectsHook.runDeleteSubjects(confirmSubjectIds);
       setConfirmTarget(null);
@@ -297,8 +301,10 @@ export default function AspexyCanvas() {
             ) : (
               <TeachersTab
                 teachersHook={teachersHook}
+                groupsHook={teacherGroupsHook}
                 structureSelectOptions={structuresHook.structureSelectOptions}
                 onRequestDelete={() => setConfirmTarget("teacher")}
+                onRequestDeleteGroup={() => setConfirmTarget("teacher-group")}
                 showToast={showToast}
               />
             )
@@ -372,6 +378,7 @@ export default function AspexyCanvas() {
         title={
           confirmTarget === "generated" ? "Excluir horário gerado?"
             : confirmTarget === "teacher" ? "Excluir professor?"
+            : confirmTarget === "teacher-group" ? "Excluir agrupamento?"
             : confirmTarget === "class" ? "Excluir turma?"
             : confirmTarget === "subject" ? "Excluir disciplina?"
             : "Excluir estrutura?"
@@ -379,6 +386,7 @@ export default function AspexyCanvas() {
         description={
           confirmTarget === "generated" ? "O horário será removido permanentemente do banco. Esta ação não pode ser desfeita."
             : confirmTarget === "teacher" ? "O professor será removido permanentemente. Esta ação não pode ser desfeita."
+            : confirmTarget === "teacher-group" ? "O agrupamento será removido permanentemente. Os professores permanecem cadastrados. Esta ação não pode ser desfeita."
             : confirmTarget === "class" ? "A turma será removida permanentemente. Esta ação não pode ser desfeita."
             : confirmTarget === "subject"
               ? confirmSubjectIds.length > 1
