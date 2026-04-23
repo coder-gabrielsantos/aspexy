@@ -96,6 +96,7 @@ export async function GET(request: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
     }
+    const userId = session.user.id;
 
     const url = new URL(request.url);
     const id = url.searchParams.get("id") ?? undefined;
@@ -109,14 +110,14 @@ export async function GET(request: Request) {
       if (!objectId) {
         return NextResponse.json({ error: "ID inválido." }, { status: 400 });
       }
-      const doc = await collection.findOne({ _id: objectId, user_id: session.user.id });
+      const doc = await collection.findOne({ _id: objectId, user_id: userId });
       if (!doc) {
         return NextResponse.json({ error: "Agrupamento não encontrado." }, { status: 404 });
       }
       return NextResponse.json({ ok: true, group: groupJsonFromDoc(doc as GroupDocLike) });
     }
 
-    const docs = await collection.find({ user_id: session.user.id }).sort({ name: 1 }).toArray();
+    const docs = await collection.find({ user_id: userId }).sort({ name: 1 }).toArray();
     return NextResponse.json({
       ok: true,
       groups: docs.map((d) => groupJsonFromDoc(d as GroupDocLike))
@@ -139,6 +140,7 @@ export async function POST(request: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
     }
+    const userId = session.user.id;
 
     const body = (await request.json()) as SaveGroupBody;
     const name = body.name?.trim();
@@ -164,7 +166,7 @@ export async function POST(request: Request) {
 
       const teacherObjectIds = teacherIds.map((id) => new ObjectId(id));
       await teachersCollection.updateMany(
-        { user_id: session.user.id, _id: { $in: teacherObjectIds } },
+        { user_id: userId, _id: { $in: teacherObjectIds } },
         {
           $set: {
             unavailability: sanitizeDayMap(groupUnavailability),
@@ -216,7 +218,7 @@ export async function POST(request: Request) {
 
       if (teacherIdsProvided && teacherIds.length > 0) {
         await collection.updateMany(
-          { user_id: session.user.id, _id: { $ne: objectId }, teacher_ids: { $in: teacherIds } },
+          { user_id: userId, _id: { $ne: objectId }, teacher_ids: { $in: teacherIds } },
           { $pull: { teacher_ids: { $in: teacherIds } }, $set: { updated_at: now } } as Record<string, unknown>
         );
       }
@@ -225,7 +227,7 @@ export async function POST(request: Request) {
       if (Object.keys(unsetFields).length > 0) update.$unset = unsetFields;
 
       const updateResult = await collection.findOneAndUpdate(
-        { _id: objectId, user_id: session.user.id },
+        { _id: objectId, user_id: userId },
         update,
         { returnDocument: "after", includeResultMetadata: false }
       );
@@ -248,13 +250,13 @@ export async function POST(request: Request) {
 
     if (teacherIdsProvided && teacherIds.length > 0) {
       await collection.updateMany(
-        { user_id: session.user.id, teacher_ids: { $in: teacherIds } },
+        { user_id: userId, teacher_ids: { $in: teacherIds } },
         { $pull: { teacher_ids: { $in: teacherIds } }, $set: { updated_at: now } } as Record<string, unknown>
       );
     }
 
     const insertDoc: Record<string, unknown> = {
-      user_id: session.user.id,
+      user_id: userId,
       name,
       teacher_ids: teacherIdsProvided ? teacherIds : [],
       unavailability: unavailabilityProvided ? (unavailability ?? {}) : {},
@@ -305,6 +307,7 @@ export async function DELETE(request: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
     }
+    const userId = session.user.id;
 
     const url = new URL(request.url);
     const id = url.searchParams.get("id") ?? undefined;
@@ -317,7 +320,7 @@ export async function DELETE(request: Request) {
     const db = client.db(process.env.MONGODB_DB ?? "aspexy");
     const result = await db.collection("teacher_schedule_groups").deleteOne({
       _id: objectId,
-      user_id: session.user.id
+      user_id: userId
     });
 
     if (result.deletedCount === 0) {
