@@ -106,10 +106,10 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
               <li>
                 <div
                   className={cn(
-                    "flex min-h-[4.5rem] items-stretch overflow-hidden rounded-xl transition-[background-color,box-shadow,border-color] duration-200",
+                    "flex min-h-[4.5rem] items-stretch overflow-hidden rounded-xl border-dashed transition-[background-color,box-shadow,border-color] duration-200",
                     canUseMutexRule
-                      ? "border border-transparent bg-slate-50/60 hover:border-slate-200/85 hover:bg-white hover:shadow-[0_1px_2px_rgba(67,56,202,0.09),0_1px_2px_rgba(15,23,42,0.04)]"
-                      : "border border-slate-100 bg-slate-50/40"
+                      ? "border border-slate-200/85 bg-white hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_1px_2px_rgba(67,56,202,0.09),0_1px_2px_rgba(15,23,42,0.04)]"
+                      : "border border-slate-200/80 bg-white"
                   )}
                 >
                   <button
@@ -167,8 +167,8 @@ export default function ConstraintsTab({ constraintsHook: c, teacherSelectOption
               <li>
                 <div
                   className={cn(
-                    "flex min-h-[4.5rem] items-stretch overflow-hidden rounded-xl border border-transparent bg-slate-50/60 transition-[background-color,box-shadow,border-color] duration-200",
-                    "hover:border-slate-200/85 hover:bg-white hover:shadow-[0_1px_2px_rgba(67,56,202,0.09),0_1px_2px_rgba(15,23,42,0.04)]"
+                    "flex min-h-[4.5rem] items-stretch overflow-hidden rounded-xl border border-dashed border-slate-200/85 bg-white transition-[background-color,box-shadow,border-color] duration-200",
+                    "hover:border-slate-300 hover:bg-slate-50 hover:shadow-[0_1px_2px_rgba(67,56,202,0.09),0_1px_2px_rgba(15,23,42,0.04)]"
                   )}
                 >
                   <button
