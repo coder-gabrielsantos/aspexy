@@ -84,6 +84,13 @@ export default function GenerateTab({
 
   const hasResult = g.solverResult && g.classIds.length > 0 && g.viewSlots.length > 0;
   const canEditCells = Boolean(g.selectedGeneratedScheduleId);
+  const visibleDayIndexes = useMemo(() => {
+    const saturdayIndex = DAYS.indexOf("SAB");
+    const hasSaturdayLessons =
+      saturdayIndex >= 0 &&
+      Object.keys(g.scheduleByDaySlotClass).some((key) => key.startsWith(`${saturdayIndex}-`));
+    return DAYS.map((_, index) => index).filter((index) => index !== saturdayIndex || hasSaturdayLessons);
+  }, [g.scheduleByDaySlotClass]);
 
   const subjectOptionsEdit = useMemo(
     () => (editCell ? subjectOptionsForClassName(editCell.classId, subjects, classNameById) : []),
@@ -307,6 +314,7 @@ export default function GenerateTab({
             >
               <ByDayView
                 g={g}
+                dayIndexes={visibleDayIndexes}
                 allocationAt={allocationAt}
                 canEditCells={canEditCells}
                 onCellClick={openEdit}
@@ -320,6 +328,7 @@ export default function GenerateTab({
             >
             <ByClassView
               g={g}
+              dayIndexes={visibleDayIndexes}
               classId={selectedClassId || g.classIds[0] || ""}
               allocationAt={allocationAt}
               canEditCells={canEditCells}
@@ -406,20 +415,25 @@ const CELL_W = "w-[108px] min-w-[108px] max-w-[108px] sm:w-[140px] sm:min-w-[140
 
 function ByDayView({
   g,
+  dayIndexes,
   allocationAt,
   canEditCells,
   onCellClick,
   search
 }: {
   g: ReturnType<typeof useScheduleGeneration>;
+  dayIndexes: number[];
 } & CellHelpers) {
   return (
     <div className="app-panel-flat overflow-hidden rounded-xl border border-slate-200/80 shadow-sm">
       <div className="max-h-[min(72vh,680px)] overflow-auto">
-        {DAYS.map((dayName, dayIndex) => (
+        {dayIndexes.map((dayIndex, visibleDayIndex) => {
+          const dayName = DAYS[dayIndex];
+          if (!dayName) return null;
+          return (
           <section
             key={dayName}
-            className={cn(dayIndex > 0 && "border-t border-slate-200/90")}
+            className={cn(visibleDayIndex > 0 && "border-t border-slate-200/90")}
           >
             <table
               className="table-fixed border-separate border-spacing-0 text-xs"
@@ -554,7 +568,8 @@ function ByDayView({
               </tbody>
             </table>
           </section>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -566,6 +581,7 @@ function ByDayView({
 
 function ByClassView({
   g,
+  dayIndexes,
   classId,
   allocationAt,
   canEditCells,
@@ -573,6 +589,7 @@ function ByClassView({
   search
 }: {
   g: ReturnType<typeof useScheduleGeneration>;
+  dayIndexes: number[];
   classId: string;
 } & CellHelpers) {
   if (!classId) return null;
@@ -584,8 +601,8 @@ function ByClassView({
           <colgroup>
             {/* Time col */}
             <col className="w-[88px] sm:w-[136px]" />
-            {DAYS.map((d) => (
-              <col key={d} />
+            {dayIndexes.map((dayIndex) => (
+              <col key={DAYS[dayIndex]} />
             ))}
           </colgroup>
 
@@ -607,13 +624,17 @@ function ByClassView({
                   </span>
                 </div>
               </th>
-              {DAYS.map((day) => (
+              {dayIndexes.map((dayIndex) => {
+                const day = DAYS[dayIndex];
+                if (!day) return null;
+                return (
                 <th key={day} className="sticky top-0 z-[20] border-b border-l border-slate-200 p-0 align-top">
                   <div className="box-border flex min-h-[2.25rem] w-full items-center justify-center bg-slate-100 px-1 py-1.5 text-center text-[10px] font-bold uppercase tracking-wider text-slate-600 shadow-[0_2px_0_0_rgb(226_232_240)] sm:min-h-[2.5rem] sm:px-3 sm:text-xs">
                     {dayLabelCompact(DAY_FULL_LABEL[day])}
                   </div>
                 </th>
-              ))}
+                );
+              })}
             </tr>
           </thead>
 
@@ -671,7 +692,7 @@ function ByClassView({
                   </td>
 
                   {/* Day cells */}
-                  {DAYS.map((_, di) => {
+                  {dayIndexes.map((di) => {
                     const a = allocationAt(di, si, classId);
                     const dayBreak = slot.cells[di] === "break";
                     const dayFixed = slot.cells[di] === "fixed";
