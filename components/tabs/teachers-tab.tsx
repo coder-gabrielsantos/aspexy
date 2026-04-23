@@ -120,7 +120,6 @@ export default function TeachersTab({
     });
   }, [t.teacherSelectOptions, g.groupByTeacherId, g.selectedGroup]);
 
-  const selectedTeacherGroup = t.selectedTeacher ? g.groupByTeacherId[t.selectedTeacher.id] ?? null : null;
   const hasGroupMembersChanges = useMemo(() => {
     if (!g.selectedGroup) return false;
     const currentIds = [...g.selectedGroup.teacher_ids].sort();
@@ -246,7 +245,6 @@ export default function TeachersTab({
                 </div>
                 <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-1.5">
                   {t.teachers.map((teacher) => {
-                    const group = g.groupByTeacherId[teacher.id];
                     return (
                       <div
                         key={teacher.id}
@@ -295,15 +293,6 @@ export default function TeachersTab({
                               <span className="min-w-0 flex-1 truncate" title={teacher.name}>
                                 {teacher.name}
                               </span>
-                              {group ? (
-                                <span
-                                  className="ml-1 hidden shrink-0 items-center gap-1 rounded-md border border-indigo-200/80 bg-indigo-50/80 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700 sm:inline-flex"
-                                  title={`No agrupamento ${group.name}`}
-                                >
-                                  <FolderTree className="h-3 w-3" aria-hidden />
-                                  <span className="max-w-[6rem] truncate">{group.name}</span>
-                                </span>
-                              ) : null}
                             </button>
                             <button
                               type="button"
@@ -349,20 +338,6 @@ export default function TeachersTab({
                           <p className="min-w-0 truncate text-sm font-semibold tracking-tight text-slate-800">
                             {t.selectedTeacher.name}
                           </p>
-                          {selectedTeacherGroup ? (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                g.setSelectedGroupId(selectedTeacherGroup.id);
-                                setMode("groups");
-                              }}
-                              className="inline-flex items-center gap-1 rounded-md border border-indigo-200/80 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700 transition-colors hover:bg-indigo-100"
-                              title="Abrir agrupamento"
-                            >
-                              <FolderTree className="h-3 w-3" aria-hidden />
-                              No agrupamento {selectedTeacherGroup.name}
-                            </button>
-                          ) : null}
                         </div>
                         <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
                           <label
