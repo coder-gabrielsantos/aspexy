@@ -27,14 +27,14 @@ type CommonScheduleSelectProps = {
   maxVisibleMenuItems?: number;
   /**
    * Quantos valores selecionados renderizar no controle antes de mostrar um "+N".
-   * - Quando omitido, usa um padrão responsivo (mobile: 1; sm+: 2).
+   * - Quando omitido, usa um padrão responsivo (mobile: 1; >=500px: 2).
    * - Quando definido, aplica o mesmo valor em todos os tamanhos de tela.
    */
   maxVisibleSelectedValues?: number;
   /**
    * Quando definido junto com `maxVisibleSelectedValues`, usa:
    * - mobile: `maxVisibleSelectedValues`
-   * - sm+: `maxVisibleSelectedValuesSm`
+   * - >=500px: `maxVisibleSelectedValuesSm`
    */
   maxVisibleSelectedValuesSm?: number;
   /** Separa os valores renderizados por vírgula (útil quando parecem “texto corrido”). */
@@ -306,15 +306,15 @@ function ScheduleSelectMulti({
           {...props.innerProps}
           className={cn(
             props.className,
-            hideOnMobile && "hidden sm:inline-flex",
+            hideOnMobile && "hidden min-[500px]:inline-flex",
             asText && "border-0 bg-transparent text-sm text-slate-800"
           )}
           title={props.data.label}
         >
           <span className={cn("max-w-[14rem] truncate", asText ? "py-0 pl-0 pr-0" : "py-1 pl-3 pr-1")}>
             {props.data.label}
-            {commaMobile ? <span className="mx-1 text-slate-400 sm:hidden">,</span> : null}
-            {commaDesktop ? <span className="mx-1 hidden text-slate-400 sm:inline">,</span> : null}
+            {commaMobile ? <span className="mx-1 text-slate-400 min-[500px]:hidden">,</span> : null}
+            {commaDesktop ? <span className="mx-1 hidden text-slate-400 min-[500px]:inline">,</span> : null}
           </span>
           {asText ? null : (
             (() => {
@@ -348,8 +348,8 @@ function ScheduleSelectMulti({
                 className={cn(
                   props.className,
                   asText
-                    ? "pointer-events-none select-none border-0 bg-transparent text-sm text-slate-500 sm:hidden"
-                    : "pointer-events-none select-none border-slate-200/70 bg-slate-100/80 text-slate-600 sm:hidden"
+                    ? "pointer-events-none select-none border-0 bg-transparent text-sm text-slate-500 min-[500px]:hidden"
+                    : "pointer-events-none select-none border-slate-200/70 bg-slate-100/80 text-slate-600 min-[500px]:hidden"
                 )}
                 title={`${nMobile} selecionado(s)`}
               >
@@ -376,8 +376,8 @@ function ScheduleSelectMulti({
             className={cn(
               props.className,
               multiValueDisplay === "text"
-                ? "pointer-events-none select-none border-0 bg-transparent text-sm text-slate-500 sm:hidden"
-                : "pointer-events-none select-none border-slate-200/70 bg-slate-100/80 text-slate-600 sm:hidden"
+                ? "pointer-events-none select-none border-0 bg-transparent text-sm text-slate-500 min-[500px]:hidden"
+                : "pointer-events-none select-none border-slate-200/70 bg-slate-100/80 text-slate-600 min-[500px]:hidden"
             )}
             title={`${n} selecionado(s)`}
           >
@@ -397,7 +397,7 @@ function ScheduleSelectMulti({
               multiValueDisplay === "text"
                 ? "pointer-events-none select-none border-0 bg-transparent text-sm text-slate-500"
                 : "pointer-events-none select-none border-slate-200/70 bg-slate-100/80 text-slate-600",
-              mobileLimit !== smLimit && "hidden sm:inline-flex"
+              mobileLimit !== smLimit && "hidden min-[500px]:inline-flex"
             )}
             title={`${n} selecionado(s)`}
           >

@@ -93,7 +93,7 @@ export default function AspexyCanvas() {
   const structuresHook = useStructures(showToast);
   const classesHook = useClasses(showToast);
   const teachersHook = useTeachers(showToast);
-  const teacherGroupsHook = useTeacherScheduleGroups(showToast);
+  const teacherGroupsHook = useTeacherScheduleGroups(showToast, teachersHook.loadTeachers);
   const subjectsHook = useSubjects(showToast);
   const constraintsHook = useScheduleConstraints(showToast);
   const {

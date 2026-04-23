@@ -655,7 +655,8 @@ export default function TeachersTab({
                               placeholder={t.teachers.length === 0 ? "Cadastre professores primeiro" : "Adicionar professores"}
                               isSearchable={false}
                               maxVisibleMenuItems={6}
-                              maxVisibleSelectedValues={4}
+                              maxVisibleSelectedValues={2}
+                              maxVisibleSelectedValuesSm={4}
                               multiValueSeparator="comma"
                               multiValueDisplay="text"
                             />

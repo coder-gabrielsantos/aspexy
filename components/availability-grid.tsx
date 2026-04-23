@@ -141,7 +141,7 @@ export default function AvailabilityGrid({ slots, getState, onToggle, onApplyBul
         )}
         ref={scrollRef}
       >
-        <table className="w-full min-w-[600px] table-fixed border-collapse text-xs">
+        <table className="w-full min-w-[900px] table-fixed border-collapse text-xs">
           <colgroup>
             <col className="w-[120px]" />
             {DAYS.map((d) => (
@@ -159,7 +159,7 @@ export default function AvailabilityGrid({ slots, getState, onToggle, onApplyBul
                   className={cn(
                     "sticky top-0 z-10 border-b border-l border-slate-200 bg-slate-100 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500",
                     di === DAYS.length - 1 && "border-r",
-                    di === 0 ? "pl-0 pr-2" : di === DAYS.length - 1 ? "pl-2 pr-0" : "px-2"
+                    di === 0 ? "pl-0 pr-3" : di === DAYS.length - 1 ? "pl-3 pr-0" : "px-3"
                   )}
                 >
                   {day}
@@ -182,7 +182,7 @@ export default function AvailabilityGrid({ slots, getState, onToggle, onApplyBul
                         className={cn(
                           "break-stripes border-b border-slate-100/80 py-2 text-center text-slate-300",
                           di === DAYS.length - 1 && "border-r",
-                          di === 0 ? "pl-0 pr-2" : di === DAYS.length - 1 ? "pl-2 pr-2" : "px-2"
+                          di === 0 ? "pl-0 pr-3" : di === DAYS.length - 1 ? "pl-3 pr-3" : "px-3"
                         )}
                       >
                         —
@@ -205,7 +205,7 @@ export default function AvailabilityGrid({ slots, getState, onToggle, onApplyBul
                         className={cn(
                           "border-b border-slate-100/80 py-2 align-middle",
                           di === DAYS.length - 1 && "border-r",
-                          di === 0 ? "pl-0 pr-1.5" : di === DAYS.length - 1 ? "pl-1.5 pr-1.5" : "px-1.5"
+                          di === 0 ? "pl-0 pr-2.5" : di === DAYS.length - 1 ? "pl-2.5 pr-2.5" : "px-2.5"
                         )}
                       >
                         <button

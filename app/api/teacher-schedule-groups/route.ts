@@ -149,7 +149,31 @@ export async function POST(request: Request) {
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB ?? "aspexy");
     const collection = db.collection("teacher_schedule_groups");
+    const teachersCollection = db.collection("teachers");
     const now = new Date();
+
+    const mirrorGroupAvailabilityToTeachers = async (
+      teacherIdsRaw: unknown,
+      groupUnavailability: unknown,
+      groupPreference: unknown
+    ) => {
+      const teacherIds = Array.isArray(teacherIdsRaw)
+        ? teacherIdsRaw.filter((id): id is string => typeof id === "string" && ObjectId.isValid(id))
+        : [];
+      if (teacherIds.length === 0) return;
+
+      const teacherObjectIds = teacherIds.map((id) => new ObjectId(id));
+      await teachersCollection.updateMany(
+        { user_id: session.user.id, _id: { $in: teacherObjectIds } },
+        {
+          $set: {
+            unavailability: sanitizeDayMap(groupUnavailability),
+            preference: sanitizeDayMap(groupPreference),
+            updated_at: now
+          }
+        }
+      );
+    };
 
     const teacherIdsProvided = body.teacherIds !== undefined;
     const teacherIds = teacherIdsProvided ? sanitizeTeacherIds(body.teacherIds) : [];
@@ -210,6 +234,15 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Agrupamento não encontrado." }, { status: 404 });
       }
 
+      const shouldMirrorAvailability = unavailabilityProvided || preferenceProvided || teacherIdsProvided;
+      if (shouldMirrorAvailability) {
+        await mirrorGroupAvailabilityToTeachers(
+          updateResult.teacher_ids,
+          updateResult.unavailability,
+          updateResult.preference
+        );
+      }
+
       return NextResponse.json({ ok: true, group: groupJsonFromDoc(updateResult as GroupDocLike) });
     }
 
@@ -232,6 +265,14 @@ export async function POST(request: Request) {
     if (maxProvided && maxValue !== null) insertDoc.max_lessons_per_day = maxValue;
 
     const result = await collection.insertOne(insertDoc);
+
+    if ((unavailabilityProvided || preferenceProvided) && teacherIds.length > 0) {
+      await mirrorGroupAvailabilityToTeachers(
+        insertDoc.teacher_ids,
+        insertDoc.unavailability,
+        insertDoc.preference
+      );
+    }
 
     return NextResponse.json({
       ok: true,

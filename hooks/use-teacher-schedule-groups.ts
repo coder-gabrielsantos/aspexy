@@ -35,7 +35,8 @@ function normalizeGroupFromApi(g: {
 }
 
 export function useTeacherScheduleGroups(
-  showToast: (msg: string, v?: "success" | "error") => void
+  showToast: (msg: string, v?: "success" | "error") => void,
+  onMembersAvailabilitySync?: () => void | Promise<void>
 ) {
   const [groups, setGroups] = useState<TeacherScheduleGroup[]>([]);
   const [newGroupName, setNewGroupName] = useState("");
@@ -151,6 +152,7 @@ export function useTeacherScheduleGroups(
         const d = await readJsonSafe<{ ok?: boolean; group?: TeacherScheduleGroup; error?: string }>(r);
         if (!r.ok || !d?.ok) throw new Error(d?.error ?? "Falha ao atualizar membros.");
         await loadGroups();
+        await onMembersAvailabilitySync?.();
         showToast("Membros atualizados.");
       } catch (e) {
         showToast(e instanceof Error ? e.message : "Falha ao atualizar membros.", "error");
@@ -158,7 +160,7 @@ export function useTeacherScheduleGroups(
         setIsSavingGroup(false);
       }
     },
-    [groups, loadGroups, showToast]
+    [groups, loadGroups, onMembersAvailabilitySync, showToast]
   );
 
   const handleLoadStructureForGroup = useCallback(
@@ -235,12 +237,13 @@ export function useTeacherScheduleGroups(
         });
         const d = await readJsonSafe<{ ok?: boolean; error?: string }>(r);
         if (!r.ok || !d?.ok) throw new Error(d?.error ?? "Falha ao salvar grade do agrupamento.");
+        await onMembersAvailabilitySync?.();
       } catch (e) {
         await loadGroups();
         showToast(e instanceof Error ? e.message : "Falha ao salvar grade do agrupamento.", "error");
       }
     },
-    [selectedGroup, loadGroups, showToast]
+    [selectedGroup, loadGroups, onMembersAvailabilitySync, showToast]
   );
 
   const applyGroupSlotsBulk = useCallback(
@@ -265,12 +268,13 @@ export function useTeacherScheduleGroups(
         });
         const d = await readJsonSafe<{ ok?: boolean; error?: string }>(r);
         if (!r.ok || !d?.ok) throw new Error(d?.error ?? "Falha ao salvar grade do agrupamento.");
+        await onMembersAvailabilitySync?.();
       } catch (e) {
         await loadGroups();
         showToast(e instanceof Error ? e.message : "Falha ao salvar grade do agrupamento.", "error");
       }
     },
-    [selectedGroup, loadGroups, showToast]
+    [selectedGroup, loadGroups, onMembersAvailabilitySync, showToast]
   );
 
   return {
