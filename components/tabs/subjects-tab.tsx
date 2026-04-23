@@ -130,10 +130,16 @@ export default function SubjectsTab({
   // apenas enquanto ainda existirem associações desse grupo; fecha quando zera.
   useEffect(() => {
     if (!turmasDetailMembers) return;
-    const existing = new Set(s.subjects.map((sub) => sub.id));
-    const next = turmasDetailMembers.filter((m) => existing.has(m.id));
+    const byId = new Map(s.subjects.map((sub) => [sub.id, sub]));
+    const next = turmasDetailMembers
+      .map((m) => byId.get(m.id))
+      .filter((m): m is Subject => Boolean(m));
     if (next.length === 0) setTurmasDetailMembers(null);
-    else if (next.length !== turmasDetailMembers.length) setTurmasDetailMembers(next);
+    else {
+      const changed =
+        next.length !== turmasDetailMembers.length || next.some((m, i) => m !== turmasDetailMembers[i]);
+      if (changed) setTurmasDetailMembers(next);
+    }
   }, [s.subjects, turmasDetailMembers]);
 
   const filteredGroups = useMemo(() => {
@@ -499,6 +505,8 @@ export default function SubjectsTab({
           members={turmasDetailMembers}
           classNameById={classNameById}
           onRequestDelete={onRequestDelete}
+          onRequestRename={(subjectIds, nextName) => s.runRenameSubjects(subjectIds, nextName)}
+          isSaving={s.isSavingSubject}
         />
       ) : null}
     </>

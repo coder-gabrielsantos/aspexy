@@ -83,6 +83,47 @@ export function useSubjects(showToast: (msg: string, v?: "success" | "error") =>
     [runDeleteSubjects]
   );
 
+  const runRenameSubjects = useCallback(
+    async (subjectIds: string[], nextNameRaw: string) => {
+      const ids = [...new Set(subjectIds.map((id) => id.trim()).filter(Boolean))];
+      const nextName = nextNameRaw.trim();
+      if (ids.length === 0) return;
+      if (!nextName) {
+        showToast("Informe um nome válido para a disciplina.", "error");
+        return;
+      }
+
+      const byId = new Map(subjects.map((sub) => [sub.id, sub]));
+      setIsSavingSubject(true);
+      try {
+        for (const subjectId of ids) {
+          const current = byId.get(subjectId);
+          if (!current) continue;
+          const r = await fetch("/api/subjects", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              subjectId: current.id,
+              name: nextName,
+              lessonsPerWeek: current.lessons_per_week,
+              teacherIds: current.teacher_ids,
+              classId: current.class_id
+            })
+          });
+          const d = await readJsonSafe<{ ok?: boolean; subject?: Subject; error?: string }>(r);
+          if (!r.ok || !d?.ok || !d.subject) throw new Error(d?.error ?? "Falha ao editar disciplina.");
+        }
+        await loadSubjects();
+        showToast(ids.length > 1 ? "Disciplinas renomeadas." : "Disciplina renomeada.");
+      } catch (e) {
+        showToast(e instanceof Error ? e.message : "Falha ao editar disciplina.", "error");
+      } finally {
+        setIsSavingSubject(false);
+      }
+    },
+    [subjects, loadSubjects, showToast]
+  );
+
   return {
     subjects,
     newSubjectName,
@@ -99,5 +140,6 @@ export function useSubjects(showToast: (msg: string, v?: "success" | "error") =>
     handleAddSubject,
     runDeleteSubject,
     runDeleteSubjects,
+    runRenameSubjects,
   };
 }
