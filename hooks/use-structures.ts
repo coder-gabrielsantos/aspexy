@@ -238,7 +238,7 @@ export function useStructures(showToast: (msg: string, v?: "success" | "error") 
           id: `slot-${Date.now()}`,
           start,
           end: addMinutesToTime24(start, DEFAULT_SLOT_MINUTES),
-          cells: DAYS.map(() => "lesson" as const),
+          cells: DAYS.map((day) => (day === "SAB" ? "free" : "lesson") as const),
           fixedLabels: DAYS.map(() => null),
         },
       ];

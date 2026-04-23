@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, Info, Plus, Save, Trash2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import StructureIntroModal from "@/components/structure-intro-modal";
 import ScheduleSelect from "@/components/schedule-select";
@@ -47,6 +47,7 @@ function CellStatePicker({
   const [view, setView] = useState<"states" | "fixed-name">("states");
   const [label, setLabel] = useState("");
   const [isVisible, setIsVisible] = useState(false);
+  const [panelWidth, setPanelWidth] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -55,9 +56,16 @@ function CellStatePicker({
   const spaceBelow = (typeof window !== "undefined" ? window.innerHeight : 800) - rect.bottom;
   const showAbove = spaceBelow < 160 && rect.top > 160;
 
+  const viewportW = typeof window !== "undefined" ? window.innerWidth : 1200;
+  const safeMargin = 8;
+  const anchorCenterX = rect.left + rect.width / 2;
+  const minCenterX = safeMargin + panelWidth / 2;
+  const maxCenterX = viewportW - safeMargin - panelWidth / 2;
+  const clampedCenterX = panelWidth > 0 ? Math.min(Math.max(anchorCenterX, minCenterX), maxCenterX) : anchorCenterX;
+
   const style: React.CSSProperties = {
     position: "fixed",
-    left: rect.left + rect.width / 2,
+    left: clampedCenterX,
     top: showAbove ? rect.top - 8 : rect.bottom + 8,
     transform: showAbove ? "translate(-50%, -100%)" : "translateX(-50%)",
     zIndex: 200,
@@ -98,6 +106,14 @@ function CellStatePicker({
     }
   }, [view]);
 
+  useLayoutEffect(() => {
+    if (!open) return;
+    const measure = () => setPanelWidth(panelRef.current?.offsetWidth ?? 0);
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [open, view]);
+
   if (view === "states") {
     return (
       <div
@@ -110,7 +126,7 @@ function CellStatePicker({
           if (!open) onExited();
         }}
         className={cn(
-          "flex gap-1 rounded-xl border border-slate-200/90 bg-white p-1.5 shadow-[0_8px_24px_-4px_rgba(15,23,42,0.14),0_1px_2px_rgba(15,23,42,0.06)]",
+          "flex overflow-hidden rounded-lg border-2 border-slate-300 bg-white shadow-[0_8px_24px_-4px_rgba(15,23,42,0.14),0_1px_2px_rgba(15,23,42,0.06)] divide-x divide-slate-200/70",
           "origin-top transition-all duration-200 ease-out",
           isVisible ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"
         )}
@@ -128,10 +144,10 @@ function CellStatePicker({
               }
             }}
             className={cn(
-              "h-9 rounded-lg px-3 text-[10px] font-semibold tracking-wide transition-colors duration-100",
-              state === currentState && "ring-2 ring-inset ring-indigo-400/60",
+              "h-10 w-24 shrink-0 rounded-none px-3 text-[10px] font-semibold tracking-wide transition-colors duration-100",
+              state === currentState && "bg-indigo-100 text-indigo-800",
               state === "lesson" && "bg-slate-100 text-slate-800 hover:bg-slate-200/80",
-              state === "free" && "bg-white text-slate-500 ring-1 ring-slate-200 hover:bg-slate-50",
+              state === "free" && "bg-white text-slate-500 hover:bg-slate-50",
               state === "break" && "break-stripes bg-amber-50 text-amber-800 hover:bg-amber-100",
               state === "fixed" && "bg-violet-100 text-violet-800 hover:bg-violet-200/80",
             )}
@@ -154,7 +170,7 @@ function CellStatePicker({
         if (!open) onExited();
       }}
       className={cn(
-        "w-72 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_8px_24px_-4px_rgba(15,23,42,0.14),0_1px_2px_rgba(15,23,42,0.06)]",
+        "w-72 overflow-hidden rounded-lg border border-slate-200/90 bg-white shadow-[0_8px_24px_-4px_rgba(15,23,42,0.14),0_1px_2px_rgba(15,23,42,0.06)]",
         "origin-top transition-all duration-200 ease-out",
         isVisible ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"
       )}
@@ -204,6 +220,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
   const [introOpen, setIntroOpen] = useState(false);
   const [activePicker, setActivePicker] = useState<ActivePicker | null>(null);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [applyScope, setApplyScope] = useState<"cell" | "row">("cell");
 
   const openPicker = (si: number, di: number, e: React.MouseEvent<HTMLButtonElement>) => {
     if (activePicker && activePicker.si === si && activePicker.di === di && isPickerOpen) {
@@ -222,7 +239,20 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
 
   const handleSelectState = (state: SlotState, label?: string) => {
     if (!activePicker) return;
-    s.setCellState(activePicker.si, activePicker.di, state, label);
+    const clickedDay = DAYS[activePicker.di];
+    if (clickedDay === "SAB") {
+      s.setCellState(activePicker.si, activePicker.di, state, label);
+      closePicker();
+      return;
+    }
+    if (applyScope === "row") {
+      for (let di = 0; di < DAYS.length; di++) {
+        if (DAYS[di] === "SAB") continue;
+        s.setCellState(activePicker.si, di, state, label);
+      }
+    } else {
+      s.setCellState(activePicker.si, activePicker.di, state, label);
+    }
     closePicker();
   };
 
@@ -295,6 +325,52 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
             </Button>
           </div>
         </div>
+        <div className="border-t border-slate-100 px-5 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              Aplicar status em
+            </p>
+            <div
+              role="tablist"
+              aria-label="Aplicação de status"
+              className="relative inline-grid h-8 w-max grid-cols-2 items-stretch rounded-full bg-slate-100/95 p-0.5"
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "pointer-events-none absolute bottom-0.5 left-0.5 top-0.5 w-[calc(50%-2px)] rounded-full bg-white shadow-sm transition-transform duration-300 ease-out motion-reduce:transition-none",
+                  applyScope === "row" ? "translate-x-full" : "translate-x-0"
+                )}
+              />
+              <button
+                type="button"
+                role="tab"
+                aria-selected={applyScope === "cell"}
+                onClick={() => setApplyScope("cell")}
+                className={cn(
+                  "relative z-10 flex min-w-0 items-center justify-center rounded-full px-3 text-xs font-semibold transition-colors duration-200",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/35 focus-visible:ring-offset-2",
+                  applyScope === "cell" ? "text-indigo-600" : "text-slate-500 hover:text-slate-800"
+                )}
+              >
+                Célula
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={applyScope === "row"}
+                onClick={() => setApplyScope("row")}
+                className={cn(
+                  "relative z-10 flex min-w-0 items-center justify-center rounded-full px-3 text-xs font-semibold transition-colors duration-200",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/35 focus-visible:ring-offset-2",
+                  applyScope === "row" ? "text-indigo-600" : "text-slate-500 hover:text-slate-800"
+                )}
+              >
+                Linha inteira
+              </button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="app-panel-flat overflow-hidden">
@@ -349,7 +425,8 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                       />
                     </div>
                   </td>
-                  {slot.cells.map((state, di) => {
+                  {DAYS.map((_, di) => {
+                    const state = slot.cells[di] ?? "free";
                     const fixedLabel = slot.fixedLabels[di];
                     const isActive = activePicker?.si === si && activePicker?.di === di;
                     return (

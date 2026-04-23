@@ -4,14 +4,15 @@ export type StepDef = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement> & { className?: string }>;
 };
 
-export const DAYS = ["SEG", "TER", "QUA", "QUI", "SEX"] as const;
+export const DAYS = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB"] as const;
 
 export const DAY_FULL_LABEL: Record<(typeof DAYS)[number], string> = {
   SEG: "Segunda-feira",
   TER: "Terça-feira",
   QUA: "Quarta-feira",
   QUI: "Quinta-feira",
-  SEX: "Sexta-feira"
+  SEX: "Sexta-feira",
+  SAB: "Sábado"
 };
 
 export const DEFAULT_START = "07:30";
@@ -242,7 +243,7 @@ export function createInitialSlot(index = 0): SlotRow {
     id: `slot-${index + 1}`,
     start: DEFAULT_START,
     end: DEFAULT_END,
-    cells: DAYS.map(() => "lesson" as SlotState),
+    cells: DAYS.map((day) => (day === "SAB" ? "free" : "lesson") as SlotState),
     fixedLabels: DAYS.map(() => null),
   };
 }
