@@ -28,7 +28,7 @@ function ruleContent(rule: RuleIntroRuleKey): RuleContent {
       eyebrow: "Regra de geração",
       title: "Limites gerais",
       description:
-        "Define o teto padrão de aulas por dia para cada professor na geração do horário e, se quiser, limita quantas aulas seguidas o mesmo professor pode ter com a mesma turma no mesmo dia (em períodos consecutivos da grade).",
+        "Define o teto padrão de aulas por dia para cada professor na geração do horário e, se quiser, limita quantas aulas seguidas o mesmo professor pode ter com a mesma turma no mesmo dia.",
       bullets: [
         "O limite diário vale para todos os professores, salvo se você definir um limite próprio na aba Professores."
       ]
