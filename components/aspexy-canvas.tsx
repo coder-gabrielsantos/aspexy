@@ -47,6 +47,15 @@ const PAGE_TITLE: Record<TabMode, string> = {
   generate: "Horários"
 };
 
+const PAGE_SUBTITLE: Record<TabMode, string> = {
+  grade: "Defina os blocos de aula, intervalos e horários fixos da semana.",
+  classes: "Cadastre as turmas que serão usadas na geração dos horários.",
+  teachers: "Organize disponibilidade e limites para professores e agrupamentos.",
+  subjects: "Configure disciplinas, carga semanal e vínculo com turmas e professores.",
+  constraints: "Ajuste regras que orientam o motor de geração automática.",
+  generate: "Monte, revise e ajuste os horários gerados para cada turma."
+};
+
 const CADASTRO_TAB_IDS = new Set<TabMode>(["grade", "classes", "teachers", "subjects"]);
 
 const TAB_HASH_PT: Record<TabMode, string> = {
@@ -232,6 +241,7 @@ export default function AspexyCanvas() {
   const breadcrumbStep = STEPS.find((s) => s.id === activeTab)?.label ?? PAGE_TITLE[activeTab];
   const breadcrumbGroup = CADASTRO_TAB_IDS.has(activeTab) ? "Cadastro" : "Geração";
   const pageTitle = PAGE_TITLE[activeTab];
+  const pageSubtitle = PAGE_SUBTITLE[activeTab];
 
   if (!mounted) {
     return <div className="min-h-screen bg-white" />;
@@ -263,7 +273,12 @@ export default function AspexyCanvas() {
 
         <main className="app-shell-main min-w-0 grow-0 overflow-x-hidden px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
           <header className="mb-8 animate-fade-in">
-            <h1 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">{pageTitle}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-[2rem]">
+              {pageTitle}
+            </h1>
+            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-500 sm:text-[15px]">
+              {pageSubtitle}
+            </p>
           </header>
 
           {initialLoading && (
