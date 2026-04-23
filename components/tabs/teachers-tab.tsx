@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, FolderTree, LayoutGrid, Pencil, Plus, Trash2, UserPlus, Users, X } from "lucide-react";
+import { Check, FolderTree, LayoutGrid, Pencil, Plus, Trash2, Users, X } from "lucide-react";
 
 import AvailabilityGrid from "@/components/availability-grid";
 import ScheduleSelect from "@/components/schedule-select";

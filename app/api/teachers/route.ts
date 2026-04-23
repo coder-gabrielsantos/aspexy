@@ -253,7 +253,7 @@ export async function DELETE(request: Request) {
     const teacherIdStr = objectId.toString();
     await db.collection("teacher_schedule_groups").updateMany(
       { user_id: session.user.id, teacher_ids: teacherIdStr },
-      { $pull: { teacher_ids: teacherIdStr }, $set: { updated_at: new Date() } }
+      { $pull: { teacher_ids: teacherIdStr }, $set: { updated_at: new Date() } } as Record<string, unknown>
     );
 
     return NextResponse.json({ ok: true });

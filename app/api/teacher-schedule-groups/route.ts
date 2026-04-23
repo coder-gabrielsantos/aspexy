@@ -193,7 +193,7 @@ export async function POST(request: Request) {
       if (teacherIdsProvided && teacherIds.length > 0) {
         await collection.updateMany(
           { user_id: session.user.id, _id: { $ne: objectId }, teacher_ids: { $in: teacherIds } },
-          { $pull: { teacher_ids: { $in: teacherIds } }, $set: { updated_at: now } }
+          { $pull: { teacher_ids: { $in: teacherIds } }, $set: { updated_at: now } } as Record<string, unknown>
         );
       }
 
@@ -216,7 +216,7 @@ export async function POST(request: Request) {
     if (teacherIdsProvided && teacherIds.length > 0) {
       await collection.updateMany(
         { user_id: session.user.id, teacher_ids: { $in: teacherIds } },
-        { $pull: { teacher_ids: { $in: teacherIds } }, $set: { updated_at: now } }
+        { $pull: { teacher_ids: { $in: teacherIds } }, $set: { updated_at: now } } as Record<string, unknown>
       );
     }
 
