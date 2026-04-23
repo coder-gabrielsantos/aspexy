@@ -1,7 +1,7 @@
 "use client";
 
-import { Info, Plus, Save, Trash2, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { ChevronLeft, Info, Plus, Save, Trash2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import StructureIntroModal from "@/components/structure-intro-modal";
 import ScheduleSelect from "@/components/schedule-select";
@@ -12,10 +12,12 @@ import {
   DAYS,
   DEFAULT_START,
   DEFAULT_END,
+  STATE_CYCLE,
   stateLabelMap,
   formatTimeTyping,
   addMinutesToTime24,
   normalizeTime24OrFallback,
+  type SlotState,
 } from "@/lib/types";
 import type { useStructures } from "@/hooks/use-structures";
 
@@ -25,86 +27,174 @@ type StructureTabProps = {
   onStructureSaved?: (id: string) => void;
 };
 
-function FixedLabelDialog({
-  onConfirm,
-  onCancel,
-}: {
-  onConfirm: (label: string) => void;
-  onCancel: () => void;
-}) {
-  const [value, setValue] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
+type ActivePicker = { si: number; di: number; rect: DOMRect };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-      <button
-        type="button"
-        className="absolute inset-0 bg-slate-950/35 backdrop-blur-[8px] motion-reduce:animate-none motion-reduce:opacity-100 animate-dialog-overlay-in"
-        aria-label="Fechar"
-        onClick={onCancel}
-      />
+function CellStatePicker({
+  open,
+  anchor,
+  currentState,
+  onSelectState,
+  onRequestClose,
+  onExited,
+}: {
+  open: boolean;
+  anchor: ActivePicker;
+  currentState: SlotState;
+  onSelectState: (state: SlotState, label?: string) => void;
+  onRequestClose: () => void;
+  onExited: () => void;
+}) {
+  const [view, setView] = useState<"states" | "fixed-name">("states");
+  const [label, setLabel] = useState("");
+  const [isVisible, setIsVisible] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const { rect } = anchor;
+
+  const spaceBelow = (typeof window !== "undefined" ? window.innerHeight : 800) - rect.bottom;
+  const showAbove = spaceBelow < 160 && rect.top > 160;
+
+  const style: React.CSSProperties = {
+    position: "fixed",
+    left: rect.left + rect.width / 2,
+    top: showAbove ? rect.top - 8 : rect.bottom + 8,
+    transform: showAbove ? "translate(-50%, -100%)" : "translateX(-50%)",
+    zIndex: 200,
+  };
+
+  useEffect(() => {
+    if (open) {
+      const raf = requestAnimationFrame(() => setIsVisible(true));
+      return () => cancelAnimationFrame(raf);
+    }
+    setIsVisible(false);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handlePointerDown = (e: PointerEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        onRequestClose();
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onRequestClose();
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open, onRequestClose]);
+
+  useEffect(() => {
+    if (view === "fixed-name") {
+      requestAnimationFrame(() => inputRef.current?.focus());
+    }
+  }, [view]);
+
+  if (view === "states") {
+    return (
       <div
+        ref={panelRef}
+        style={style}
         role="dialog"
-        aria-modal="true"
-        aria-labelledby="fixed-label-dialog-title"
-        aria-describedby="fixed-label-dialog-desc"
-        onClick={(e) => e.stopPropagation()}
+        aria-label="Escolher estado da célula"
+        onTransitionEnd={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (!open) onExited();
+        }}
         className={cn(
-          "relative z-10 w-full max-w-[420px] motion-reduce:animate-none motion-reduce:opacity-100 motion-reduce:scale-100 animate-dialog-in",
-          "overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_1px_0_rgba(255,255,255,0.8)_inset,0_24px_48px_-12px_rgba(15,23,42,0.18)]",
-          "outline-none ring-1 ring-slate-900/[0.03]"
+          "flex gap-1 rounded-xl border border-slate-200/90 bg-white p-1.5 shadow-[0_8px_24px_-4px_rgba(15,23,42,0.14),0_1px_2px_rgba(15,23,42,0.06)]",
+          "origin-top transition-all duration-200 ease-out",
+          isVisible ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"
         )}
       >
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-200/80 to-transparent"
-          aria-hidden
+        {STATE_CYCLE.map((state) => (
+          <button
+            key={state}
+            type="button"
+            aria-pressed={state === currentState}
+            onClick={() => {
+              if (state === "fixed") {
+                setView("fixed-name");
+              } else {
+                onSelectState(state);
+              }
+            }}
+            className={cn(
+              "h-9 rounded-lg px-3 text-[10px] font-semibold tracking-wide transition-colors duration-100",
+              state === currentState && "ring-2 ring-inset ring-indigo-400/60",
+              state === "lesson" && "bg-slate-100 text-slate-800 hover:bg-slate-200/80",
+              state === "free" && "bg-white text-slate-500 ring-1 ring-slate-200 hover:bg-slate-50",
+              state === "break" && "break-stripes bg-amber-50 text-amber-800 hover:bg-amber-100",
+              state === "fixed" && "bg-violet-100 text-violet-800 hover:bg-violet-200/80",
+            )}
+          >
+            {stateLabelMap[state]}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={panelRef}
+      style={style}
+      role="dialog"
+      aria-label="Nome do horário fixo"
+      onTransitionEnd={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (!open) onExited();
+      }}
+      className={cn(
+        "w-72 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_8px_24px_-4px_rgba(15,23,42,0.14),0_1px_2px_rgba(15,23,42,0.06)]",
+        "origin-top transition-all duration-200 ease-out",
+        isVisible ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"
+      )}
+    >
+      <div className="border-b border-slate-100 px-3 py-2.5">
+        <button
+          type="button"
+          onClick={() => { setLabel(""); setView("states"); }}
+          className="flex items-center gap-1 text-[11px] font-medium text-slate-500 transition-colors hover:text-slate-800"
+        >
+          <ChevronLeft className="h-3 w-3" aria-hidden />
+          Voltar
+        </button>
+        <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-violet-600">
+          Horário fixo
+        </p>
+      </div>
+      <div className="px-3 pb-3 pt-2.5">
+        <label className="mb-1.5 block text-xs font-medium text-slate-700">
+          Nome{" "}
+          <span className="font-normal text-slate-400">(opcional)</span>
+        </label>
+        <Input
+          ref={inputRef}
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          placeholder="Ex: Avaliação"
+          className="h-9 text-sm"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSelectState("fixed", label);
+            if (e.key === "Escape") onRequestClose();
+          }}
         />
-
-        <div className="relative px-5 pb-5 pt-5 sm:px-6 sm:pb-6 sm:pt-6">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1 pr-1 pt-0.5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Horário reservado</p>
-              <h2 id="fixed-label-dialog-title" className="mt-1.5 text-base font-semibold leading-snug tracking-tight text-slate-900">
-                Adicionar nome ao horário fixo
-              </h2>
-              <p id="fixed-label-dialog-desc" className="mt-2.5 text-sm leading-relaxed text-slate-600">
-                Dê um nome para este horário reservado. Ele não será usado na geração automática.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onCancel}
-              aria-label="Fechar"
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25"
-            >
-              <X className="h-4 w-4" strokeWidth={2} aria-hidden />
-            </button>
-          </div>
-
-          <div className="mt-4">
-            <Input
-              ref={inputRef}
-              autoFocus
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder="Ex: Avaliação Semanal"
-              className="h-11 w-full text-sm"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") onConfirm(value);
-                if (e.key === "Escape") onCancel();
-              }}
-            />
-          </div>
-
-          <div className="mt-6 flex flex-col-reverse gap-2 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-            <Button type="button" variant="ghost" onClick={onCancel} className="h-10 px-4 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 sm:h-9">
-              Cancelar
-            </Button>
-            <Button type="button" className="h-10 min-w-[8.5rem] gap-2 text-sm font-semibold shadow-sm sm:h-9" onClick={() => onConfirm(value)}>
-              Confirmar
-            </Button>
-          </div>
-        </div>
+        <Button
+          type="button"
+          className="mt-2.5 h-9 w-full gap-1.5 text-sm font-semibold"
+          onClick={() => onSelectState("fixed", label)}
+        >
+          Aplicar
+        </Button>
       </div>
     </div>
   );
@@ -112,15 +202,42 @@ function FixedLabelDialog({
 
 export default function StructureTab({ structures: s, onRequestDelete, onStructureSaved }: StructureTabProps) {
   const [introOpen, setIntroOpen] = useState(false);
+  const [activePicker, setActivePicker] = useState<ActivePicker | null>(null);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+
+  const openPicker = (si: number, di: number, e: React.MouseEvent<HTMLButtonElement>) => {
+    if (activePicker && activePicker.si === si && activePicker.di === di && isPickerOpen) {
+      setIsPickerOpen(false);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setActivePicker({ si, di, rect });
+    setIsPickerOpen(true);
+  };
+
+  const closePicker = () => setIsPickerOpen(false);
+  const handlePickerExited = () => {
+    if (!isPickerOpen) setActivePicker(null);
+  };
+
+  const handleSelectState = (state: SlotState, label?: string) => {
+    if (!activePicker) return;
+    s.setCellState(activePicker.si, activePicker.di, state, label);
+    closePicker();
+  };
 
   return (
     <div className="animate-fade-in space-y-6">
       <StructureIntroModal open={introOpen} onOpenChange={setIntroOpen} />
 
-      {s.pendingFixedCell && (
-        <FixedLabelDialog
-          onConfirm={(label) => s.setFixedLabel(s.pendingFixedCell!.si, s.pendingFixedCell!.di, label)}
-          onCancel={s.cancelPendingFixed}
+      {activePicker && (
+        <CellStatePicker
+          open={isPickerOpen}
+          anchor={activePicker}
+          currentState={s.slots[activePicker.si]?.cells[activePicker.di] ?? "lesson"}
+          onSelectState={handleSelectState}
+          onRequestClose={closePicker}
+          onExited={handlePickerExited}
         />
       )}
 
@@ -147,7 +264,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
               />
             </div>
           </div>
-          <div className="flex w-full shrink-0 flex-wrap items-center justify-end gap-2 sm:ml-auto sm:w-auto">
+          <div className="flex w-full shrink-0 flex-nowrap items-center justify-end gap-2 sm:ml-auto sm:w-auto">
             <Button
               type="button"
               variant="outline"
@@ -162,16 +279,16 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                 type="button"
                 onClick={onRequestDelete}
                 variant="outline"
-                className="h-11 min-h-11 gap-1.5 text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+                className="h-11 min-h-11 gap-1.5 text-slate-500 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 max-[460px]:w-11 max-[460px]:min-w-11 max-[460px]:px-0"
               >
                 <Trash2 className="h-3.5 w-3.5" />
-                Excluir
+                <span className="max-[460px]:hidden">Excluir</span>
               </Button>
             )}
             <Button
               onClick={() => void s.handleSaveStructure(onStructureSaved)}
               disabled={s.isSavingStructure || (Boolean(s.selectedStructureId) && !s.isStructureDirty)}
-              className="h-11 min-h-11 gap-1.5"
+              className="h-11 min-h-11 w-full min-w-0 flex-1 gap-1.5 sm:w-auto sm:flex-none"
             >
               <Save className="h-3.5 w-3.5" />
               {s.saveButtonLabel}
@@ -234,6 +351,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                   </td>
                   {slot.cells.map((state, di) => {
                     const fixedLabel = slot.fixedLabels[di];
+                    const isActive = activePicker?.si === si && activePicker?.di === di;
                     return (
                       <td
                         key={`${slot.id}-${DAYS[di]}`}
@@ -244,15 +362,18 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                       >
                         <button
                           type="button"
-                          onClick={() => s.toggleCellState(si, di)}
+                          onClick={(e) => openPicker(si, di, e)}
+                          aria-haspopup="dialog"
+                          aria-expanded={isActive}
                           aria-label={
                             state === "fixed" && fixedLabel
-                              ? `${fixedLabel} — clique para remover`
-                              : `${stateLabelMap[state]} — clique para alternar`
+                              ? `${fixedLabel} — clique para alterar`
+                              : `${stateLabelMap[state]} — clique para alterar`
                           }
                           title={state === "fixed" && fixedLabel ? fixedLabel : undefined}
                           className={cn(
                             "box-border flex h-11 w-full items-center justify-center gap-1 overflow-hidden rounded-none px-1 text-[10px] font-semibold tracking-wide transition-colors duration-150",
+                            isActive && "ring-2 ring-inset ring-indigo-400/70",
                             state === "lesson" && "bg-slate-100 text-slate-800 ring-1 ring-slate-200 hover:bg-slate-200/80",
                             state === "free" && "bg-white text-slate-400 ring-1 ring-slate-200 hover:bg-slate-50",
                             state === "break" && "break-stripes bg-amber-50/90 text-amber-800 ring-1 ring-amber-200/70 hover:bg-amber-100/80",
@@ -260,11 +381,9 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
                           )}
                         >
                           {state === "fixed" ? (
-                            <>
-                              <span className="truncate leading-none uppercase">
-                                {fixedLabel ?? stateLabelMap.fixed}
-                              </span>
-                            </>
+                            <span className="truncate leading-none uppercase">
+                              {fixedLabel ?? stateLabelMap.fixed}
+                            </span>
                           ) : (
                             stateLabelMap[state]
                           )}
@@ -324,7 +443,7 @@ export default function StructureTab({ structures: s, onRequestDelete, onStructu
               >
                 <span className="h-1.5 w-1.5 translate-y-px rounded-full bg-slate-400" />
               </span>
-              <span className="leading-none">clique para alternar</span>
+              <span className="leading-none">clique para alterar</span>
             </span>
           </div>
         </div>

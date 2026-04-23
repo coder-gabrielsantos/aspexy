@@ -45,8 +45,8 @@ export default function StructureIntroModal({ open, onOpenChange }: StructureInt
 
   const bullets = [
     "Defina os horários de cada slot na coluna Horário.",
-    "Em cada dia, clique na célula para alternar entre Aula, Livre, Intervalo e Fixo.",
-    "Quando marcar Fixo, adicione um nome para identificar esse horário reservado.",
+    "Clique em qualquer célula para escolher seu estado: Aula, Livre, Intervalo ou Fixo.",
+    "Ao escolher Fixo, você pode dar um nome ao horário.",
     "Use Adicionar slot para criar novas linhas e Salvar para gravar a estrutura."
   ];
 

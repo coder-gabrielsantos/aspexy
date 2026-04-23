@@ -4,7 +4,6 @@ import {
   DEFAULT_START,
   DEFAULT_END,
   DEFAULT_SLOT_MINUTES,
-  STATE_CYCLE,
   createInitialSlot,
   slotsFromProfile,
   readJsonSafe,
@@ -12,10 +11,10 @@ import {
   parseTime24ToMinutes,
   type SchoolProfile,
   type SlotRow,
+  type SlotState,
   type StructureSummary,
 } from "@/lib/types";
 
-type PendingFixedCell = { si: number; di: number } | null;
 
 function buildProfileFingerprint(slots: SlotRow[]): string {
   return JSON.stringify(
@@ -42,7 +41,6 @@ export function useStructures(showToast: (msg: string, v?: "success" | "error") 
   const [committedProfileFingerprint, setCommittedProfileFingerprint] = useState("");
   const [isSavingStructure, setIsSavingStructure] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [pendingFixedCell, setPendingFixedCell] = useState<PendingFixedCell>(null);
 
   const activeSlotsCount = useMemo(
     () => slots.reduce((acc, row) => acc + row.cells.filter((c) => c === "lesson").length, 0),
@@ -213,54 +211,17 @@ export function useStructures(showToast: (msg: string, v?: "success" | "error") 
     showToast("Estrutura excluída com sucesso.");
   }, [selectedStructureId, loadStructures, showToast]);
 
-  const toggleCellState = useCallback((slotIndex: number, dayIndex: number) => {
-    setSlots((prev) => {
-      const slot = prev[slotIndex];
-      if (!slot) return prev;
-      const current = slot.cells[dayIndex];
-      // Clicking a fixed cell returns it directly to "lesson"
-      if (current === "fixed") {
-        return prev.map((s, ri) => {
-          if (ri !== slotIndex) return s;
-          const nextCells = [...s.cells];
-          nextCells[dayIndex] = "lesson";
-          const nextFixedLabels = [...s.fixedLabels];
-          nextFixedLabels[dayIndex] = null;
-          return { ...s, cells: nextCells, fixedLabels: nextFixedLabels };
-        });
-      }
-      const nextState = STATE_CYCLE[(STATE_CYCLE.indexOf(current) + 1) % STATE_CYCLE.length];
-      // When the next state would be "fixed", open the label popover instead
-      if (nextState === "fixed") {
-        setPendingFixedCell({ si: slotIndex, di: dayIndex });
-        return prev;
-      }
-      return prev.map((s, ri) => {
-        if (ri !== slotIndex) return s;
-        const nextCells = [...s.cells];
-        nextCells[dayIndex] = nextState;
-        return { ...s, cells: nextCells };
-      });
-    });
-  }, []);
-
-  const setFixedLabel = useCallback((slotIndex: number, dayIndex: number, label: string) => {
-    const trimmed = label.trim() || "RESERVADO";
+  const setCellState = useCallback((slotIndex: number, dayIndex: number, state: SlotState, label?: string) => {
     setSlots((prev) =>
       prev.map((s, ri) => {
         if (ri !== slotIndex) return s;
         const nextCells = [...s.cells];
-        nextCells[dayIndex] = "fixed";
+        nextCells[dayIndex] = state;
         const nextFixedLabels = [...s.fixedLabels];
-        nextFixedLabels[dayIndex] = trimmed;
+        nextFixedLabels[dayIndex] = state === "fixed" ? (label?.trim() || "RESERVADO") : null;
         return { ...s, cells: nextCells, fixedLabels: nextFixedLabels };
       })
     );
-    setPendingFixedCell(null);
-  }, []);
-
-  const cancelPendingFixed = useCallback(() => {
-    setPendingFixedCell(null);
   }, []);
 
   const updateSlotTime = useCallback((slotIndex: number, field: "start" | "end", value: string) => {
@@ -307,12 +268,9 @@ export function useStructures(showToast: (msg: string, v?: "success" | "error") 
     isStructureDirty,
     saveButtonLabel,
     runDeleteStructure,
-    toggleCellState,
+    setCellState,
     updateSlotTime,
     addSlotRow,
     removeSlotRow,
-    pendingFixedCell,
-    setFixedLabel,
-    cancelPendingFixed,
   };
 }
